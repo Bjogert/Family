@@ -1,0 +1,29 @@
+{
+  "name": "family-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Family Hub - A Raspberry Pi hosted web app for household management",
+  "scripts": {
+    "dev": "pnpm run --parallel dev",
+    "dev:api": "pnpm --filter @family-hub/api dev",
+    "dev:web": "pnpm --filter @family-hub/web dev",
+    "build": "pnpm run -r build",
+    "build:api": "pnpm --filter @family-hub/api build",
+    "build:web": "pnpm --filter @family-hub/web build",
+    "test": "pnpm run -r test",
+    "lint": "pnpm run -r lint",
+    "format": "prettier --write \"**/*.{ts,js,svelte,json,md}\"",
+    "clean": "pnpm run -r clean && rimraf node_modules"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "prettier-plugin-svelte": "^3.2.2",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.4"
+}
