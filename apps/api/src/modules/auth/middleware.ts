@@ -33,12 +33,15 @@ export async function requireAuth(
   const familyResult = await pool.query('SELECT id, name FROM families WHERE id = $1', [session.familyId]);
   const family = familyResult.rows[0] || null;
 
-  if (user && family) {
-    (request as any).user = {
-      id: user.id,
-      username: user.username,
-      displayName: user.displayName,
-    };
-    (request as any).family = {
-      id: family.id,
-      name: family.name,
+    if (user && family) {
+      (request as any).user = {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+      };
+      (request as any).family = {
+        id: family.id,
+        name: family.name,
+      };
+    }
+  }
