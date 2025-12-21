@@ -1,4 +1,12 @@
-const API_BASE = '/api';
+// In production, use the same host as the page. In dev, Vite proxies /api to localhost:3001
+function getApiBase(): string {
+  if (typeof window === 'undefined') return '/api'; // SSR
+  // Use the same host/port as the page, but port 3001 for API
+  const host = window.location.hostname;
+  const isLocalhost = host === 'localhost' || host === '127.0.0.1';
+  if (isLocalhost) return '/api'; // Dev mode uses Vite proxy
+  return `http://${host}:3001/api`; // Production: same host, port 3001
+}
 
 export class ApiError extends Error {
   constructor(
@@ -14,7 +22,8 @@ export async function apiCall<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const apiBase = getApiBase();
+  const response = await fetch(`${apiBase}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

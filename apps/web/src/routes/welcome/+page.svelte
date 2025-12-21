@@ -1,6 +1,7 @@
 ﻿<script lang="ts">
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { get, post } from '$lib/api/client';
 
   let families: Array<{ id: number; name: string }> = [];
   let showCreateForm = false;
@@ -16,11 +17,8 @@
 
   async function loadFamilies() {
     try {
-      const response = await fetch('/api/families');
-      if (response.ok) {
-        const data = await response.json();
-        families = data.families || [];
-      }
+      const data = await get<{ families: Array<{ id: number; name: string }> }>('/families');
+      families = data.families || [];
     } catch (err) {
       error = 'Failed to load families';
     }
@@ -37,25 +35,19 @@
     successMessage = '';
 
     try {
-      const response = await fetch('/api/families', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newFamilyName.trim() }),
+      const data = await post<{ family: { id: number; name: string } }>('/families', {
+        name: newFamilyName.trim(),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        successMessage = `Family "${data.family.name}" created successfully!`;
-        newFamilyName = '';
-        showCreateForm = false;
-        await loadFamilies();
-      } else if (response.status === 409) {
+      successMessage = `Family "${data.family.name}" created successfully!`;
+      newFamilyName = '';
+      showCreateForm = false;
+      await loadFamilies();
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'statusCode' in err && err.statusCode === 409) {
         error = 'A family with this name already exists';
       } else {
         error = 'Failed to create family';
       }
-    } catch (err) {
-      error = 'Error creating family';
     } finally {
       loading = false;
     }
@@ -120,6 +112,8 @@
       {:else}
         <div class="space-y-4">
           <input
+            id="familyName"
+            name="familyName"
             type="text"
             placeholder="Family name (e.g., Familjen Wiesel)"
             bind:value={newFamilyName}

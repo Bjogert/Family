@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { login, loading, error } from '$lib/stores/auth';
+  import { get } from '$lib/api/client';
 
   interface FamilyMember {
     id: number;
@@ -26,20 +27,13 @@
 
   async function loadFamilyInfo() {
     try {
-      const [familyRes, membersRes] = await Promise.all([
-        fetch(`/api/families/${familyId}`),
-        fetch(`/api/families/${familyId}/users`),
+      const [familyData, membersData] = await Promise.all([
+        get<{ family: { id: number; name: string } }>(`/families/${familyId}`),
+        get<{ users: FamilyMember[] }>(`/families/${familyId}/users`),
       ]);
 
-      if (familyRes.ok) {
-        const data = await familyRes.json();
-        familyName = data.family.name;
-      }
-
-      if (membersRes.ok) {
-        const data = await membersRes.json();
-        familyMembers = data.users || [];
-      }
+      familyName = familyData.family.name;
+      familyMembers = membersData.users || [];
     } catch (err) {
       console.error('Failed to load family info', err);
     }

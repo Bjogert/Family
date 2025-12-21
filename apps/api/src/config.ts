@@ -15,8 +15,8 @@ export const config = {
   port: parseInt(process.env.API_PORT || '3001', 10),
   host: process.env.API_HOST || '0.0.0.0',
 
-  // CORS (frontend URL)
-  corsOrigin: process.env.WEB_URL || 'http://localhost:3000',
+  // CORS (allow multiple origins for dev + Pi)
+  corsOrigin: process.env.CORS_ORIGIN || true, // true = reflect request origin (allow all with credentials)
 
   // Security
   sessionSecret: process.env.SESSION_SECRET || 'dev-secret-change-in-production',
