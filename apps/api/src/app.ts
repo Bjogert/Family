@@ -4,16 +4,19 @@ import cookie from '@fastify/cookie';
 import websocket from '@fastify/websocket';
 import { config } from './config.js';
 import { logger } from './utils/logger.js';
+import { initDatabase } from './db/index.js';
+import authRoutes from './modules/auth/routes.js';
+import familyRoutes from './modules/families/routes.js';
 
 export async function buildApp() {
   const app = Fastify({
     logger: config.isDev
       ? {
-          transport: {
-            target: 'pino-pretty',
-            options: { colorize: true },
-          },
-        }
+        transport: {
+          target: 'pino-pretty',
+          options: { colorize: true },
+        },
+      }
       : true,
   });
 
@@ -46,8 +49,13 @@ export async function buildApp() {
     };
   });
 
-  // TODO: Register module routes in later phases
-  // await app.register(authRoutes, { prefix: '/api/auth' });
+  // Initialize database
+  await initDatabase();
+
+  // Register module routes
+  await app.register(authRoutes, { prefix: '/api/auth' });
+  await app.register(familyRoutes, { prefix: '/api/families' });
+  // TODO: Register in later phases
   // await app.register(groceryRoutes, { prefix: '/api/groceries' });
   // await app.register(calendarRoutes, { prefix: '/api/calendar' });
 

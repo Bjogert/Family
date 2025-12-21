@@ -178,81 +178,187 @@ family-hub/
 
 ---
 
-## Data Model (SQLite)
+## Individual User System - Enhancement Plan
+
+### Overview
+Migrate from single family password to individual user accounts (Robert, Julia, Tore). This enables:
+- Activity tracking (who added/bought items)
+- Future notifications (Julia gets alert when Robert adds milk)
+- User-specific preferences
+- Audit trail
+
+### Initial Setup
+**Users to create:**
+- Robert (password: "robert")
+- Julia (password: "julia")
+- Tore (password: "tore")
+
+### Schema Changes
+
+**New tables:**
+```sql
+-- Users table (added)
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    display_name TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    last_login TEXT
+);
+
+-- Modify sessions to reference user
+-- ALTER TABLE sessions ADD COLUMN user_id INTEGER REFERENCES users(id);
+```
+
+**Data model changes:**
+- `groceries.added_by` → changes from TEXT to reference `users.id`
+- `sessions.user_id` → new column to track which user owns session
+- Future: track `modified_by`, `bought_by` on groceries
+
+### API Changes
+
+**Authentication endpoints:**
+```typescript
+// OLD: POST /api/auth/login
+{ password: string }
+
+// NEW: POST /api/auth/login
+{ username: string; password: string }
+
+// Response adds user info
+{
+  success: true;
+  user: { id: number; username: string; displayName: string };
+}
+```
+
+**Grocery items now return user info:**
+```typescript
+{
+  id: number;
+  name: string;
+  addedBy: { id: number; username: string; displayName: string };
+  addedAt: string;
+  boughtBy?: { id: number; username: string };
+  boughtAt?: string;
+}
+```
+
+### Frontend Changes
+- Login form: change from password-only to username + password
+- Display "logged in as Robert" in nav
+- Show who added each item (Julia added "Milk")
+- Ready for notifications later (when Julia taps item)
+
+### Implementation Steps
+1. Create `users` table and seed with Robert, Julia, Tore
+2. Modify `sessions` table to add `user_id` column
+3. Update auth service: validate username + password instead of just password
+4. Update login endpoint to return user info
+5. Update auth middleware to include user in request context
+6. Update frontend login form
+7. Update frontend to show current user and item creators
+8. Seed database with initial groceries (add "added_by" user_id)
+
+---
+
+````## Data Model (PostgreSQL)
 
 ### Tables
 
 ```sql
--- Grocery items
-CREATE TABLE groceries (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    category TEXT NOT NULL DEFAULT 'other',
-    quantity INTEGER DEFAULT 1,
-    unit TEXT,                          -- 'pcs', 'kg', 'liter', etc.
-    is_bought INTEGER DEFAULT 0,        -- SQLite boolean
-    added_by TEXT,                      -- 'robert', 'julia', or null
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now')),
-    bought_at TEXT                      -- When marked as bought
-);
-
--- Categories for groceries
-CREATE TABLE grocery_categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
-    icon TEXT,                          -- Emoji or icon name
-    sort_order INTEGER DEFAULT 0
+-- Users table
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    display_name VARCHAR(100),
+    created_at TIMESTAMP DEFAULT NOW(),
+    last_login TIMESTAMP
 );
 
 -- Sessions for auth
 CREATE TABLE sessions (
-    id TEXT PRIMARY KEY,                -- UUID
-    created_at TEXT DEFAULT (datetime('now')),
-    expires_at TEXT NOT NULL,
-    user_agent TEXT
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    expires_at TIMESTAMP NOT NULL,
+    user_agent VARCHAR(500)
+);
+
+-- Grocery items
+CREATE TABLE groceries (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    category VARCHAR(50) NOT NULL DEFAULT 'other',
+    quantity INTEGER DEFAULT 1,
+    unit VARCHAR(20),                          -- 'pcs', 'kg', 'liter', etc.
+    is_bought BOOLEAN DEFAULT false,
+    added_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    bought_at TIMESTAMP                        -- When marked as bought
+);
+
+-- Categories for groceries
+CREATE TABLE grocery_categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    icon VARCHAR(10),                          -- Emoji or icon name
+    sort_order INTEGER DEFAULT 0
 );
 
 -- App settings (key-value store)
 CREATE TABLE settings (
-    key TEXT PRIMARY KEY,
+    key VARCHAR(100) PRIMARY KEY,
     value TEXT NOT NULL,
-    updated_at TEXT DEFAULT (datetime('now'))
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Google Calendar token storage
 CREATE TABLE google_tokens (
-    id INTEGER PRIMARY KEY CHECK (id = 1),  -- Only one row
+    id INTEGER PRIMARY KEY CHECK (id = 1),    -- Only one row
     access_token TEXT NOT NULL,
     refresh_token TEXT NOT NULL,
-    expires_at TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
     scope TEXT NOT NULL,
-    updated_at TEXT DEFAULT (datetime('now'))
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Calendar events cache
 CREATE TABLE calendar_cache (
-    id TEXT PRIMARY KEY,                -- Google event ID
-    calendar_id TEXT NOT NULL,
+    id VARCHAR(255) PRIMARY KEY,               -- Google event ID
+    calendar_id VARCHAR(255) NOT NULL,
     summary TEXT,
     description TEXT,
-    start_time TEXT NOT NULL,
-    end_time TEXT NOT NULL,
-    all_day INTEGER DEFAULT 0,
-    location TEXT,
-    color TEXT,
-    raw_json TEXT,                      -- Full event JSON for future use
-    cached_at TEXT DEFAULT (datetime('now'))
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
+    all_day BOOLEAN DEFAULT false,
+    location VARCHAR(255),
+    color VARCHAR(10),
+    raw_json JSONB,                            -- Full event JSON for future use
+    cached_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_calendar_cache_start ON calendar_cache(start_time);
+CREATE INDEX idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
+CREATE INDEX idx_groceries_added_by ON groceries(added_by);
 CREATE INDEX idx_groceries_category ON groceries(category);
 CREATE INDEX idx_groceries_bought ON groceries(is_bought);
+CREATE INDEX idx_calendar_cache_start ON calendar_cache(start_time);
 ```
 
-### Default Categories
+### Default Data
 
 ```sql
+-- Users
+INSERT INTO users (username, password_hash, display_name) VALUES
+    ('robert', '$2a$10$...', 'Robert'),
+    ('julia', '$2a$10$...', 'Julia'),
+    ('tore', '$2a$10$...', 'Tore');
+
+-- Categories
 INSERT INTO grocery_categories (name, icon, sort_order) VALUES
     ('produce', '🥬', 1),
     ('dairy', '🥛', 2),
@@ -472,41 +578,74 @@ https://www.googleapis.com/auth/calendar.events.readonly
 ### Phase 0: Project Setup (Foundation)
 **Goal:** Empty project that runs
 
-- [ ] Initialize monorepo with pnpm
-- [ ] Set up TypeScript configs
-- [ ] Create shared package structure
-- [ ] Create API app skeleton (Fastify hello world)
-- [ ] Create web app skeleton (SvelteKit hello world)
-- [ ] Docker Compose for local dev (optional)
-- [ ] Basic README
+- [x] Initialize monorepo with pnpm
+- [x] Set up TypeScript configs
+- [x] Create shared package structure
+- [x] Create API app skeleton (Fastify hello world)
+- [x] Create web app skeleton (SvelteKit hello world)
+- [x] Docker Compose for local dev (optional)
+- [x] Basic README
 
 **Acceptance:** Both apps start, can see hello world pages
+
+---
+
+### Phase 0.5: Multi-Family System (Foundation Enhancement)
+**Goal:** Enable multiple families to use the same app instance
+
+- [x] Add families table to PostgreSQL
+- [x] Modify users table to reference family_id
+- [x] Modify sessions table to reference family_id
+- [x] Update auth service to handle family context
+- [x] Create family backend endpoints (GET /api/families, POST /api/families, etc.)
+- [x] Create welcome page (family selection/creation)
+- [x] Update login page to be family-specific
+- [x] Update auth store to include family context
+- [x] Update navigation to show family name
+- [x] Update redirect flow: Welcome → Family Select → Family-Specific Login → App
+
+**Technical Details:**
+- **Welcome Page:** Displays list of existing families, allows creating new ones
+- **Family Selection:** Routes to `/login/:familyId` for family-specific login
+- **Database Schema:** 
+  - `families` (id, name, created_at)
+  - `users` (id, family_id FK, username, password_hash, display_name, created_at, last_login)
+  - `sessions` (id, family_id FK, user_id FK, created_at, expires_at, user_agent)
+  - `groceries` (id, family_id FK, ...)
+- **Family Endpoints:**
+  - `GET /api/families` - List all families
+  - `POST /api/families` - Create new family
+  - `GET /api/families/:id` - Get family details
+  - `GET /api/families/search?search=term` - Search families
+
+**Acceptance:** Multiple families can be created, each has their own users and data space, users log in to their family's app instance
 
 ---
 
 ### Phase 1: Authentication
 **Goal:** Secure the app with login
 
-- [ ] SQLite database setup with better-sqlite3
-- [ ] Sessions table and management
-- [ ] Password hashing (bcrypt)
-- [ ] Login API endpoint
-- [ ] Auth middleware for protected routes
-- [ ] Login page UI
-- [ ] Session cookie handling
-- [ ] Logout functionality
-- [ ] Protected route redirects
+- [x] PostgreSQL database setup
+- [x] Sessions table and management with family context
+- [x] Password hashing (bcrypt)
+- [x] Login API endpoint with family support
+- [x] Auth middleware for protected routes
+- [x] Login page UI (family-specific)
+- [x] Session cookie handling
+- [x] Logout functionality
+- [x] Protected route redirects (to welcome, then family select, then login)
+- [x] Individual user accounts (Robert, Julia, Tore) per family
 
-**Acceptance:** Can't access app without password, session persists on refresh
+**Acceptance:** Can't access app without family selection and password, session persists on refresh, users are family-specific
 
 ---
 
 ### Phase 2: Groceries - Core CRUD
 **Goal:** Basic grocery list management
 
-- [ ] Groceries table and categories
+- [ ] Groceries table and categories with family_id
 - [ ] Zod schemas for groceries (shared package)
-- [ ] CRUD API endpoints
+- [ ] CRUD API endpoints with family scoping
 - [ ] Grocery list page UI
 - [ ] Add item form
 - [ ] Mark item as bought (swipe or tap)

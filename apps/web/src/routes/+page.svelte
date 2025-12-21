@@ -51,7 +51,7 @@
     </div>
 
     <p class="mt-8 text-sm text-gray-500 dark:text-gray-400">
-      Phase 0 - Project Setup Complete ✓
+      Phase 1 - Authentication Complete
     </p>
   </div>
 </main>

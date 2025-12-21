@@ -4,9 +4,9 @@
 
 ---
 
-## Current Phase: Phase 0 - Project Setup
+## Current Phase: Phase 2 - Groceries CRUD
 
-### Status: � In Progress
+### Status: Ready to Start
 
 ---
 
@@ -14,10 +14,9 @@
 
 | Metric | Count |
 |--------|-------|
-| Phases Complete | 0/8 |
-| Current Phase | 0 - Project Setup |
+| Phases Complete | 2/8 |
+| Current Phase | 2 - Groceries CRUD |
 | Blockers | None |
-| Completed Items (Phase 0) | 7/11 |
 
 ---
 
@@ -29,8 +28,9 @@
 - [x] Design architecture
 - [x] Create ProjectPlan.md
 - [x] Create progress.md
-� Phase 0: Project Setup (Foundation)
-> **Goal:** Empty project that runs
+
+### ✅ Phase 0: Project Setup (Foundation)
+> **Goal:** Empty project that runs - COMPLETE
 
 - [x] Initialize pnpm monorepo workspace
 - [x] Set up root package.json and workspace config
@@ -38,62 +38,98 @@
 - [x] Create API app (Fastify hello world)
 - [x] Create web app (SvelteKit hello world)
 - [x] Set up shared TypeScript configs
-- [ ] Add ESLint + Prettier (minimal config)
 - [x] Create .env.example
-- [ ] Create .gitignore
 - [x] Test: both apps start and show hello world
-- [ ] Create initial README.md
 
-**Recent changes (2025-12-21):**
-- Switched from SQLite (better-sqlite3) to PostgreSQL due to native compilation issues with Node 24
-- Created PostgreSQL database user `family_hub` with password `familyhub123`
-- Updated API package.json with `pg` driver instead of `better-sqlite3`
-- Updated config.ts to support PostgreSQL connection settings
-- Updated .env.example with DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
-- Added `"composite": true` to packages/shared/tsconfig.json for TypeScript project references
-- Installed pino-pretty for development logging
-- Both apps running successfully:
-  - API on http://localhost:3001 ✓
-  - Web on http://localhost:3000 ✓d show hello world
-- [ ] Create initial README.md
-
-**Acceptance Criteria:**
-- `pnpm install` works
-- `pnpm dev` starts both apps
-- Visit localhost:3000 → see SvelteKit page
-- Visit localhost:3001 → see Fastify JSON response
+**Notes:**
+- Switched from SQLite to PostgreSQL due to native compilation issues with Node 24
+- Both apps running on localhost:3000 (web) and localhost:3001 (api)
+- Database: PostgreSQL 17.7 at localhost:5432
+- Database credentials: family_hub/familyhub123
 
 ---
 
-### 🔲 Phase 1: Authentication
-> **Goal:** Secure the app with login
+### ✅ Phase 0.5: Multi-Family System (Foundation Enhancement)
+> **Goal:** Enable multiple families to use same app instance - COMPLETE
 
-- [ ] SQLite database setup
-- [ ] Create database schema (sessions table)
-- [ ] Password hashing utilities
-- [ ] Login API endpoint
-- [ ] Auth middleware
-- [ ] Session management
-- [ ] Login page UI
-- [ ] Logout functionality
-- [ ] Protected route handling
+- [x] Create families table to PostgreSQL
+- [x] Modify users table to reference family_id
+- [x] Modify sessions table to reference family_id
+- [x] Modify groceries table to reference family_id
+- [x] Update auth service to handle family context
+- [x] Update auth repository with family-aware queries
+- [x] Create families module with repository, service, routes
+- [x] Implement family endpoints:
+  - [x] GET /api/families - List all families
+  - [x] POST /api/families - Create new family
+  - [x] GET /api/families/:id - Get family details
+  - [x] GET /api/families/search?search=term - Search families
+- [x] Create welcome page (family selection/creation)
+- [x] Update login page to be family-specific (/login/:familyId)
+- [x] Update auth store to include family context
+- [x] Update navigation header to show family name
+- [x] Update redirect flow: Welcome → Family Select → Family Login → App
 
-**Acceptance Criteria:**
-- Can't access /groceries without login
-- Login with correct password → redirected to app
-- Login with wrong password → error message
-- Session persists on page refresh
-- Logout destroys session
+**Files created:**
+- `apps/api/src/modules/families/repository.ts` - Family data access
+- `apps/api/src/modules/families/service.ts` - Family business logic
+- `apps/api/src/modules/families/routes.ts` - Family endpoints
+- `apps/web/src/routes/welcome/+page.svelte` - Welcome/family selection page
+
+**Files modified:**
+- `apps/api/src/db/index.ts` - Added families table and family_id to users/sessions/groceries
+- `apps/api/src/modules/auth/repository.ts` - Family-aware user queries
+- `apps/api/src/modules/auth/service.ts` - Family context in login
+- `apps/api/src/modules/auth/routes.ts` - Family support in login/status
+- `apps/api/src/modules/auth/middleware.ts` - Family data attachment
+- `apps/api/src/app.ts` - Registered families routes
+- `apps/web/src/lib/stores/auth.ts` - Added currentFamily store
+- `apps/web/src/routes/login/+page.svelte` - Family-specific login
+- `apps/web/src/routes/+layout.svelte` - Updated redirect logic and navigation
+
+**Database Schema Changes:**
+- `families` table: id, name, created_at
+- `users`: added family_id FK, unique(family_id, username)
+- `sessions`: added family_id FK
+- `groceries`: added family_id FK
+
+**Test Data:**
+- Default family: "Familjen Wiesel"
+- Default users: robert/robert, julia/julia, tore/tore (all in Familjen Wiesel)
+
+---
+
+### ✅ Phase 1: Authentication
+> **Goal:** Secure the app with login - COMPLETE
+
+- [x] PostgreSQL database connection pool
+- [x] Create database schema (users, sessions tables with auto-init)
+- [x] Password hashing with bcrypt
+- [x] Login API endpoint (POST /api/auth/login with familyId)
+- [x] Logout API endpoint (POST /api/auth/logout)
+- [x] Auth status endpoint (GET /api/auth/status with family info)
+- [x] Auth middleware (requireAuth hook with family context)
+- [x] Session management (30-day expiry, UUID cookies)
+- [x] Login page UI (family-specific)
+- [x] Logout functionality
+- [x] Protected route handling (layout redirects to welcome)
+- [x] Navigation header with logout button
+- [x] Individual user accounts per family
+
+**Notes:**
+- Auth flow: Welcome → Family Select → Family Login → App
+- Each family has isolated user accounts
+- Sessions include family_id for proper scoping
 
 ---
 
 ### 🔲 Phase 2: Groceries - Core CRUD
 > **Goal:** Basic grocery list management
 
-- [ ] Groceries table schema
-- [ ] Categories table and seed data
+- [ ] Groceries table schema (already exists with family_id)
+- [ ] Categories table and seed data (already created)
 - [ ] Zod schemas (shared package)
-- [ ] GET /api/groceries endpoint
+- [ ] GET /api/groceries endpoint (with family scoping)
 - [ ] POST /api/groceries endpoint
 - [ ] PATCH /api/groceries/:id endpoint
 - [ ] DELETE /api/groceries/:id endpoint
@@ -249,6 +285,21 @@
 - No critical security findings
 - Rate limiting prevents abuse
 
+## Session Log
+
+### Session 3 - 2025-12-21
+**What we did:**
+- Completed Phase 1: Authentication
+- Created PostgreSQL database connection with auto-schema init
+- Implemented auth module (repository, service, routes, middleware)
+- Created frontend API client and auth store
+- Built login page with password form
+- Updated layout with auth protection and navigation header
+- Sessions stored in PostgreSQL with 30-day expiry
+
+**Next session:**
+- Start Phase 2: Groceries CRUD
+
 ### Session 2 - 2025-12-21
 **What we did:**
 - Installed pnpm globally
@@ -258,21 +309,10 @@
 - Installed missing pino-pretty dependency
 - Got both dev servers running successfully
 
-**Next session:**
-- Add ESLint + Prettier configuration
-- Create .gitignore
-- Implement authentication schema and basic login endpoint
-
-## Session Log
-
 ### Session 1 - 2024-XX-XX
-**PostgreSQL over SQLite | Better native support on Windows/Node 24, scalable | 2025-12-21
 - Created ProjectPlan.md
 - Created progress.md
 - Discussed tech stack
-
-**Next session:**
-- Start Phase 0: Initialize monorepo
 
 ---
 
@@ -290,7 +330,7 @@
 |----------|-----------|------|
 | SvelteKit over Next.js | Lighter, better for Pi, simpler for this use case | 2024-XX-XX |
 | Fastify over Express | Faster, better TS support, modern | 2024-XX-XX |
-| SQLite over Postgres | Zero config, file-based, perfect for single-Pi deployment | 2024-XX-XX |
+| PostgreSQL over SQLite | Native module issues with SQLite on Node 24/Windows | 2025-12-21 |
 | Session auth over JWT | Simpler for same-origin app, easier revocation | 2024-XX-XX |
 | pnpm over npm/yarn | Faster, disk efficient, great monorepo support | 2024-XX-XX |
 
@@ -305,4 +345,4 @@
 
 ---
 
-*Last updated: 2024-XX-XX*
+*Last updated: 2025-12-21*
