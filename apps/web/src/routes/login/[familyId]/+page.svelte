@@ -42,12 +42,18 @@
 
   function getRoleLabel(role: string | null): string {
     switch (role) {
-      case 'pappa': return 'Pappa';
-      case 'mamma': return 'Mamma';
-      case 'barn': return 'Barn';
-      case 'bebis': return 'Bebis';
-      case 'annan': return 'Annan';
-      default: return '';
+      case 'pappa':
+        return 'Pappa';
+      case 'mamma':
+        return 'Mamma';
+      case 'barn':
+        return 'Barn';
+      case 'bebis':
+        return 'Bebis';
+      case 'annan':
+        return 'Annan';
+      default:
+        return '';
     }
   }
 
@@ -185,7 +191,9 @@
             </div>
           {:else if selectedMemberForPassword}
             <!-- Password input modal/overlay -->
-            {@const selectedMember = familyMembers.find((m) => m.username === selectedMemberForPassword)}
+            {@const selectedMember = familyMembers.find(
+              (m) => m.username === selectedMemberForPassword
+            )}
             <form on:submit|preventDefault={handleSubmit} class="space-y-6">
               <div class="text-center mb-6">
                 <div class="text-5xl mb-4">{selectedMember?.avatarEmoji || '🔐'}</div>
@@ -283,9 +291,7 @@
           {:else}
             <!-- Member selection view -->
             <div class="space-y-3">
-              <p class="text-sm font-medium text-stone-600 dark:text-stone-400 mb-4">
-                Vem är du?
-              </p>
+              <p class="text-sm font-medium text-stone-600 dark:text-stone-400 mb-4">Vem är du?</p>
               {#each familyMembers as member (member.id)}
                 {@const age = calculateAge(member.birthday)}
                 {@const cardColor = colorClasses[member.color || 'orange']}

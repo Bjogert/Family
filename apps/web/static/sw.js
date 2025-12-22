@@ -1,7 +1,7 @@
 // Service Worker for Family Hub PWA
 // Minimal caching - only for PWA installability and offline fallback
 // All data fetched fresh to ensure real-time sync works correctly
-const CACHE_VERSION = 'family-hub-v3';
+const CACHE_VERSION = 'family-hub-v4';
 const OFFLINE_URL = '/offline';
 
 // Only cache the offline page - everything else is fetched fresh
