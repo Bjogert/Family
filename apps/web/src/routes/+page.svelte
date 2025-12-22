@@ -1,13 +1,12 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { get, patch } from '$lib/api/client';
+  import { get } from '$lib/api/client';
   import { t } from '$lib/i18n';
   import { groceryWs } from '$lib/stores/groceryWs';
-  import type { GroceryItem, CategoryInfo } from '$lib/types/grocery';
+  import type { GroceryItem } from '$lib/types/grocery';
 
   let apiStatus = 'Checking...';
   let groceryItems: GroceryItem[] = [];
-  let categories: CategoryInfo[] = [];
   let loadingGroceries = true;
 
   interface ApiInfo {
@@ -19,23 +18,28 @@
   $: pendingItems = groceryItems.filter((i) => !i.isBought);
   $: pendingCount = pendingItems.length;
 
-  function getCategoryIcon(categoryName: string): string {
-    const cat = categories.find((c) => c.name === categoryName);
-    return cat?.icon || '📦';
-  }
+  // Get the most recent item to show who updated the list
+  $: latestItem = groceryItems.length > 0
+    ? groceryItems.reduce((latest, item) => {
+        const latestDate = new Date(latest.updatedAt || latest.createdAt);
+        const itemDate = new Date(item.updatedAt || item.createdAt);
+        return itemDate > latestDate ? item : latest;
+      })
+    : null;
 
-  async function toggleBought(itemId: number) {
-    const item = groceryItems.find((i) => i.id === itemId);
-    if (!item) return;
+  function timeAgo(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    const newBoughtState = !item.isBought;
-    groceryItems = groceryItems.map((i) => (i.id === item.id ? { ...i, isBought: newBoughtState } : i));
-
-    try {
-      await patch(`/groceries/${item.id}`, { isBought: newBoughtState });
-    } catch {
-      groceryItems = groceryItems.map((i) => (i.id === item.id ? { ...i, isBought: !newBoughtState } : i));
-    }
+    if (seconds < 60) return 'just nu';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} min sedan`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} tim sedan`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} dagar sedan`;
+    return date.toLocaleDateString('sv-SE');
   }
 
   function handleWebSocketMessage(message: any) {
@@ -71,12 +75,8 @@
       }
 
       try {
-        const [groceriesRes, categoriesRes] = await Promise.all([
-          get<{ success: boolean; items: GroceryItem[] }>('/groceries'),
-          get<{ success: boolean; categories: CategoryInfo[] }>('/groceries/categories'),
-        ]);
+        const groceriesRes = await get<{ success: boolean; items: GroceryItem[] }>('/groceries');
         groceryItems = groceriesRes.items;
-        categories = categoriesRes.categories;
       } catch {
         // Ignore errors
       } finally {
@@ -135,63 +135,41 @@
       </div>
     </aside>
 
-    <!-- Main Content - Grocery List -->
+    <!-- Main Content - Activity Feed -->
     <div class="flex-1 min-w-0">
       <div
         class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-6"
       >
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-bold text-stone-800 dark:text-white">
-            🛒 Inköpslista
-            {#if pendingCount > 0}
-              <span class="text-base font-normal text-stone-500">({pendingCount})</span>
-            {/if}
-          </h2>
-          <a
-            href="/groceries"
-            class="text-orange-500 hover:text-orange-600 dark:text-amber-400 text-sm"
-          >
-            Visa alla →
-          </a>
-        </div>
+        <h2 class="text-lg font-bold text-stone-800 dark:text-white mb-4">Aktivitet</h2>
 
         {#if loadingGroceries}
-          <div class="text-center py-8">
-            <div class="animate-spin w-6 h-6 border-2 border-orange-400 border-t-transparent rounded-full mx-auto"></div>
+          <div class="text-center py-4">
+            <div class="animate-spin w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full mx-auto"></div>
           </div>
-        {:else if pendingItems.length === 0}
-          <div class="text-center py-8">
-            <p class="text-4xl mb-2">🎉</p>
-            <p class="text-stone-500 dark:text-stone-400">Inköpslistan är tom!</p>
-            <a
-              href="/groceries"
-              class="inline-block mt-4 text-orange-500 hover:text-orange-600 dark:text-amber-400 text-sm"
-            >
-              + Lägg till varor
-            </a>
-          </div>
-        {:else}
-          <ul class="space-y-2">
-            {#each pendingItems as item (item.id)}
-              <li
-                class="flex items-center gap-3 p-3 bg-stone-50 dark:bg-stone-700/50 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors"
-              >
-                <button
-                  on:click={() => toggleBought(item.id)}
-                  class="w-6 h-6 rounded-full border-2 border-stone-300 dark:border-stone-500 hover:border-orange-400 dark:hover:border-amber-400 flex items-center justify-center transition-colors"
-                >
-                  <!-- Empty circle for pending items -->
-                </button>
-                <span class="text-lg">{getCategoryIcon(item.category)}</span>
-                <span class="flex-1 text-stone-800 dark:text-stone-200">{item.name}</span>
-                {#if item.quantity > 1}
-                  <span class="text-sm text-stone-500 dark:text-stone-400 bg-stone-200 dark:bg-stone-600 px-2 py-0.5 rounded">
-                    {item.quantity} st
-                  </span>
+        {:else if pendingCount > 0}
+          <!-- Grocery List Activity Card -->
+          <a
+            href="/groceries"
+            class="block p-4 bg-stone-50 dark:bg-stone-700/50 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">🛒</span>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-stone-800 dark:text-stone-200">
+                  Inköpslista
+                  <span class="text-orange-500 dark:text-amber-400">({pendingCount} varor)</span>
+                </p>
+                {#if latestItem}
+                  <p class="text-sm text-stone-500 dark:text-stone-400 truncate">
+                    Uppdaterad av {latestItem.addedBy?.name || 'någon'}, {timeAgo(latestItem.updatedAt || latestItem.createdAt)}
+                  </p>
                 {/if}
-              </li>
-            {/each}
-          </ul>
+              </div>
+              <span class="text-stone-400">→</span>
+            </div>
+          </a>
+        {:else}
+          <p class="text-stone-500 dark:text-stone-400 text-sm py-4">Ingen aktivitet just nu</p>
         {/if}
       </div>
     </div>
