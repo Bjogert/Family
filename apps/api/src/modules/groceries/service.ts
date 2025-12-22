@@ -116,3 +116,60 @@ export async function getCategories(): Promise<CategoryInfo[]> {
         sortOrder: row.sort_order,
     }));
 }
+
+// Grocery assignments
+export interface GroceryAssignmentInfo {
+    id: number;
+    familyId: number;
+    userId: number;
+    assignedBy: number | null;
+    createdAt: Date;
+    userDisplayName: string | null;
+    userAvatarEmoji: string | null;
+    userColor: string | null;
+}
+
+function mapAssignment(row: repository.GroceryAssignment): GroceryAssignmentInfo {
+    return {
+        id: row.id,
+        familyId: row.family_id,
+        userId: row.user_id,
+        assignedBy: row.assigned_by,
+        createdAt: row.created_at,
+        userDisplayName: row.user_display_name,
+        userAvatarEmoji: row.user_avatar_emoji,
+        userColor: row.user_color,
+    };
+}
+
+export async function getGroceryAssignments(familyId: number): Promise<GroceryAssignmentInfo[]> {
+    const rows = await repository.getAssignments(familyId);
+    return rows.map(mapAssignment);
+}
+
+export async function assignGroceryList(familyId: number, userId: number, assignedBy: number): Promise<GroceryAssignmentInfo | null> {
+    const assignment = await repository.addAssignment(familyId, userId, assignedBy);
+    if (!assignment) return null;
+
+    // Broadcast assignment to all family members
+    connectionManager.broadcastToFamily(familyId, {
+        type: 'grocery:assigned',
+        payload: { userId, assignedBy },
+    });
+
+    return mapAssignment(assignment);
+}
+
+export async function unassignGroceryList(familyId: number, userId: number): Promise<boolean> {
+    const success = await repository.removeAssignment(familyId, userId);
+
+    if (success) {
+        // Broadcast unassignment to all family members
+        connectionManager.broadcastToFamily(familyId, {
+            type: 'grocery:unassigned',
+            payload: { userId },
+        });
+    }
+
+    return success;
+}

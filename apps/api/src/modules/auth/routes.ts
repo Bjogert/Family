@@ -119,5 +119,54 @@ export default async function authRoutes(app: FastifyInstance) {
       } : null,
     });
   });
+
+  // DELETE /api/users/:id - Delete user account
+  app.delete<{ Params: { id: string } }>(
+    '/users/:id',
+    async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+      const sessionId = request.cookies.sessionId;
+      const userIdToDelete = parseInt(request.params.id, 10);
+
+      if (!sessionId) {
+        return reply.status(401).send({
+          success: false,
+          error: 'Not authenticated',
+        });
+      }
+
+      const session = await authService.validateSession(sessionId);
+      if (!session) {
+        return reply.status(401).send({
+          success: false,
+          error: 'Invalid session',
+        });
+      }
+
+      // Users can only delete their own account
+      if (session.userId !== userIdToDelete) {
+        return reply.status(403).send({
+          success: false,
+          error: 'You can only delete your own account',
+        });
+      }
+
+      const deleted = await authRepo.deleteUser(userIdToDelete);
+
+      if (!deleted) {
+        return reply.status(404).send({
+          success: false,
+          error: 'User not found',
+        });
+      }
+
+      // Clear the session cookie
+      reply.clearCookie('sessionId', { path: '/' });
+
+      return reply.send({
+        success: true,
+        message: 'Account deleted successfully',
+      });
+    }
+  );
 }
 

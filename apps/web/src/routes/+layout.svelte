@@ -13,6 +13,7 @@
   } from '$lib/stores/auth';
   import { t, setLanguage, languages, currentLanguage } from '$lib/i18n';
   import InstallPrompt from '$lib/components/InstallPrompt.svelte';
+  import SettingsModal from '$lib/components/SettingsModal.svelte';
 
   // Color mapping for user indicators
   const colorClasses: Record<string, string> = {
@@ -26,6 +27,7 @@
   };
 
   let showLanguageMenu = false;
+  let showSettingsModal = false;
   let isFullscreen = false;
   let canFullscreen = false;
   let showFullscreenPrompt = false;
@@ -201,6 +203,13 @@
                 </button>
               {/if}
               <button
+                on:click={() => (showSettingsModal = true)}
+                class="text-base hover:opacity-80"
+                aria-label="Settings"
+              >
+                ⚙️
+              </button>
+              <button
                 on:click={() => (showLanguageMenu = !showLanguageMenu)}
                 class="text-base hover:opacity-80"
                 aria-label="Change language"
@@ -218,18 +227,30 @@
           {#if $currentFamily}
             <p class="text-[10px] text-gray-500 mb-2">{$currentFamily.name}</p>
           {/if}
-          <nav class="flex gap-3">
+          <nav class="flex gap-3 overflow-x-auto">
             <a
               href="/groceries"
-              class="text-gray-600 dark:text-gray-300 hover:text-primary-600 text-xs font-medium"
+              class="text-gray-600 dark:text-gray-300 hover:text-primary-600 text-xs font-medium whitespace-nowrap"
             >
               🛒 {$t('nav.groceries')}
             </a>
             <a
               href="/calendar"
-              class="text-gray-600 dark:text-gray-300 hover:text-primary-600 text-xs font-medium"
+              class="text-gray-600 dark:text-gray-300 hover:text-primary-600 text-xs font-medium whitespace-nowrap"
             >
               📅 {$t('nav.calendar')}
+            </a>
+            <a
+              href="/activities"
+              class="text-gray-600 dark:text-gray-300 hover:text-primary-600 text-xs font-medium whitespace-nowrap"
+            >
+              🎯 {$t('nav.activities')}
+            </a>
+            <a
+              href="/tasks"
+              class="text-gray-600 dark:text-gray-300 hover:text-primary-600 text-xs font-medium whitespace-nowrap"
+            >
+              ✅ {$t('nav.tasks')}
             </a>
           </nav>
           {#if showLanguageMenu}
@@ -263,10 +284,16 @@
           </div>
           <nav class="flex items-center gap-4">
             <a href="/groceries" class="text-stone-600 dark:text-stone-300 hover:text-orange-500">
-              {$t('nav.groceries')}
+              🛒 {$t('nav.groceries')}
             </a>
             <a href="/calendar" class="text-stone-600 dark:text-stone-300 hover:text-orange-500">
-              {$t('nav.calendar')}
+              📅 {$t('nav.calendar')}
+            </a>
+            <a href="/activities" class="text-stone-600 dark:text-stone-300 hover:text-orange-500">
+              🎯 {$t('nav.activities')}
+            </a>
+            <a href="/tasks" class="text-stone-600 dark:text-stone-300 hover:text-orange-500">
+              ✅ {$t('nav.tasks')}
             </a>
 
             <div class="flex items-center gap-2">
@@ -293,6 +320,15 @@
                 ⛶
               </button>
             {/if}
+
+            <!-- Settings (Desktop) -->
+            <button
+              on:click={() => (showSettingsModal = true)}
+              class="text-xl hover:opacity-80"
+              aria-label="Settings"
+            >
+              ⚙️
+            </button>
 
             <!-- Language Switcher (Desktop) -->
             <div class="relative">
@@ -334,4 +370,7 @@
 
   <!-- PWA Install Prompt -->
   <InstallPrompt />
+
+  <!-- Settings Modal -->
+  <SettingsModal bind:open={showSettingsModal} />
 </div>

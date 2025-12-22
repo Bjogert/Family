@@ -157,3 +157,29 @@ export async function deleteExpiredSessions(): Promise<number> {
   );
   return result.rowCount ?? 0;
 }
+
+// Delete user and related data
+export async function deleteUser(userId: number): Promise<boolean> {
+  // Start transaction to delete user and related data
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Delete user sessions
+    await client.query('DELETE FROM sessions WHERE user_id = $1', [userId]);
+
+    // Delete user's grocery assignments
+    await client.query('DELETE FROM grocery_assignments WHERE user_id = $1', [userId]);
+
+    // Delete the user
+    const result = await client.query('DELETE FROM users WHERE id = $1', [userId]);
+
+    await client.query('COMMIT');
+    return (result.rowCount ?? 0) > 0;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}

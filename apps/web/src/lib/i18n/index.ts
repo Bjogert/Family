@@ -21,8 +21,8 @@ if (typeof window !== 'undefined') {
 }
 
 export const t = derived(currentLanguage, ($lang) => {
-    return (key: TranslationKey): string => {
-        return translations[$lang][key] || key;
+    return (key: TranslationKey | string): string => {
+        return translations[$lang][key as TranslationKey] || key;
     };
 });
 

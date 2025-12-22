@@ -29,15 +29,26 @@
     stone: 'bg-stone-400',
   };
 
+  interface GroceryAssignment {
+    userId: number;
+  }
+
   let apiStatus = 'Checking...';
   let groceryItems: GroceryItem[] = [];
   let loadingGroceries = true;
   let familyMembers: FamilyMember[] = [];
   let loadingMembers = true;
+  let groceryAssignments: GroceryAssignment[] = [];
 
-  // TODO: This will be replaced with actual task assignments from API
-  // For now, simulate notification counts per user
-  let memberNotifications: Record<number, number> = {};
+  // Notification counts per user based on actual assignments
+  $: memberNotifications = groceryAssignments.reduce(
+    (acc, assignment) => {
+      // Show the pending grocery count for assigned members
+      acc[assignment.userId] = pendingCount;
+      return acc;
+    },
+    {} as Record<number, number>
+  );
 
   interface ApiInfo {
     name: string;
@@ -92,6 +103,18 @@
       case 'grocery:cleared':
         groceryItems = groceryItems.filter((i) => !i.isBought);
         break;
+      case 'grocery:assigned':
+        // Add assignment if not already present
+        const assignedUserId = message.payload.userId;
+        if (!groceryAssignments.find((a) => a.userId === assignedUserId)) {
+          groceryAssignments = [...groceryAssignments, { userId: assignedUserId }];
+        }
+        break;
+      case 'grocery:unassigned':
+        // Remove assignment
+        const unassignedUserId = message.payload.userId;
+        groceryAssignments = groceryAssignments.filter((a) => a.userId !== unassignedUserId);
+        break;
     }
   }
 
@@ -121,10 +144,12 @@
             `/families/${$currentFamily.id}/users`
           );
           familyMembers = membersRes.users || [];
-          // TODO: Fetch actual task assignments - for now just simulate with pending grocery count for first member
-          if (familyMembers.length > 0 && pendingCount > 0) {
-            memberNotifications = { [familyMembers[0].id]: pendingCount };
-          }
+
+          // Fetch actual grocery assignments
+          const assignmentsRes = await get<{ success: boolean; assignments: GroceryAssignment[] }>(
+            '/groceries/assignments'
+          );
+          groceryAssignments = assignmentsRes.assignments || [];
         } catch {
           // Ignore errors
         } finally {
@@ -161,28 +186,68 @@
   class="flex-1 bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900"
 >
   <div class="h-full flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-7xl mx-auto">
-    <!-- Left Sidebar - Navigation -->
+    <!-- Left Sidebar - Family Members -->
     <aside class="lg:w-64 flex-shrink-0">
       <div
         class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-6"
       >
-        <nav class="space-y-3">
-          <a
-            href="/groceries"
-            class="flex items-center gap-3 px-4 py-3 bg-gradient-to-br from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-medium rounded-lg shadow-md transition"
-          >
-            <span class="text-xl">🛒</span>
-            <span>{$t('home.groceries')}</span>
-          </a>
+        <h3 class="text-sm font-semibold text-stone-600 dark:text-stone-400 mb-4">Familjen</h3>
 
-          <a
-            href="/calendar"
-            class="flex items-center gap-3 px-4 py-3 bg-gradient-to-br from-orange-300 to-amber-300 hover:from-orange-400 hover:to-amber-400 text-stone-800 font-medium rounded-lg shadow-md transition"
-          >
-            <span class="text-xl">📅</span>
-            <span>{$t('home.calendar')}</span>
-          </a>
-        </nav>
+        {#if loadingMembers}
+          <div class="flex justify-center py-4">
+            <div
+              class="animate-spin w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full"
+            ></div>
+          </div>
+        {:else if familyMembers.length === 0}
+          <p class="text-sm text-stone-500 dark:text-stone-400">Inga medlemmar</p>
+        {:else}
+          <div class="space-y-2">
+            {#each familyMembers as member (member.id)}
+              {@const bgColor = colorClasses[member.color || 'orange']}
+              {@const notificationCount = memberNotifications[member.id] || 0}
+              <button
+                class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 transition-colors text-left relative"
+              >
+                <!-- Avatar with notification badge -->
+                <div class="relative">
+                  <div
+                    class="{bgColor} w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md"
+                  >
+                    {member.avatarEmoji || '👤'}
+                  </div>
+                  {#if notificationCount > 0}
+                    <div
+                      class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-md"
+                    >
+                      {notificationCount > 9 ? '9+' : notificationCount}
+                    </div>
+                  {/if}
+                </div>
+
+                <!-- Name and role -->
+                <div class="flex-1 min-w-0">
+                  <p class="font-medium text-stone-800 dark:text-stone-200 truncate">
+                    {member.displayName || member.username}
+                  </p>
+                  {#if member.role}
+                    <p class="text-xs text-stone-500 dark:text-stone-400 capitalize">
+                      {member.role === 'pappa'
+                        ? 'Pappa'
+                        : member.role === 'mamma'
+                          ? 'Mamma'
+                          : member.role === 'barn'
+                            ? 'Barn'
+                            : member.role === 'bebis'
+                              ? 'Bebis'
+                              : member.role}
+                    </p>
+                  {/if}
+                </div>
+              </button>
+            {/each}
+          </div>
+        {/if}
       </div>
     </aside>
 

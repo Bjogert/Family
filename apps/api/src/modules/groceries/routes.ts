@@ -247,4 +247,76 @@ export default async function groceryRoutes(app: FastifyInstance) {
             count,
         });
     });
+
+    // GET /api/groceries/assignments - Get grocery list assignments
+    app.get('/assignments', async (request: FastifyRequest, reply: FastifyReply) => {
+        const { familyId } = (request as AuthenticatedRequest).session;
+
+        const assignments = await groceryService.getGroceryAssignments(familyId);
+
+        return reply.send({
+            success: true,
+            assignments,
+        });
+    });
+
+    // POST /api/groceries/assignments - Assign grocery list to a user
+    app.post<{ Body: { userId: number } }>(
+        '/assignments',
+        async (request: FastifyRequest<{ Body: { userId: number } }>, reply: FastifyReply) => {
+            const { familyId, userId: assignedBy } = (request as AuthenticatedRequest).session;
+            const { userId } = request.body;
+
+            if (!userId || typeof userId !== 'number') {
+                return reply.status(400).send({
+                    success: false,
+                    message: 'userId is required',
+                });
+            }
+
+            const assignment = await groceryService.assignGroceryList(familyId, userId, assignedBy);
+
+            if (!assignment) {
+                return reply.status(409).send({
+                    success: false,
+                    message: 'User is already assigned',
+                });
+            }
+
+            return reply.send({
+                success: true,
+                assignment,
+            });
+        }
+    );
+
+    // DELETE /api/groceries/assignments/:userId - Unassign grocery list from a user
+    app.delete<{ Params: { userId: string } }>(
+        '/assignments/:userId',
+        async (request: FastifyRequest<{ Params: { userId: string } }>, reply: FastifyReply) => {
+            const { familyId } = (request as AuthenticatedRequest).session;
+            const userId = parseInt(request.params.userId, 10);
+
+            if (isNaN(userId)) {
+                return reply.status(400).send({
+                    success: false,
+                    message: 'Invalid user ID',
+                });
+            }
+
+            const success = await groceryService.unassignGroceryList(familyId, userId);
+
+            if (!success) {
+                return reply.status(404).send({
+                    success: false,
+                    message: 'Assignment not found',
+                });
+            }
+
+            return reply.send({
+                success: true,
+                message: 'Assignment removed',
+            });
+        }
+    );
 }

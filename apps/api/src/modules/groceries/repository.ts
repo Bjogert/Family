@@ -191,3 +191,64 @@ export async function getCategories(): Promise<Array<{ name: string; icon: strin
     );
     return result.rows;
 }
+
+// Grocery assignments
+export interface GroceryAssignment {
+    id: number;
+    family_id: number;
+    user_id: number;
+    assigned_by: number | null;
+    created_at: Date;
+    user_display_name: string | null;
+    user_avatar_emoji: string | null;
+    user_color: string | null;
+}
+
+export async function getAssignments(familyId: number): Promise<GroceryAssignment[]> {
+    const result = await pool.query<GroceryAssignment>(
+        `SELECT 
+            ga.id, ga.family_id, ga.user_id, ga.assigned_by, ga.created_at,
+            u.display_name as user_display_name,
+            u.avatar_emoji as user_avatar_emoji,
+            u.color as user_color
+        FROM grocery_assignments ga
+        JOIN users u ON ga.user_id = u.id
+        WHERE ga.family_id = $1
+        ORDER BY ga.created_at DESC`,
+        [familyId]
+    );
+    return result.rows;
+}
+
+export async function addAssignment(familyId: number, userId: number, assignedBy: number): Promise<GroceryAssignment | null> {
+    const result = await pool.query(
+        `INSERT INTO grocery_assignments (family_id, user_id, assigned_by)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (family_id, user_id) DO NOTHING
+        RETURNING id`,
+        [familyId, userId, assignedBy]
+    );
+
+    if (result.rows.length === 0) {
+        return null; // Already assigned
+    }
+
+    const assignments = await getAssignments(familyId);
+    return assignments.find(a => a.user_id === userId) || null;
+}
+
+export async function removeAssignment(familyId: number, userId: number): Promise<boolean> {
+    const result = await pool.query(
+        'DELETE FROM grocery_assignments WHERE family_id = $1 AND user_id = $2',
+        [familyId, userId]
+    );
+    return (result.rowCount ?? 0) > 0;
+}
+
+export async function clearAssignments(familyId: number): Promise<number> {
+    const result = await pool.query(
+        'DELETE FROM grocery_assignments WHERE family_id = $1',
+        [familyId]
+    );
+    return result.rowCount ?? 0;
+}

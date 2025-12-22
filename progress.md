@@ -14,9 +14,10 @@
 
 | Metric | Count |
 |--------|-------|
-| Phases Complete | 3/8 |
-| Current Phase | 2b - Smart Suggestions (planned) |
+| Phases Complete | 4/8 |
+| Current Phase | 2b - Task Assignments |
 | Blockers | None |
+| Public URL | https://familjehubben.vip |
 
 ---
 
@@ -262,21 +263,20 @@
 ---
 
 ### ✅ Phase 7: Deployment (Partial)
-> **Goal:** Running on Raspberry Pi - PARTIAL COMPLETE
+> **Goal:** Running on Raspberry Pi - MOSTLY COMPLETE
 
 - [x] Pi OS installed and updated (Raspberry Pi OS 64-bit, Debian Trixie)
 - [x] Node.js 24.12.0 installed
 - [x] pnpm 10.26.1 installed
 - [x] PostgreSQL 17.6 installed and configured
-- [x] Clone repo to Pi (~/Family)
+- [x] Clone repo to Pi (~/family-hub)
 - [ ] SSD mounted for data
-- [ ] Caddy installed
-- [ ] Caddyfile configured
-- [x] systemd service for API (family-hub-api.service)
-- [x] systemd service for web (family-hub-web.service)
-- [ ] Domain DNS configured
-- [ ] Port forwarding on router / Cloudflare Tunnel
-- [ ] HTTPS working
+- [ ] Caddy installed (not needed - using Cloudflare Tunnel)
+- [x] systemd user service for API (family-api.service)
+- [x] systemd user service for web (family-web.service)
+- [x] Domain DNS configured (familjehubben.vip)
+- [x] Cloudflare Tunnel for HTTPS access
+- [x] HTTPS working via Cloudflare
 - [ ] Backup script created
 - [ ] Backup cron job set
 - [ ] rclone to Google Drive configured
@@ -286,26 +286,36 @@
 **Pi Details:**
 - IP: 192.168.68.127
 - Hostname: FamiljeHubbenPi
-- SSH: Key-based auth enabled (passwordless)
-- Web: http://192.168.68.127:3000
-- API: http://192.168.68.127:3001
+- SSH: robert@192.168.68.127 (password: SamMoa123)
+- Web: http://192.168.68.127:3000 (local) / https://familjehubben.vip (public)
+- API: http://192.168.68.127:3001 (local) / https://familjehubben.vip/api (public)
+
+**Systemd User Services:**
+- Location: ~/.config/systemd/user/
+- family-api.service - Fastify API on port 3001
+- family-web.service - SvelteKit on port 3000
+- Lingering enabled: `sudo loginctl enable-linger robert`
+- Auto-restart on crash, auto-start on boot
 
 **Deployment Workflow:**
 ```powershell
-# Deploy everything
-.\scripts\deploy.ps1
+# Build locally
+pnpm build
 
-# Deploy only API
-.\scripts\deploy.ps1 -Target api
+# Deploy API
+scp -r apps/api/dist apps/api/package.json robert@192.168.68.127:~/family-hub/apps/api/
 
-# Deploy only Web  
-.\scripts\deploy.ps1 -Target web
+# Deploy Web
+scp -r apps/web/build apps/web/package.json robert@192.168.68.127:~/family-hub/apps/web/
 
-# Check service status
-ssh robert@192.168.68.127 "sudo systemctl status family-hub-api family-hub-web"
+# Restart services
+ssh robert@192.168.68.127 "systemctl --user restart family-api family-web"
+
+# Check status
+ssh robert@192.168.68.127 "systemctl --user status family-api family-web"
 
 # View logs
-ssh robert@192.168.68.127 "journalctl -u family-hub-api -f"
+ssh robert@192.168.68.127 "journalctl --user -u family-api -f"
 ```
 
 **Remaining for Phase 7:**
@@ -451,6 +461,94 @@ ssh robert@192.168.68.127 "journalctl -u family-hub-api -f"
 - Consider Phase 2: Account deletion (backend + frontend)
 - Consider Phase 3: Email password recovery
 - Continue with Phase 5: Google Calendar integration
+
+### Session 8 - 2025-12-22 (Grocery Assignments & Systemd Services)
+**What we did:**
+
+**1. Dashboard Redesign:**
+- Removed sidebar navigation (keep nav in header only)
+- Added family member avatars in sidebar instead
+- Added notification badge capability on member avatars
+- Connected notifications to real grocery assignment data
+
+**2. Grocery List Assignment Feature (Full Implementation):**
+- Created `grocery_assignments` database table on Pi
+- Added repository functions: getAssignments, addAssignment, removeAssignment, clearAssignments
+- Added service functions with WebSocket broadcasting (grocery:assigned, grocery:unassigned events)
+- Added API routes: GET/POST /api/groceries/assignments, DELETE /api/groceries/assignments/:userId
+- Added assignment UI on grocery page (🏷️ button next to title)
+- Assignment panel shows family members with toggle buttons
+- Assigned members shown as avatar summary bar
+- Real-time sync via WebSocket when assignments change
+- Dashboard notification badges now show real assignment counts
+
+**3. Bug Fixes:**
+- Fixed /api/users 404 error (changed to /api/families/{id}/users)
+- Fixed reactive assignment state (UI wasn't updating on click)
+- Used reactive $: assignedUserIds Set for proper Svelte reactivity
+
+**4. UI Improvements:**
+- Welcome page: Autocomplete only shows when typing (not on focus)
+- Welcome page: Added autocomplete="off" to prevent browser autofill
+- Login page: Hide age display for parents (pappa, mamma)
+- Grocery page: Changed assignment icon from 👥 to 🏷️
+- Grocery page: Moved assignment button next to title
+
+**5. Systemd User Services (Major Stability Fix):**
+- Created ~/.config/systemd/user/family-api.service
+- Created ~/.config/systemd/user/family-web.service
+- Enabled lingering: `sudo loginctl enable-linger robert`
+- Services now auto-restart on crash (Restart=always, RestartSec=5)
+- Services start automatically on boot
+- Services persist after SSH disconnect
+
+**Database Changes:**
+```sql
+CREATE TABLE grocery_assignments (
+    id SERIAL PRIMARY KEY,
+    family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    assigned_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(family_id, user_id)
+);
+```
+
+**New Files:**
+- `~/.config/systemd/user/family-api.service` - API systemd service
+- `~/.config/systemd/user/family-web.service` - Web systemd service
+
+**Files Modified:**
+- `apps/api/src/modules/groceries/repository.ts` - Assignment DB functions
+- `apps/api/src/modules/groceries/service.ts` - Assignment service + WebSocket events
+- `apps/api/src/modules/groceries/routes.ts` - Assignment API endpoints
+- `apps/web/src/routes/+page.svelte` - Dashboard with real notifications
+- `apps/web/src/routes/groceries/+page.svelte` - Assignment UI
+- `apps/web/src/routes/welcome/+page.svelte` - Autocomplete fixes
+- `apps/web/src/routes/login/[familyId]/+page.svelte` - Hide parent ages
+
+**Deployment Commands (Updated):**
+```bash
+# Restart services after deploy
+ssh robert@192.168.68.127 "systemctl --user restart family-api family-web"
+
+# Check service status
+ssh robert@192.168.68.127 "systemctl --user status family-api family-web"
+
+# View logs
+ssh robert@192.168.68.127 "journalctl --user -u family-api -f"
+ssh robert@192.168.68.127 "journalctl --user -u family-web -f"
+```
+
+**Pi Environment (.env):**
+- DB_PASSWORD=familyhub123 (was causing auth issues earlier)
+- Services read from ~/family-hub/.env
+
+**Next session:**
+- Test assignment feature with multiple users
+- Consider adding task/chore assignment (beyond just groceries)
+- Phase 3: Real-time sync improvements
+- Phase 5: Google Calendar integration
 
 ### Session 3 - 2025-12-21
 **What we did:**

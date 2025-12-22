@@ -15,9 +15,31 @@
   import CategorySection from '$lib/components/CategorySection.svelte';
   import GroceryItemRow from '$lib/components/GroceryItemRow.svelte';
   import { groceryWs } from '$lib/stores/groceryWs';
+  import { currentFamily } from '$lib/stores/auth';
+
+  interface GroceryAssignment {
+    id: number;
+    familyId: number;
+    userId: number;
+    assignedBy: number | null;
+    createdAt: string;
+    userDisplayName: string | null;
+    userAvatarEmoji: string | null;
+    userColor: string | null;
+  }
+
+  interface FamilyMember {
+    id: number;
+    displayName: string | null;
+    avatarEmoji: string | null;
+    color: string | null;
+    role: string | null;
+  }
 
   let items: GroceryItem[] = [];
   let categories: CategoryInfo[] = [];
+  let assignments: GroceryAssignment[] = [];
+  let familyMembers: FamilyMember[] = [];
   let loading = true;
   let error = '';
   let newItemName = '';
@@ -28,6 +50,7 @@
   let adding = false;
   let editingQuantityId: number | null = null;
   let editQuantityValue = 1;
+  let showAssignmentPanel = false;
 
   // Autocomplete state
   let showSuggestions = false;
@@ -71,12 +94,26 @@
     loading = true;
     error = '';
     try {
-      const [groceriesRes, categoriesRes] = await Promise.all([
+      const [groceriesRes, categoriesRes, assignmentsRes] = await Promise.all([
         get<{ success: boolean; items: GroceryItem[] }>('/groceries'),
         get<{ success: boolean; categories: CategoryInfo[] }>('/groceries/categories'),
+        get<{ success: boolean; assignments: GroceryAssignment[] }>('/groceries/assignments'),
       ]);
       items = groceriesRes.items;
       categories = categoriesRes.categories;
+      assignments = assignmentsRes.assignments;
+
+      // Load family members separately using the correct endpoint
+      if ($currentFamily) {
+        try {
+          const membersRes = await get<{ users: FamilyMember[] }>(
+            `/families/${$currentFamily.id}/users`
+          );
+          familyMembers = membersRes.users || [];
+        } catch {
+          // Ignore - family members are optional for this page
+        }
+      }
     } catch (e) {
       if (e instanceof ApiError) {
         if (e.statusCode === 401) {
@@ -202,6 +239,48 @@
 
   function cancelEditingQuantity() {
     editingQuantityId = null;
+  }
+
+  // Assignment functions
+  async function assignMember(userId: number) {
+    try {
+      const res = await post<{ success: boolean; assignment: GroceryAssignment }>(
+        '/groceries/assignments',
+        { userId }
+      );
+      if (res.success && res.assignment) {
+        // Add to assignments if not already there
+        if (!assignments.find((a) => a.userId === userId)) {
+          assignments = [...assignments, res.assignment];
+        }
+      }
+    } catch (e) {
+      if (e instanceof ApiError) {
+        error = e.message;
+      }
+    }
+  }
+
+  async function unassignMember(userId: number) {
+    try {
+      await del<{ success: boolean }>(`/groceries/assignments/${userId}`);
+      assignments = assignments.filter((a) => a.userId !== userId);
+    } catch (e) {
+      if (e instanceof ApiError) {
+        error = e.message;
+      }
+    }
+  }
+
+  // Reactive set of assigned user IDs for proper UI updates
+  $: assignedUserIds = new Set(assignments.map((a) => a.userId));
+
+  function toggleAssignment(userId: number) {
+    if (assignedUserIds.has(userId)) {
+      unassignMember(userId);
+    } else {
+      assignMember(userId);
+    }
   }
 
   // Autocomplete functions
@@ -343,6 +422,35 @@
         // Remove all bought items
         items = items.filter((i) => !i.isBought);
         break;
+
+      case 'grocery:assigned':
+        // Add new assignment
+        const assignedUserId = message.payload.userId;
+        if (!assignments.find((a) => a.userId === assignedUserId)) {
+          const member = familyMembers.find((m) => m.id === assignedUserId);
+          if (member) {
+            assignments = [
+              ...assignments,
+              {
+                id: 0,
+                familyId: 0,
+                userId: assignedUserId,
+                assignedBy: message.payload.assignedBy,
+                createdAt: new Date().toISOString(),
+                userDisplayName: member.displayName,
+                userAvatarEmoji: member.avatarEmoji,
+                userColor: member.color,
+              },
+            ];
+          }
+        }
+        break;
+
+      case 'grocery:unassigned':
+        // Remove assignment
+        const unassignedUserId = message.payload.userId;
+        assignments = assignments.filter((a) => a.userId !== unassignedUserId);
+        break;
     }
   }
 
@@ -367,6 +475,21 @@
     <header class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
         <h1 class="text-2xl font-bold">🛒 {$t('groceries.title')}</h1>
+        <!-- Assignment button - next to title -->
+        <button
+          on:click={() => (showAssignmentPanel = !showAssignmentPanel)}
+          class="relative flex items-center gap-1 px-2 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
+          title="Tilldela handlingslistan"
+        >
+          <span class="text-base">🏷️</span>
+          {#if assignments.length > 0}
+            <span
+              class="absolute -top-1 -right-1 bg-primary-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium text-[10px]"
+            >
+              {assignments.length}
+            </span>
+          {/if}
+        </button>
         <!-- Connection status indicator -->
         <div class="flex items-center gap-1.5">
           {#if $groceryWs.status === 'connected'}
@@ -386,6 +509,78 @@
         >← Tillbaka</a
       >
     </header>
+
+    <!-- Assignment panel -->
+    {#if showAssignmentPanel}
+      <div class="card p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-semibold text-stone-700 dark:text-stone-200">
+            📋 Tilldela handlingslistan
+          </h3>
+          <button
+            on:click={() => (showAssignmentPanel = false)}
+            class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+          >
+            ✕
+          </button>
+        </div>
+        <p class="text-sm text-stone-500 dark:text-stone-400 mb-3">Välj vem som ska handla idag:</p>
+        <div class="flex flex-wrap gap-2">
+          {#each familyMembers as member}
+            {@const assigned = assignedUserIds.has(member.id)}
+            <button
+              on:click={() => toggleAssignment(member.id)}
+              class="flex items-center gap-2 px-3 py-2 rounded-lg transition-all {assigned
+                ? 'ring-2 ring-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                : 'bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700'}"
+            >
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center text-lg"
+                style="background-color: {member.color || '#9CA3AF'}"
+              >
+                {member.avatarEmoji || '👤'}
+              </div>
+              <span class="text-sm font-medium">{member.displayName || 'Anonym'}</span>
+              {#if assigned}
+                <span class="text-green-500 text-lg">✓</span>
+              {/if}
+            </button>
+          {/each}
+        </div>
+        {#if assignments.length > 0}
+          <div class="mt-3 pt-3 border-t border-stone-200 dark:border-stone-700">
+            <p class="text-sm text-stone-600 dark:text-stone-300">
+              <span class="font-medium">Tilldelad:</span>
+              {assignments.map((a) => a.userDisplayName || 'Anonym').join(', ')}
+            </p>
+          </div>
+        {/if}
+      </div>
+    {/if}
+
+    <!-- Show assigned members summary if any -->
+    {#if assignments.length > 0 && !showAssignmentPanel}
+      <div class="flex items-center gap-2 mb-4 p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+        <span class="text-sm text-stone-600 dark:text-stone-300">Tilldelad:</span>
+        <div class="flex -space-x-2">
+          {#each assignments as assignment}
+            <div
+              class="w-7 h-7 rounded-full flex items-center justify-center text-sm ring-2 ring-white dark:ring-stone-900"
+              style="background-color: {assignment.userColor || '#9CA3AF'}"
+              title={assignment.userDisplayName || 'Anonym'}
+            >
+              {assignment.userAvatarEmoji || '👤'}
+            </div>
+          {/each}
+        </div>
+        <button
+          on:click={() => (showAssignmentPanel = true)}
+          class="ml-auto text-xs text-primary-600 dark:text-primary-400 hover:underline"
+        >
+          Ändra
+        </button>
+      </div>
+    {/if}
 
     {#if error}
       <div class="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-3 rounded-lg mb-4">
