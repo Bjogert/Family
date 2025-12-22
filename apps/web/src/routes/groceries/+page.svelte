@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, afterUpdate } from 'svelte';
+  import { onMount, afterUpdate, onDestroy } from 'svelte';
   import { get, post, patch, del, ApiError } from '$lib/api/client';
   import { t } from '$lib/i18n';
   import { searchSuggestions, type GrocerySuggestion } from '$lib/data/grocerySuggestions';
@@ -14,6 +14,7 @@
   import AutocompleteDropdown from '$lib/components/AutocompleteDropdown.svelte';
   import CategorySection from '$lib/components/CategorySection.svelte';
   import GroceryItemRow from '$lib/components/GroceryItemRow.svelte';
+  import { groceryWs } from '$lib/stores/groceryWs';
 
   let items: GroceryItem[] = [];
   let categories: CategoryInfo[] = [];
@@ -294,7 +295,55 @@
   onMount(() => {
     categoryOrder = loadCategoryOrder();
     loadData();
+
+    // Connect to WebSocket
+    groceryWs.connect();
+
+    // Subscribe to WebSocket messages
+    const unsubscribe = groceryWs.subscribe((state: { status: string; lastMessage: any }) => {
+      if (state.lastMessage) {
+        handleWebSocketMessage(state.lastMessage);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
   });
+
+  onDestroy(() => {
+    groceryWs.disconnect();
+  });
+
+  // Handle incoming WebSocket messages
+  function handleWebSocketMessage(message: any) {
+    switch (message.type) {
+      case 'grocery:added':
+        // Add new item if it doesn't exist
+        const newItem = message.payload.item;
+        if (!items.find((i) => i.id === newItem.id)) {
+          items = [newItem, ...items];
+        }
+        break;
+
+      case 'grocery:updated':
+        // Update existing item
+        const updatedItem = message.payload.item;
+        items = items.map((i) => (i.id === updatedItem.id ? updatedItem : i));
+        break;
+
+      case 'grocery:deleted':
+        // Remove deleted item
+        const deletedId = message.payload.id;
+        items = items.filter((i) => i.id !== deletedId);
+        break;
+
+      case 'grocery:cleared':
+        // Remove all bought items
+        items = items.filter((i) => !i.isBought);
+        break;
+    }
+  }
 
   // Update category order when new categories appear
   afterUpdate(() => {
@@ -315,7 +364,21 @@
 <main class="flex-1 p-4 pb-24">
   <div class="max-w-2xl mx-auto">
     <header class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold">🛒 {$t('groceries.title')}</h1>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-bold">🛒 {$t('groceries.title')}</h1>
+        <!-- Connection status indicator -->
+        <div class="flex items-center gap-1.5">
+          {#if $groceryWs.status === 'connected'}
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Ansluten"></div>
+          {:else if $groceryWs.status === 'connecting'}
+            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title="Ansluter..."></div>
+          {:else if $groceryWs.status === 'error'}
+            <div class="w-2 h-2 bg-red-500 rounded-full" title="Anslutningsfel"></div>
+          {:else}
+            <div class="w-2 h-2 bg-gray-400 rounded-full" title="Frånkopplad"></div>
+          {/if}
+        </div>
+      </div>
       <a href="/" class="text-primary-600 hover:underline text-sm">← Tillbaka</a>
     </header>
 

@@ -1,5 +1,6 @@
 ﻿import * as repository from './repository.js';
 import type { GroceryRow, CreateGroceryData, UpdateGroceryData } from './repository.js';
+import { connectionManager } from '../../websocket/connectionManager.js';
 
 export interface GroceryItem {
     id: number;
@@ -43,7 +44,15 @@ export async function getGroceryById(id: number, familyId: number): Promise<Groc
 
 export async function createGrocery(data: CreateGroceryData): Promise<GroceryItem> {
     const row = await repository.create(data);
-    return toGroceryItem(row);
+    const item = toGroceryItem(row);
+
+    // Broadcast to all family members
+    connectionManager.broadcastToFamily(data.familyId, {
+        type: 'grocery:added',
+        payload: { item },
+    });
+
+    return item;
 }
 
 export async function updateGrocery(
@@ -52,15 +61,45 @@ export async function updateGrocery(
     data: UpdateGroceryData
 ): Promise<GroceryItem | null> {
     const row = await repository.update(id, familyId, data);
-    return row ? toGroceryItem(row) : null;
+    if (!row) return null;
+
+    const item = toGroceryItem(row);
+
+    // Broadcast to all family members
+    connectionManager.broadcastToFamily(familyId, {
+        type: 'grocery:updated',
+        payload: { item },
+    });
+
+    return item;
 }
 
 export async function deleteGrocery(id: number, familyId: number): Promise<boolean> {
-    return repository.remove(id, familyId);
+    const success = await repository.remove(id, familyId);
+
+    if (success) {
+        // Broadcast to all family members
+        connectionManager.broadcastToFamily(familyId, {
+            type: 'grocery:deleted',
+            payload: { id },
+        });
+    }
+
+    return success;
 }
 
 export async function clearBoughtGroceries(familyId: number): Promise<number> {
-    return repository.clearBought(familyId);
+    const count = await repository.clearBought(familyId);
+
+    if (count > 0) {
+        // Broadcast to all family members
+        connectionManager.broadcastToFamily(familyId, {
+            type: 'grocery:cleared',
+            payload: { count },
+        });
+    }
+
+    return count;
 }
 
 export interface CategoryInfo {

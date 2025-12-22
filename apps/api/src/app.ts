@@ -8,6 +8,7 @@ import { initDatabase } from './db/index.js';
 import authRoutes from './modules/auth/routes.js';
 import familyRoutes from './modules/families/routes.js';
 import groceryRoutes from './modules/groceries/routes.js';
+import websocketRoutes from './websocket/routes.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -57,6 +58,7 @@ export async function buildApp() {
   await app.register(authRoutes, { prefix: '/api/auth' });
   await app.register(familyRoutes, { prefix: '/api/families' });
   await app.register(groceryRoutes, { prefix: '/api/groceries' });
+  await app.register(websocketRoutes, { prefix: '/api' });
   // TODO: Register in later phases
   // await app.register(calendarRoutes, { prefix: '/api/calendar' });
 

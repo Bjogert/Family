@@ -311,6 +311,7 @@
 
           <div class="border-t pt-4">
             <div class="flex items-center justify-between mb-2">
+              <!-- svelte-ignore a11y-label-has-associated-control -->
               <label class="block text-sm font-medium text-gray-700">Family Members</label>
               <button
                 type="button"
