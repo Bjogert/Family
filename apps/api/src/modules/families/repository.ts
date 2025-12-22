@@ -39,12 +39,15 @@ export async function getFamilyByName(name: string): Promise<Family | null> {
 }
 
 // Create new family
-export async function createFamily(name: string): Promise<Family> {
+export async function createFamily(name: string, password: string): Promise<Family> {
+    const bcrypt = (await import('bcrypt')).default;
+    const passwordHash = await bcrypt.hash(password, 10);
+
     const result = await pool.query(
-        `INSERT INTO families (name)
-     VALUES ($1)
+        `INSERT INTO families (name, password_hash)
+     VALUES ($1, $2)
      RETURNING id, name, created_at as "createdAt"`,
-        [name]
+        [name, passwordHash]
     );
     return result.rows[0];
 }
@@ -77,4 +80,66 @@ export async function getFamilyMembers(familyId: number): Promise<FamilyMember[]
         [familyId]
     );
     return result.rows;
+}
+
+// Create family member
+export async function createFamilyMember(
+    familyId: number,
+    username: string,
+    password?: string,
+    displayName?: string
+): Promise<FamilyMember> {
+    // Check if user already exists in this family
+    const existingUser = await pool.query(
+        'SELECT id FROM users WHERE family_id = $1 AND username = $2',
+        [familyId, username]
+    );
+
+    if (existingUser.rows.length > 0) {
+        throw new Error(`User with username "${username}" already exists in this family`);
+    }
+
+    // Hash password if provided, otherwise set to null
+    let passwordHash: string | null = null;
+    if (password && password.trim()) {
+        const bcrypt = (await import('bcrypt')).default;
+        passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    const result = await pool.query(
+        `INSERT INTO users (family_id, username, password_hash, display_name)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id, username, display_name as "displayName"`,
+        [familyId, username, passwordHash, displayName || username]
+    );
+
+    return result.rows[0];
+}
+
+// Verify family password
+export async function verifyFamilyPassword(familyId: number, password: string): Promise<boolean> {
+    const result = await pool.query(
+        'SELECT password_hash FROM families WHERE id = $1',
+        [familyId]
+    );
+
+    if (result.rows.length === 0) {
+        return false;
+    }
+
+    const bcrypt = (await import('bcrypt')).default;
+    return bcrypt.compare(password, result.rows[0].password_hash);
+}
+
+// Update family password
+export async function updateFamilyPassword(familyId: number, newPassword: string): Promise<boolean> {
+    const bcrypt = (await import('bcrypt')).default;
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    const result = await pool.query(
+        'UPDATE families SET password_hash = $1 WHERE id = $2',
+        [passwordHash, familyId]
+    );
+
+    return (result.rowCount ?? 0) > 0;
 }

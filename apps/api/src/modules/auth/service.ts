@@ -30,13 +30,13 @@ export async function loginUser(
   }
 
   const passwordHash = await sessionRepo.getUserPasswordHash(familyId, username);
-  if (!passwordHash) {
-    return null;
-  }
 
-  const isPasswordValid = await bcrypt.compare(password, passwordHash);
-  if (!isPasswordValid) {
-    return null;
+  // If user has a password, validate it. If not, allow login without password.
+  if (passwordHash) {
+    const isPasswordValid = await bcrypt.compare(password, passwordHash);
+    if (!isPasswordValid) {
+      return null;
+    }
   }
 
   // Update last login

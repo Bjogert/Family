@@ -26,6 +26,7 @@ export async function initDatabase(): Promise<void> {
       CREATE TABLE IF NOT EXISTS families (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
@@ -39,13 +40,21 @@ export async function initDatabase(): Promise<void> {
         id SERIAL PRIMARY KEY,
         family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
         username VARCHAR(50) NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
+        password_hash VARCHAR(255),
         display_name VARCHAR(100),
         created_at TIMESTAMPTZ DEFAULT NOW(),
         last_login TIMESTAMPTZ,
         UNIQUE(family_id, username)
       )
     `);
+
+    // Migration: Allow NULL passwords for existing tables
+    await client.query(`
+      ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL
+    `).catch(() => {
+      // Column might already allow nulls, ignore error
+    });
+
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_users_family_id ON users(family_id)
     `);
@@ -101,6 +110,7 @@ export async function initDatabase(): Promise<void> {
         unit VARCHAR(20),
         is_bought BOOLEAN DEFAULT false,
         added_by INTEGER REFERENCES users(id),
+        bought_by INTEGER REFERENCES users(id),
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW(),
         bought_at TIMESTAMPTZ
@@ -111,6 +121,9 @@ export async function initDatabase(): Promise<void> {
     `);
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_groceries_added_by ON groceries(added_by)
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_groceries_bought_by ON groceries(bought_by)
     `);
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_groceries_category ON groceries(category)
@@ -126,11 +139,15 @@ export async function initDatabase(): Promise<void> {
       [defaultFamilyName]
     );
 
+    // Import bcrypt for password hashing
+    const bcrypt = (await import('bcrypt')).default;
+
     let familyId: number;
     if (existingFamily.rows.length === 0) {
+      const defaultPassword = await bcrypt.hash(config.familyPassword, 10);
       const newFamily = await client.query(
-        'INSERT INTO families (name) VALUES ($1) RETURNING id',
-        [defaultFamilyName]
+        'INSERT INTO families (name, password_hash) VALUES ($1, $2) RETURNING id',
+        [defaultFamilyName, defaultPassword]
       );
       familyId = newFamily.rows[0].id;
       logger.info(`Created family: ${defaultFamilyName}`);
@@ -138,13 +155,12 @@ export async function initDatabase(): Promise<void> {
       familyId = existingFamily.rows[0].id;
     }
 
-    // Seed default users if they don't exist
-    const bcrypt = (await import('bcrypt')).default;
+    // Seed default users if they don't exist (no passwords - optional login)
 
     const users = [
-      { username: 'robert', password: 'robert', displayName: 'Robert' },
-      { username: 'julia', password: 'julia', displayName: 'Julia' },
-      { username: 'tore', password: 'tore', displayName: 'Tore' },
+      { username: 'robert', displayName: 'Robert' },
+      { username: 'julia', displayName: 'Julia' },
+      { username: 'tore', displayName: 'Tore' },
     ];
 
     for (const user of users) {
@@ -154,10 +170,9 @@ export async function initDatabase(): Promise<void> {
       );
 
       if (existingUser.rows.length === 0) {
-        const passwordHash = await bcrypt.hash(user.password, 10);
         await client.query(
-          'INSERT INTO users (family_id, username, password_hash, display_name) VALUES ($1, $2, $3, $4)',
-          [familyId, user.username, passwordHash, user.displayName]
+          'INSERT INTO users (family_id, username, password_hash, display_name) VALUES ($1, $2, NULL, $3)',
+          [familyId, user.username, user.displayName]
         );
         logger.info(`Created user: ${user.username} in family ${familyId}`);
       }

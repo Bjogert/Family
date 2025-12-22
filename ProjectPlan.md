@@ -911,11 +911,454 @@ Designed for modular addition:
 2. **Chore Chart** - Track who did what chores
 3. **Notes/Memo Board** - Shared family notes
 4. **Pet Care** - Feeding schedules for Sam, Noa, Björn
-5. **Meal Planning** - Weekly menu linked to groceries
+5. **Meal Planning** - Weekly menu linked to groceries (see Smart Grocery System below)
 6. **Calendar Write** - Create events from Family Hub
 
-Each module follows the same pattern:
+---
+
+## Smart Grocery System - Detailed Plan
+
+> Transform the grocery list from a simple todo into an AI-powered meal planning assistant with Swedish store price integration.
+
+### Overview
+
+**Current Workflow (Julia → Robert via WhatsApp):**
+1. Julia thinks of what to buy
+2. Sends WhatsApp message to Robert
+3. Robert manually checks list at store
+4. Easy to forget items, no history
+
+**Target Workflow:**
+1. Julia adds "Milk" → Robert sees it instantly
+2. Quick-add suggests frequently bought items
+3. AI suggests weekly menu → auto-generates shopping list
+4. Shows items on sale at Willys/ICA Landvetter
+5. Organizes list by store aisle
+
+### Implementation Phases
+
+#### Phase 2a: Basic Grocery List (Core - Build Now)
+**Goal:** Replace WhatsApp with shared family list
+
+**Features:**
+- Single shared list per family (Julia adds → Robert sees)
+- Quick-add text input with instant save
+- Categories: 🥬 Produce, 🥛 Dairy, 🥩 Meat, 🍞 Bakery, 🧊 Frozen, 🥤 Beverages, 🍿 Snacks, 🧹 Household, 🐕 Pet, 📦 Other
+- Tap to mark bought (strikethrough, moves to bottom)
+- Swipe to delete
+- "Clear bought items" button
+- Shows who added each item ("Julia added")
+- Mobile-first design (thumb-friendly)
+
+**Database:**
+```sql
+-- Already exists, just need to use it
+CREATE TABLE groceries (
+    id SERIAL PRIMARY KEY,
+    family_id INTEGER NOT NULL REFERENCES families(id),
+    name VARCHAR(200) NOT NULL,
+    category VARCHAR(50) DEFAULT 'other',
+    quantity INTEGER DEFAULT 1,
+    unit VARCHAR(20),
+    is_bought BOOLEAN DEFAULT false,
+    added_by INTEGER REFERENCES users(id),
+    bought_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT NOW(),
+    bought_at TIMESTAMP
+);
 ```
+
+**UI Components:**
+- `GroceryList.svelte` - Main list container
+- `GroceryItem.svelte` - Individual item with swipe actions
+- `QuickAdd.svelte` - Fast text input at top
+- `CategoryFilter.svelte` - Filter pills
+
+---
+
+#### Phase 2b: Smart Suggestions (Build After Core)
+**Goal:** Make adding common items effortless
+
+**Features:**
+- Track item frequency (what you buy often)
+- "Quick buttons" for top 10 most-added items
+- Autocomplete from purchase history
+- "You usually buy X" suggestions
+- Fuzzy search ("mlk" → "Milk", "mjölk" → "Mjölk")
+
+**New Database Table:**
+```sql
+CREATE TABLE grocery_history (
+    id SERIAL PRIMARY KEY,
+    family_id INTEGER NOT NULL REFERENCES families(id),
+    item_name VARCHAR(200) NOT NULL,
+    normalized_name VARCHAR(200) NOT NULL,  -- lowercase, trimmed
+    category VARCHAR(50),
+    times_added INTEGER DEFAULT 1,
+    last_added TIMESTAMP DEFAULT NOW(),
+    UNIQUE(family_id, normalized_name)
+);
+```
+
+**Logic:**
+```typescript
+// On add item:
+// 1. Normalize name (trim, lowercase)
+// 2. Upsert to history (increment times_added)
+// 3. Use for autocomplete and suggestions
+
+// Autocomplete query:
+SELECT item_name, category, times_added
+FROM grocery_history
+WHERE family_id = $1 AND normalized_name ILIKE $2 || '%'
+ORDER BY times_added DESC
+LIMIT 10;
+```
+
+**UI Enhancements:**
+- Quick-add shows autocomplete dropdown
+- "Frequently bought" section with one-tap add
+- Recent items appear first in suggestions
+
+---
+
+#### Phase 2c: AI Menu Planning (Build Later)
+**Goal:** AI suggests weekly meals and generates shopping list
+
+**Features:**
+- "Suggest 5 dinners for this week" button
+- AI considers: dietary preferences, what's in season, previous meals
+- Generates ingredient list automatically
+- One-click "Add all ingredients to list"
+- Save favorite meals for reuse
+
+**New Database Tables:**
+```sql
+CREATE TABLE meals (
+    id SERIAL PRIMARY KEY,
+    family_id INTEGER NOT NULL REFERENCES families(id),
+    name VARCHAR(200) NOT NULL,
+    description TEXT,
+    servings INTEGER DEFAULT 4,
+    prep_time_minutes INTEGER,
+    is_favorite BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE meal_ingredients (
+    id SERIAL PRIMARY KEY,
+    meal_id INTEGER NOT NULL REFERENCES meals(id) ON DELETE CASCADE,
+    item_name VARCHAR(200) NOT NULL,
+    quantity DECIMAL(10,2),
+    unit VARCHAR(20),
+    category VARCHAR(50) DEFAULT 'other'
+);
+
+CREATE TABLE weekly_menu (
+    id SERIAL PRIMARY KEY,
+    family_id INTEGER NOT NULL REFERENCES families(id),
+    week_start DATE NOT NULL,  -- Monday of the week
+    day_of_week INTEGER NOT NULL,  -- 0=Mon, 6=Sun
+    meal_id INTEGER REFERENCES meals(id),
+    meal_type VARCHAR(20) DEFAULT 'dinner',  -- breakfast, lunch, dinner
+    notes TEXT,
+    UNIQUE(family_id, week_start, day_of_week, meal_type)
+);
+
+CREATE TABLE family_preferences (
+    family_id INTEGER PRIMARY KEY REFERENCES families(id),
+    dietary_restrictions TEXT[],  -- ['vegetarian', 'gluten-free']
+    disliked_ingredients TEXT[],  -- ['mushrooms', 'olives']
+    preferred_cuisines TEXT[],    -- ['swedish', 'italian', 'asian']
+    default_servings INTEGER DEFAULT 4
+);
+```
+
+**AI Integration:**
+```typescript
+// Using Claude API (Anthropic) or OpenAI
+const prompt = `
+You are a Swedish family meal planner. Suggest 5 dinner recipes for this week.
+
+Family: 2 adults, 1 toddler (3yo)
+Preferences: ${preferences}
+Dislikes: ${dislikes}
+Season: ${currentSeason}
+Recent meals to avoid: ${recentMeals}
+
+For each recipe provide:
+- Name (Swedish-friendly)
+- Brief description
+- Prep time
+- Ingredients with quantities (metric units)
+
+Respond in JSON format.
+`;
+
+// Parse response, save to meals table, show to user
+```
+
+**Environment Variables:**
+```bash
+# AI Provider (choose one)
+OPENAI_API_KEY=sk-...
+# or
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+---
+
+#### Phase 2d: Swedish Store Price Integration (Build Later)
+**Goal:** Show prices and sales from local stores
+
+**Target Stores (Landvetter area):**
+- **Willys** - Primary store
+- **ICA** - Secondary option
+
+**Data Sources (by reliability):**
+
+1. **Matspar.se** - Aggregates Swedish grocery prices
+   - No official API, would need scraping
+   - Risk: Terms of service, structure changes
+
+2. **AllMatPriser.se** - Price comparison site
+   - Similar scraping challenges
+
+3. **Store Apps/Websites:**
+   - Willys.se - Has product search
+   - ICA.se - Has product search and digital offers
+   - Would need web scraping or unofficial API
+
+4. **Manual "Sales" Entry:**
+   - Fallback: User manually adds "Chicken on sale at Willys"
+   - AI can factor this into meal suggestions
+
+**Proposed Approach (Start Simple):**
+```sql
+-- Manual sales/offers entry (Phase 1)
+CREATE TABLE store_offers (
+    id SERIAL PRIMARY KEY,
+    family_id INTEGER REFERENCES families(id),  -- null = global
+    store_name VARCHAR(100) NOT NULL,  -- 'Willys', 'ICA'
+    item_name VARCHAR(200) NOT NULL,
+    normal_price DECIMAL(10,2),
+    sale_price DECIMAL(10,2),
+    valid_from DATE,
+    valid_until DATE,
+    added_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Price history (for future automation)
+CREATE TABLE price_history (
+    id SERIAL PRIMARY KEY,
+    store_name VARCHAR(100) NOT NULL,
+    item_name VARCHAR(200) NOT NULL,
+    normalized_name VARCHAR(200) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    unit VARCHAR(20),  -- 'kg', 'st', 'l'
+    recorded_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**UI Features:**
+- "🏷️ On Sale" badge on items
+- "Chicken is 30% off at Willys this week" notification
+- AI prioritizes sale items in meal suggestions
+- "Best store for this list" recommendation
+
+**Future Automation Ideas:**
+- Chrome extension to capture prices while browsing
+- Receipt scanning (OCR) to track actual prices paid
+- Integration with store loyalty card data (if APIs exist)
+
+---
+
+### Database Schema Summary (All Grocery Tables)
+
+```sql
+-- Core grocery list
+CREATE TABLE groceries (
+    id SERIAL PRIMARY KEY,
+    family_id INTEGER NOT NULL REFERENCES families(id),
+    name VARCHAR(200) NOT NULL,
+    category VARCHAR(50) DEFAULT 'other',
+    quantity INTEGER DEFAULT 1,
+    unit VARCHAR(20),
+    is_bought BOOLEAN DEFAULT false,
+    added_by INTEGER REFERENCES users(id),
+    bought_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT NOW(),
+    bought_at TIMESTAMP
+);
+
+-- Item frequency tracking
+CREATE TABLE grocery_history (
+    id SERIAL PRIMARY KEY,
+    family_id INTEGER NOT NULL REFERENCES families(id),
+    item_name VARCHAR(200) NOT NULL,
+    normalized_name VARCHAR(200) NOT NULL,
+    category VARCHAR(50),
+    times_added INTEGER DEFAULT 1,
+    last_added TIMESTAMP DEFAULT NOW(),
+    UNIQUE(family_id, normalized_name)
+);
+
+-- Meal recipes
+CREATE TABLE meals (
+    id SERIAL PRIMARY KEY,
+    family_id INTEGER NOT NULL REFERENCES families(id),
+    name VARCHAR(200) NOT NULL,
+    description TEXT,
+    servings INTEGER DEFAULT 4,
+    prep_time_minutes INTEGER,
+    is_favorite BOOLEAN DEFAULT false,
+    ai_generated BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Meal ingredients
+CREATE TABLE meal_ingredients (
+    id SERIAL PRIMARY KEY,
+    meal_id INTEGER NOT NULL REFERENCES meals(id) ON DELETE CASCADE,
+    item_name VARCHAR(200) NOT NULL,
+    quantity DECIMAL(10,2),
+    unit VARCHAR(20),
+    category VARCHAR(50) DEFAULT 'other'
+);
+
+-- Weekly meal plan
+CREATE TABLE weekly_menu (
+    id SERIAL PRIMARY KEY,
+    family_id INTEGER NOT NULL REFERENCES families(id),
+    week_start DATE NOT NULL,
+    day_of_week INTEGER NOT NULL,
+    meal_id INTEGER REFERENCES meals(id),
+    meal_type VARCHAR(20) DEFAULT 'dinner',
+    notes TEXT,
+    UNIQUE(family_id, week_start, day_of_week, meal_type)
+);
+
+-- Family food preferences
+CREATE TABLE family_preferences (
+    family_id INTEGER PRIMARY KEY REFERENCES families(id),
+    dietary_restrictions TEXT[],
+    disliked_ingredients TEXT[],
+    preferred_cuisines TEXT[],
+    default_servings INTEGER DEFAULT 4
+);
+
+-- Store sales (manual entry)
+CREATE TABLE store_offers (
+    id SERIAL PRIMARY KEY,
+    family_id INTEGER REFERENCES families(id),
+    store_name VARCHAR(100) NOT NULL,
+    item_name VARCHAR(200) NOT NULL,
+    normal_price DECIMAL(10,2),
+    sale_price DECIMAL(10,2),
+    valid_from DATE,
+    valid_until DATE,
+    added_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Categories (seed data)
+CREATE TABLE grocery_categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    icon VARCHAR(10),
+    sort_order INTEGER DEFAULT 0
+);
+
+INSERT INTO grocery_categories (name, icon, sort_order) VALUES
+    ('produce', '🥬', 1),
+    ('dairy', '🥛', 2),
+    ('meat', '🥩', 3),
+    ('bakery', '🍞', 4),
+    ('frozen', '🧊', 5),
+    ('beverages', '🥤', 6),
+    ('snacks', '🍿', 7),
+    ('household', '🧹', 8),
+    ('pet', '🐕', 9),
+    ('other', '📦', 10);
+```
+
+---
+
+### API Endpoints (Grocery System)
+
+| Endpoint | Method | Description | Phase |
+|----------|--------|-------------|-------|
+| `/api/groceries` | GET | Get all items (family-scoped) | 2a |
+| `/api/groceries` | POST | Add item | 2a |
+| `/api/groceries/:id` | PATCH | Update item | 2a |
+| `/api/groceries/:id` | DELETE | Delete item | 2a |
+| `/api/groceries/clear-bought` | POST | Remove bought items | 2a |
+| `/api/groceries/categories` | GET | Get categories | 2a |
+| `/api/groceries/suggestions` | GET | Get frequently bought | 2b |
+| `/api/groceries/autocomplete` | GET | Search history | 2b |
+| `/api/meals` | GET | Get saved meals | 2c |
+| `/api/meals` | POST | Create meal | 2c |
+| `/api/meals/suggest` | POST | AI suggest meals | 2c |
+| `/api/menu/week` | GET | Get weekly menu | 2c |
+| `/api/menu/week` | PUT | Set weekly menu | 2c |
+| `/api/menu/generate-list` | POST | Menu → grocery list | 2c |
+| `/api/offers` | GET | Get current sales | 2d |
+| `/api/offers` | POST | Add sale (manual) | 2d |
+
+---
+
+### UI Mockup (Phase 2a)
+
+```
+┌─────────────────────────────────────┐
+│ 🛒 Groceries          [Julia 👤]    │
+├─────────────────────────────────────┤
+│ ┌─────────────────────────────────┐ │
+│ │ Add item...              [+]    │ │  <- Quick add
+│ └─────────────────────────────────┘ │
+│                                     │
+│ 🥛 Dairy                            │
+│ ┌─────────────────────────────────┐ │
+│ │ ☐ Milk (2L)           Julia +   │ │  <- Swipe to delete
+│ │ ☐ Smör                Robert +  │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ 🥬 Produce                          │
+│ ┌─────────────────────────────────┐ │
+│ │ ☐ Bananer (6st)       Julia +   │ │
+│ │ ☐ Tomater             Julia +   │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ 🥩 Meat                             │
+│ ┌─────────────────────────────────┐ │
+│ │ ☐ Kycklingfilé (1kg)  Robert +  │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ ── Bought ──────────────────────── │
+│ ┌─────────────────────────────────┐ │
+│ │ ☑ ~~Ägg~~             ✓ Robert  │ │  <- Strikethrough
+│ └─────────────────────────────────┘ │
+│                                     │
+│ [Clear bought items]                │
+└─────────────────────────────────────┘
+```
+
+---
+
+### Success Metrics
+
+| Metric | Target | How to Measure |
+|--------|--------|----------------|
+| **Adoption** | Replace WhatsApp within 1 week | Julia stops sending lists |
+| **Speed** | Add item < 3 seconds | Time from tap to saved |
+| **Reliability** | 99.9% uptime | Monitor on Pi |
+| **Sync** | < 1 second cross-device | WebSocket latency |
+| **AI Usefulness** | 3+ meals adopted per week | Track menu usage |
+
+---
+
+
 apps/api/src/modules/{module-name}/
   ├── routes.ts
   ├── service.ts

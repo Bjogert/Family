@@ -8,7 +8,7 @@ import { pool } from '../../db/index.js';
 interface LoginBody {
   familyId: number;
   username: string;
-  password: string;
+  password?: string;
 }
 
 interface FamilyLoginRequest extends FastifyRequest {
@@ -25,15 +25,15 @@ export default async function authRoutes(app: FastifyInstance) {
     async (request: FastifyRequest<{ Body: LoginBody }>, reply: FastifyReply) => {
       const { familyId, username, password } = request.body;
 
-      if (!familyId || !username || !password) {
+      if (!familyId || !username) {
         return reply.status(400).send({
           success: false,
-          message: 'Family ID, username and password required',
+          message: 'Family ID and username required',
         });
       }
 
       const userAgent = request.headers['user-agent'];
-      const result = await authService.loginUser(familyId, username, password, userAgent);
+      const result = await authService.loginUser(familyId, username, password || '', userAgent);
 
       if (!result) {
         return reply.status(401).send({
@@ -51,7 +51,7 @@ export default async function authRoutes(app: FastifyInstance) {
       reply.setCookie('sessionId', result.sessionId, {
         path: '/',
         httpOnly: true,
-        secure: !config.isDev,
+        secure: false, // Set to true when using HTTPS
         sameSite: 'lax',
         maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
       });

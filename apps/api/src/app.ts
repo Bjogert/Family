@@ -7,6 +7,7 @@ import { logger } from './utils/logger.js';
 import { initDatabase } from './db/index.js';
 import authRoutes from './modules/auth/routes.js';
 import familyRoutes from './modules/families/routes.js';
+import groceryRoutes from './modules/groceries/routes.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -55,8 +56,8 @@ export async function buildApp() {
   // Register module routes
   await app.register(authRoutes, { prefix: '/api/auth' });
   await app.register(familyRoutes, { prefix: '/api/families' });
+  await app.register(groceryRoutes, { prefix: '/api/groceries' });
   // TODO: Register in later phases
-  // await app.register(groceryRoutes, { prefix: '/api/groceries' });
   // await app.register(calendarRoutes, { prefix: '/api/calendar' });
 
   // Global error handler

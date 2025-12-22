@@ -13,7 +13,7 @@ function Write-Step($message) {
     Write-Host "`n==> $message" -ForegroundColor Cyan
 }
 
-function Deploy-Api {
+function Publish-Api {
     Write-Step "Building API..."
     Push-Location "$PSScriptRoot\..\apps\api"
     pnpm build
@@ -36,7 +36,7 @@ function Deploy-Api {
     Write-Host "API deployed successfully!" -ForegroundColor Green
 }
 
-function Deploy-Web {
+function Publish-Web {
     Write-Step "Building Web..."
     Push-Location "$PSScriptRoot\..\apps\web"
     pnpm build
@@ -65,11 +65,11 @@ Write-Host "=====================" -ForegroundColor Yellow
 
 try {
     switch ($Target) {
-        "api" { Deploy-Api }
-        "web" { Deploy-Web }
+        "api" { Publish-Api }
+        "web" { Publish-Web }
         "all" { 
-            Deploy-Api
-            Deploy-Web
+            Publish-Api
+            Publish-Web
         }
     }
     
