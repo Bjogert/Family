@@ -4,6 +4,7 @@
   "description": "Household management for the family",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
   "background_color": "#f9fafb",
   "theme_color": "#0ea5e9",
   "orientation": "portrait-primary",

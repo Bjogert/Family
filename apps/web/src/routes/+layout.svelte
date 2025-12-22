@@ -12,8 +12,12 @@
     logout,
   } from '$lib/stores/auth';
   import { t, setLanguage, languages, currentLanguage } from '$lib/i18n';
+  import InstallPrompt from '$lib/components/InstallPrompt.svelte';
 
   let showLanguageMenu = false;
+  let isFullscreen = false;
+  let canFullscreen = false;
+  let showFullscreenPrompt = false;
 
   $: currentLangData = languages.find((l) => l.code === $currentLanguage);
 
@@ -22,6 +26,60 @@
 
   onMount(() => {
     checkAuth();
+
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((registration) => {
+          console.log('[PWA] Service worker registered:', registration.scope);
+        })
+        .catch((error) => {
+          console.error('[PWA] Service worker registration failed:', error);
+        });
+    }
+
+    // Fullscreen support
+    canFullscreen = document.fullscreenEnabled || (document as any).webkitFullscreenEnabled;
+
+    // Listen for fullscreen changes
+    const updateFullscreenState = () => {
+      isFullscreen = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('fullscreenEnabled', isFullscreen.toString());
+      }
+    };
+
+    document.addEventListener('fullscreenchange', updateFullscreenState);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenState);
+
+    // Show fullscreen prompt if previously enabled (browsers require user gesture)
+    const checkFullscreenPrompt = () => {
+      if (typeof localStorage !== 'undefined') {
+        const wasFullscreen = localStorage.getItem('fullscreenEnabled') === 'true';
+        const isCurrentlyFullscreen = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+        if (wasFullscreen && canFullscreen && !isCurrentlyFullscreen) {
+          showFullscreenPrompt = true;
+        }
+      }
+    };
+
+    // Check on initial load
+    checkFullscreenPrompt();
+
+    // Check when page becomes visible again (after minimize/tab switch)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkFullscreenPrompt();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', updateFullscreenState);
+      document.removeEventListener('webkitfullscreenchange', updateFullscreenState);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   });
 
   // Redirect logic
@@ -46,9 +104,53 @@
     setLanguage(lang);
     showLanguageMenu = false;
   }
+
+  async function toggleFullscreen() {
+    showFullscreenPrompt = false;
+    if (!isFullscreen) {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        await elem.requestFullscreen().catch(() => {});
+      } else if ((elem as any).webkitRequestFullscreen) {
+        await (elem as any).webkitRequestFullscreen().catch(() => {});
+      }
+    } else {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen().catch(() => {});
+      } else if ((document as any).webkitExitFullscreen) {
+        await (document as any).webkitExitFullscreen().catch(() => {});
+      }
+    }
+  }
+
+  function dismissFullscreenPrompt() {
+    showFullscreenPrompt = false;
+    localStorage.removeItem('fullscreenEnabled');
+  }
 </script>
 
 <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+  <!-- Fullscreen restore prompt -->
+  {#if showFullscreenPrompt && !isFullscreen}
+    <div class="bg-primary-600 text-white px-4 py-2 flex items-center justify-between">
+      <span class="text-sm">Tryck för att återgå till helskärm</span>
+      <div class="flex gap-2">
+        <button
+          on:click={toggleFullscreen}
+          class="px-3 py-1 bg-white text-primary-600 rounded text-sm font-medium"
+        >
+          ⛶ Helskärm
+        </button>
+        <button
+          on:click={dismissFullscreenPrompt}
+          class="px-2 py-1 text-white/80 hover:text-white text-sm"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  {/if}
+
   {#if $loading}
     <div class="flex-1 flex items-center justify-center">
       <div class="text-gray-500 dark:text-gray-400">Loading...</div>
@@ -62,6 +164,15 @@
           <div class="flex items-center justify-between mb-2">
             <a href="/" class="text-sm font-bold text-primary-600">{$t('nav.familyHub')}</a>
             <div class="flex items-center gap-2">
+              {#if canFullscreen}
+                <button
+                  on:click={toggleFullscreen}
+                  class="text-base hover:opacity-80"
+                  aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                >
+                  {isFullscreen ? '⛶' : '⛶'}
+                </button>
+              {/if}
               <button
                 on:click={() => (showLanguageMenu = !showLanguageMenu)}
                 class="text-base hover:opacity-80"
@@ -137,6 +248,17 @@
               {$t('nav.logout')}
             </button>
 
+            <!-- Fullscreen Toggle (Desktop) -->
+            {#if canFullscreen}
+              <button
+                on:click={toggleFullscreen}
+                class="text-xl hover:opacity-80"
+                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              >
+                ⛶
+              </button>
+            {/if}
+
             <!-- Language Switcher (Desktop) -->
             <div class="relative">
               <button
@@ -174,4 +296,7 @@
       <slot />
     {/key}
   {/if}
+
+  <!-- PWA Install Prompt -->
+  <InstallPrompt />
 </div>
