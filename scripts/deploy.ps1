@@ -78,7 +78,8 @@ try {
     Write-Step "Checking service status..."
     ssh $PI_HOST "sudo systemctl status family-hub-api family-hub-web --no-pager -l | head -30"
     
-} catch {
+}
+catch {
     Write-Host "`n✗ Deployment failed: $_" -ForegroundColor Red
     exit 1
 }
