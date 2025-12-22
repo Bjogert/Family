@@ -57,7 +57,9 @@
     const checkFullscreenPrompt = () => {
       if (typeof localStorage !== 'undefined') {
         const wasFullscreen = localStorage.getItem('fullscreenEnabled') === 'true';
-        const isCurrentlyFullscreen = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+        const isCurrentlyFullscreen = !!(
+          document.fullscreenElement || (document as any).webkitFullscreenElement
+        );
         if (wasFullscreen && canFullscreen && !isCurrentlyFullscreen) {
           showFullscreenPrompt = true;
         }
@@ -129,7 +131,9 @@
   }
 </script>
 
-<div class="min-h-screen flex flex-col bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900">
+<div
+  class="min-h-screen flex flex-col bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900"
+>
   <!-- Fullscreen restore prompt -->
   {#if showFullscreenPrompt && !isFullscreen}
     <div class="bg-primary-600 text-white px-4 py-2 flex items-center justify-between">
@@ -157,12 +161,18 @@
     </div>
   {:else if $authenticated && !publicPaths.some((p) => $page.url.pathname.startsWith(p))}
     <!-- Navigation header for authenticated users -->
-    <header class="bg-gradient-to-r from-orange-100 via-amber-50 to-yellow-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900 shadow-md border-b border-orange-200 dark:border-stone-700">
+    <header
+      class="bg-gradient-to-r from-orange-100 via-amber-50 to-yellow-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900 shadow-md border-b border-orange-200 dark:border-stone-700"
+    >
       <div class="max-w-4xl mx-auto px-3 py-2">
         <!-- Mobile Layout -->
         <div class="md:hidden">
           <div class="flex items-center justify-between mb-2">
-            <a href="/" class="text-sm font-bold bg-gradient-to-r from-orange-400 to-amber-400 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">{$t('nav.familyHub')}</a>
+            <a
+              href="/"
+              class="text-sm font-bold bg-gradient-to-r from-orange-400 to-amber-400 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent"
+              >{$t('nav.familyHub')}</a
+            >
             <div class="flex items-center gap-2">
               {#if canFullscreen}
                 <button
@@ -225,7 +235,11 @@
         <!-- Desktop Layout -->
         <div class="hidden md:flex items-center justify-between">
           <div>
-            <a href="/" class="text-lg font-bold bg-gradient-to-r from-orange-400 to-amber-400 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">{$t('nav.familyHub')}</a>
+            <a
+              href="/"
+              class="text-lg font-bold bg-gradient-to-r from-orange-400 to-amber-400 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent"
+              >{$t('nav.familyHub')}</a
+            >
             {#if $currentFamily}
               <p class="text-xs text-gray-500">{$currentFamily.name}</p>
             {/if}

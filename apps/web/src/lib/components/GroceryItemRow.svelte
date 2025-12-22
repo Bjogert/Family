@@ -54,9 +54,7 @@
 
   {#if !item.isBought}
     {#if editingQuantityId === item.id}
-      <div
-        class="flex items-center gap-1 bg-orange-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded"
-      >
+      <div class="flex items-center gap-1 bg-orange-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded">
         <button
           on:click={decrementQuantity}
           class="w-7 h-7 flex items-center justify-center text-orange-600 dark:text-amber-400 hover:bg-orange-100 dark:hover:bg-amber-800 rounded transition-colors text-lg font-bold"

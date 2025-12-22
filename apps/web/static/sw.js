@@ -1,5 +1,5 @@
 // Service Worker for Family Hub PWA
-const CACHE_VERSION = 'family-hub-v1';
+const CACHE_VERSION = 'family-hub-v2';
 const OFFLINE_URL = '/offline';
 
 // Files to cache immediately on install
@@ -58,6 +58,12 @@ self.addEventListener('fetch', (event) => {
 
   // Skip WebSocket requests
   if (request.url.includes('/api/ws')) {
+    return;
+  }
+
+  // NEVER cache auth endpoints - must always be fresh
+  if (request.url.includes('/api/auth/')) {
+    event.respondWith(fetch(request));
     return;
   }
 

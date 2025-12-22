@@ -98,12 +98,13 @@
 
     adding = true;
     try {
-      const res = await post<{ success: boolean; item: GroceryItem }>('/groceries', {
+      // Don't add item locally - WebSocket will handle it
+      // This prevents duplication when WebSocket message arrives before POST response
+      await post<{ success: boolean; item: GroceryItem }>('/groceries', {
         name: newItemName.trim(),
         category: newItemCategory,
         quantity: newItemQuantity,
       });
-      items = [res.item, ...items];
       newItemName = '';
       newItemQuantity = 1;
     } catch (e) {
@@ -379,7 +380,11 @@
           {/if}
         </div>
       </div>
-      <a href="/" class="text-orange-500 hover:text-orange-600 dark:text-amber-400 dark:hover:text-amber-500 hover:underline text-sm">← Tillbaka</a>
+      <a
+        href="/"
+        class="text-orange-500 hover:text-orange-600 dark:text-amber-400 dark:hover:text-amber-500 hover:underline text-sm"
+        >← Tillbaka</a
+      >
     </header>
 
     {#if error}
