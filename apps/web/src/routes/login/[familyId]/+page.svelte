@@ -3,19 +3,22 @@
   import { page } from '$app/stores';
   import { login, loading, error } from '$lib/stores/auth';
   import { get } from '$lib/api/client';
+  import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 
   interface FamilyMember {
     id: number;
     username: string;
     displayName: string | null;
+    hasPassword: boolean;
   }
 
   let familyId: number = 0;
   let familyName = '';
   let familyMembers: FamilyMember[] = [];
-  let selectedUsername: string | null = null;
+  let selectedMemberForPassword: string | null = null;
   let password = '';
   let showPassword = false;
+  let loadingFamily = true;
 
   $: if ($page.params.familyId) {
     familyId = parseInt($page.params.familyId, 10);
@@ -27,6 +30,7 @@
   }
 
   async function loadFamilyInfo() {
+    loadingFamily = true;
     try {
       const [familyData, membersData] = await Promise.all([
         get<{ family: { id: number; name: string } }>(`/families/${familyId}`),
@@ -37,6 +41,8 @@
       familyMembers = membersData.users || [];
     } catch (err) {
       console.error('Failed to load family info', err);
+    } finally {
+      loadingFamily = false;
     }
   }
 
@@ -45,23 +51,35 @@
       error.set('Family ID is required');
       return;
     }
-    if (!selectedUsername) {
+    if (!selectedMemberForPassword) {
       error.set('Please select a family member');
       return;
     }
-    // Password is optional - allow empty password
-    const success = await login(familyId, selectedUsername, password);
+    // Password is required when this form is shown
+    const success = await login(familyId, selectedMemberForPassword, password);
+    if (success) {
+      goto('/');
+    } else {
+      password = ''; // Clear password on failed attempt
+    }
+  }
+
+  async function loginWithoutPassword(username: string) {
+    const success = await login(familyId, username, '');
     if (success) {
       goto('/');
     }
   }
 
-  function goBack() {
-    goto('/welcome');
+  function showPasswordPrompt(username: string) {
+    selectedMemberForPassword = username;
+    password = '';
   }
 
-  function selectMember(username: string) {
-    selectedUsername = username;
+  function cancelPasswordPrompt() {
+    selectedMemberForPassword = null;
+    password = '';
+    showPassword = false;
   }
 </script>
 
@@ -69,148 +87,238 @@
   <title>Login - Family Hub</title>
 </svelte:head>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
-  <div class="w-full max-w-sm">
-    <div class="card p-8">
-      <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Family Hub</h1>
-        {#if familyName}
-          <p class="text-gray-600 dark:text-gray-400 mt-2">Welcome to {familyName}</p>
-        {:else}
-          <p class="text-gray-600 dark:text-gray-400 mt-2">Loading...</p>
-        {/if}
+<div
+  class="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900 px-4 py-8"
+>
+  <div class="w-full max-w-5xl">
+    <div class="flex flex-col lg:flex-row gap-8 items-stretch">
+      <!-- Left side - Welcome message -->
+      <div class="flex-1 flex flex-col justify-center lg:pr-8">
+        <div class="text-center lg:text-left mb-8 lg:mb-0">
+          <h1
+            class="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent mb-4"
+          >
+            Family Hub
+          </h1>
+          {#if familyName}
+            <p class="text-xl lg:text-2xl text-stone-700 dark:text-stone-300 font-medium">
+              Welcome to {familyName}
+            </p>
+            <p class="text-stone-600 dark:text-stone-400 mt-4">Select your profile to continue</p>
+          {:else}
+            <p class="text-xl text-stone-600 dark:text-stone-400">Loading...</p>
+          {/if}
+        </div>
+
+        <button
+          on:click={() => goto('/welcome')}
+          class="hidden lg:inline-flex items-center gap-2 text-stone-600 dark:text-stone-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors mt-8"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          Back to Family Selection
+        </button>
       </div>
 
-      {#if familyMembers.length === 0 && familyName}
-        <div class="text-center text-gray-600 dark:text-gray-400">
-          <p>No family members found</p>
-        </div>
-      {:else if selectedUsername}
-        <!-- Password input when member is selected -->
-        <form on:submit|preventDefault={handleSubmit} class="space-y-6">
-          <div class="text-center mb-6">
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              Logging in as {familyMembers.find((m) => m.username === selectedUsername)
-                ?.displayName || selectedUsername}
-            </p>
-          </div>
+      <!-- Right side - Member cards -->
+      <div class="flex-1 lg:max-w-md">
+        <div
+          class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-2xl p-6 lg:p-8 border border-orange-200 dark:border-stone-700"
+        >
+          {#if loadingFamily}
+            <!-- Loading spinner while fetching family data -->
+            <div class="py-8">
+              <LoadingSpinner size="lg" text="Loading family members..." />
+            </div>
+          {:else if familyMembers.length === 0 && familyName}
+            <div class="text-center text-stone-600 dark:text-stone-400 py-8">
+              <p>No family members found</p>
+            </div>
+          {:else if selectedMemberForPassword}
+            <!-- Password input modal/overlay -->
+            <form on:submit|preventDefault={handleSubmit} class="space-y-6">
+              <div class="text-center mb-6">
+                <div class="text-5xl mb-4">🔐</div>
+                <p class="text-sm text-stone-600 dark:text-stone-400">
+                  Logging in as <span class="font-semibold text-stone-900 dark:text-white"
+                    >{familyMembers.find((m) => m.username === selectedMemberForPassword)
+                      ?.displayName || selectedMemberForPassword}</span
+                  >
+                </p>
+              </div>
 
-          <div>
-            <label
-              for="password"
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-            >
-              Password <span class="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <div class="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                value={password}
-                on:input={(e) => (password = e.currentTarget.value)}
-                class="input w-full pr-12"
-                placeholder="Enter password (or leave empty)"
-                disabled={$loading}
-              />
-              <button
-                type="button"
-                on:click={() => (showPassword = !showPassword)}
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-              >
-                {#if showPassword}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="w-5 h-5"
+              <div>
+                <label
+                  for="password"
+                  class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2"
+                >
+                  Password
+                </label>
+                <div class="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    value={password}
+                    on:input={(e) => (password = e.currentTarget.value)}
+                    class="input w-full pr-12 bg-white dark:bg-stone-700"
+                    placeholder="Enter password"
+                    disabled={$loading}
+                  />
+                  <button
+                    type="button"
+                    on:click={() => (showPassword = !showPassword)}
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
-                    />
-                  </svg>
+                    {#if showPassword}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="w-5 h-5"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+                        />
+                      </svg>
+                    {:else}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="w-5 h-5"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                        />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                    {/if}
+                  </button>
+                </div>
+              </div>
+
+              {#if $error}
+                <div class="text-red-600 dark:text-red-400 text-sm text-center">
+                  {$error}
+                </div>
+              {/if}
+
+              <button type="submit" class="btn-primary w-full" disabled={$loading}>
+                {#if $loading}
+                  Logging in...
                 {:else}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="w-5 h-5"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
-                    />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
+                  Log in
                 {/if}
               </button>
-            </div>
-          </div>
 
-          {#if $error}
-            <div class="text-red-600 dark:text-red-400 text-sm text-center">
-              {$error}
-            </div>
-          {/if}
-
-          <button type="submit" class="btn-primary w-full" disabled={$loading}>
-            {#if $loading}
-              Logging in...
-            {:else}
-              Log in
-            {/if}
-          </button>
-
-          <button
-            type="button"
-            on:click={() => (selectedUsername = null)}
-            class="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-          >
-            ← Change member
-          </button>
-        </form>
-      {:else}
-        <!-- Member selection view -->
-        <div class="space-y-4">
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Select who you are:</p>
-          <div class="space-y-2">
-            {#each familyMembers as member (member.id)}
               <button
-                on:click={() => selectMember(member.username)}
-                disabled={$loading}
-                class="w-full p-4 bg-blue-50 dark:bg-blue-900 border-2 border-blue-200 dark:border-blue-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-lg transition text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                type="button"
+                on:click={cancelPasswordPrompt}
+                class="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               >
-                <div class="text-lg font-semibold text-gray-900 dark:text-white">
-                  👤 {member.displayName || member.username}
-                </div>
+                ← Cancel
               </button>
-            {/each}
-          </div>
+            </form>
+          {:else}
+            <!-- Member selection view -->
+            <div class="space-y-3">
+              <p class="text-sm font-medium text-stone-600 dark:text-stone-400 mb-4">
+                Who are you?
+              </p>
+              {#each familyMembers as member (member.id)}
+                <div
+                  class="group relative overflow-hidden bg-gradient-to-br from-orange-300 to-amber-300 hover:from-orange-400 hover:to-amber-400 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                >
+                  <div class="p-4 flex items-center justify-between">
+                    <button
+                      on:click={() =>
+                        member.hasPassword
+                          ? showPasswordPrompt(member.username)
+                          : loginWithoutPassword(member.username)}
+                      disabled={$loading}
+                      class="flex-1 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div class="text-lg font-semibold text-stone-800 flex items-center gap-3">
+                        <span class="text-2xl">👤</span>
+                        <span>{member.displayName || member.username}</span>
+                      </div>
+                    </button>
+                    {#if member.hasPassword}
+                      <button
+                        on:click={() => showPasswordPrompt(member.username)}
+                        disabled={$loading}
+                        class="ml-4 px-3 py-1.5 bg-white/30 hover:bg-white/40 backdrop-blur-sm rounded-lg text-xs font-medium text-stone-800 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="h-4 w-4"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                        Password
+                      </button>
+                    {/if}
+                  </div>
+                </div>
+              {/each}
 
-          {#if $error}
-            <div class="text-red-600 dark:text-red-400 text-sm text-center">
-              {$error}
+              {#if $error}
+                <div class="text-red-600 dark:text-red-400 text-sm text-center mt-4">
+                  {$error}
+                </div>
+              {/if}
             </div>
           {/if}
         </div>
-      {/if}
 
-      <button
-        on:click={goBack}
-        class="w-full mt-4 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 underline"
-      >
-        ← Back to Family Selection
-      </button>
+        <!-- Mobile back button -->
+        <button
+          on:click={() => goto('/welcome')}
+          class="lg:hidden w-full mt-6 text-center text-stone-600 dark:text-stone-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors flex items-center justify-center gap-2"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          Back to Family Selection
+        </button>
+      </div>
     </div>
   </div>
 </div>

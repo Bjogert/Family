@@ -69,11 +69,13 @@ export interface FamilyMember {
     id: number;
     username: string;
     displayName: string | null;
+    hasPassword: boolean;
 }
 
 export async function getFamilyMembers(familyId: number): Promise<FamilyMember[]> {
     const result = await pool.query(
-        `SELECT id, username, display_name as "displayName"
+        `SELECT id, username, display_name as "displayName",
+         (password_hash IS NOT NULL AND password_hash != '') as "hasPassword"
      FROM users
      WHERE family_id = $1
      ORDER BY display_name ASC`,

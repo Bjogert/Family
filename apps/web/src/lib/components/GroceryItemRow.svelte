@@ -31,7 +31,7 @@
     class="w-6 h-6 rounded-full {item.isBought
       ? 'bg-green-500 text-white'
       : 'border-2 border-gray-300 dark:border-gray-600'} flex items-center justify-center {!item.isBought
-      ? 'hover:border-primary-500'
+      ? 'hover:border-orange-400'
       : ''} transition-colors text-sm"
     aria-label={item.isBought ? 'Markera som ej köpt' : 'Markera som köpt'}
   >
@@ -55,11 +55,11 @@
   {#if !item.isBought}
     {#if editingQuantityId === item.id}
       <div
-        class="flex items-center gap-1 bg-primary-50 dark:bg-primary-900/20 px-1.5 py-0.5 rounded"
+        class="flex items-center gap-1 bg-orange-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded"
       >
         <button
           on:click={decrementQuantity}
-          class="w-7 h-7 flex items-center justify-center text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-800 rounded transition-colors text-lg font-bold"
+          class="w-7 h-7 flex items-center justify-center text-orange-600 dark:text-amber-400 hover:bg-orange-100 dark:hover:bg-amber-800 rounded transition-colors text-lg font-bold"
         >
           −
         </button>
@@ -71,19 +71,19 @@
         </span>
         <button
           on:click={incrementQuantity}
-          class="w-7 h-7 flex items-center justify-center text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-800 rounded transition-colors text-lg font-bold"
+          class="w-7 h-7 flex items-center justify-center text-orange-600 dark:text-amber-400 hover:bg-orange-100 dark:hover:bg-amber-800 rounded transition-colors text-lg font-bold"
         >
           +
         </button>
         <button
           on:click={() => onUpdateQuantity(editQuantityValue)}
-          class="ml-0.5 px-2 py-0.5 bg-primary-600 text-white rounded text-xs font-medium hover:bg-primary-700 transition-colors"
+          class="ml-0.5 px-2 py-0.5 bg-gradient-to-br from-orange-400 to-amber-400 text-white rounded text-xs font-medium hover:from-orange-500 hover:to-amber-500 transition-colors"
         >
           OK
         </button>
         <button
           on:click={onCancelEdit}
-          class="px-1.5 py-0.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-sm"
+          class="px-1.5 py-0.5 text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 text-sm"
         >
           ×
         </button>
@@ -91,14 +91,14 @@
     {:else}
       <button
         on:click={onStartEdit}
-        class="text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        class="text-sm font-medium text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors"
       >
         {item.quantity}
         {item.unit || 'st'}
       </button>
     {/if}
   {:else}
-    <span class="text-sm text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
+    <span class="text-sm text-stone-500 bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded">
       {item.quantity}
       {item.unit || 'st'}
     </span>

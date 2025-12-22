@@ -379,7 +379,7 @@
           {/if}
         </div>
       </div>
-      <a href="/" class="text-primary-600 hover:underline text-sm">← Tillbaka</a>
+      <a href="/" class="text-orange-500 hover:text-orange-600 dark:text-amber-400 dark:hover:text-amber-500 hover:underline text-sm">← Tillbaka</a>
     </header>
 
     {#if error}
@@ -392,9 +392,9 @@
     {#if loading}
       <div class="card p-8 text-center">
         <div
-          class="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full mx-auto"
+          class="animate-spin w-8 h-8 border-4 border-orange-400 border-t-transparent dark:border-amber-400 dark:border-t-transparent rounded-full mx-auto"
         ></div>
-        <p class="mt-4 text-gray-500">Laddar...</p>
+        <p class="mt-4 text-stone-500 dark:text-stone-400">Laddar...</p>
       </div>
     {:else}
       <!-- Add item form -->
@@ -475,7 +475,7 @@
 
       <!-- Pending items grouped by category -->
       {#if filteredPendingItems.length === 0}
-        <div class="card p-8 text-center text-gray-500">
+        <div class="card p-8 text-center text-stone-500 dark:text-stone-400">
           <p class="text-4xl mb-2">🎉</p>
           <p>{$t('groceries.emptyList')}</p>
         </div>
@@ -506,7 +506,7 @@
         <div class="mt-6">
           <button
             on:click={() => (showBought = !showBought)}
-            class="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-2 w-full"
+            class="flex items-center gap-2 text-stone-500 dark:text-stone-400 mb-2 w-full"
           >
             <span class="text-sm">{showBought ? '▼' : '▶'}</span>
             <span class="text-sm font-semibold">Köpta ({boughtItems.length})</span>

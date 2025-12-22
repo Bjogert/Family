@@ -129,7 +129,7 @@
   }
 </script>
 
-<div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+<div class="min-h-screen flex flex-col bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900">
   <!-- Fullscreen restore prompt -->
   {#if showFullscreenPrompt && !isFullscreen}
     <div class="bg-primary-600 text-white px-4 py-2 flex items-center justify-between">
@@ -137,7 +137,7 @@
       <div class="flex gap-2">
         <button
           on:click={toggleFullscreen}
-          class="px-3 py-1 bg-white text-primary-600 rounded text-sm font-medium"
+          class="px-3 py-1 bg-white dark:bg-stone-700 text-orange-500 dark:text-amber-400 rounded text-sm font-medium"
         >
           ⛶ Helskärm
         </button>
@@ -157,12 +157,12 @@
     </div>
   {:else if $authenticated && !publicPaths.some((p) => $page.url.pathname.startsWith(p))}
     <!-- Navigation header for authenticated users -->
-    <header class="bg-white dark:bg-gray-800 shadow-sm">
+    <header class="bg-gradient-to-r from-orange-100 via-amber-50 to-yellow-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900 shadow-md border-b border-orange-200 dark:border-stone-700">
       <div class="max-w-4xl mx-auto px-3 py-2">
         <!-- Mobile Layout -->
         <div class="md:hidden">
           <div class="flex items-center justify-between mb-2">
-            <a href="/" class="text-sm font-bold text-primary-600">{$t('nav.familyHub')}</a>
+            <a href="/" class="text-sm font-bold bg-gradient-to-r from-orange-400 to-amber-400 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">{$t('nav.familyHub')}</a>
             <div class="flex items-center gap-2">
               {#if canFullscreen}
                 <button
@@ -182,7 +182,7 @@
               </button>
               <button
                 on:click={handleLogout}
-                class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-[10px] px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded"
+                class="text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 text-[10px] px-2 py-1 bg-stone-100 dark:bg-stone-700 rounded"
               >
                 {$t('nav.logout')}
               </button>
@@ -212,7 +212,7 @@
               {#each languages as lang}
                 <button
                   on:click={() => switchLanguage(lang.code)}
-                  class="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  class="w-full px-3 py-2 text-left hover:bg-orange-50 dark:hover:bg-stone-700 flex items-center gap-2"
                 >
                   <span class="text-base">{lang.flag}</span>
                   <span class="text-xs">{lang.name}</span>
@@ -225,16 +225,16 @@
         <!-- Desktop Layout -->
         <div class="hidden md:flex items-center justify-between">
           <div>
-            <a href="/" class="text-lg font-bold text-primary-600">{$t('nav.familyHub')}</a>
+            <a href="/" class="text-lg font-bold bg-gradient-to-r from-orange-400 to-amber-400 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">{$t('nav.familyHub')}</a>
             {#if $currentFamily}
               <p class="text-xs text-gray-500">{$currentFamily.name}</p>
             {/if}
           </div>
           <nav class="flex items-center gap-4">
-            <a href="/groceries" class="text-gray-600 dark:text-gray-300 hover:text-primary-600">
+            <a href="/groceries" class="text-stone-600 dark:text-stone-300 hover:text-orange-500">
               {$t('nav.groceries')}
             </a>
-            <a href="/calendar" class="text-gray-600 dark:text-gray-300 hover:text-primary-600">
+            <a href="/calendar" class="text-stone-600 dark:text-stone-300 hover:text-orange-500">
               {$t('nav.calendar')}
             </a>
 
@@ -275,7 +275,7 @@
                   {#each languages as lang}
                     <button
                       on:click={() => switchLanguage(lang.code)}
-                      class="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                      class="w-full px-4 py-2 text-left hover:bg-orange-50 dark:hover:bg-stone-700 flex items-center gap-2"
                     >
                       <span class="text-xl">{lang.flag}</span>
                       <span class="text-sm">{lang.name}</span>

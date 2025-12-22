@@ -52,6 +52,7 @@ export interface FamilyMember {
     id: number;
     username: string;
     displayName: string | null;
+    hasPassword: boolean;
 }
 
 export async function getFamilyMembers(familyId: number): Promise<FamilyMember[]> {

@@ -1,11 +1,9 @@
-// In production, use the same host as the page. In dev, Vite proxies /api to localhost:3001
+// In production, use the same origin as the page (Cloudflare Tunnel routes /api/* to API server)
 function getApiBase(): string {
   if (typeof window === 'undefined') return '/api'; // SSR
-  // Use the same host/port as the page, but port 3001 for API
-  const host = window.location.hostname;
-  const isLocalhost = host === 'localhost' || host === '127.0.0.1';
-  if (isLocalhost) return '/api'; // Dev mode uses Vite proxy
-  return `http://${host}:3001/api`; // Production: same host, port 3001
+  // Always use /api - in dev, Vite proxies to localhost:3001
+  // In production, Cloudflare Tunnel routes /api/* to the API server
+  return '/api';
 }
 
 export class ApiError extends Error {

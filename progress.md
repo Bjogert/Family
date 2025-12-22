@@ -408,6 +408,50 @@ ssh robert@192.168.68.127 "journalctl -u family-hub-api -f"
 - Consider Cloudflare Tunnel for external access
 - Start Phase 2: Groceries CRUD
 
+### Session 7 - 2025-12-22 (Design System Implementation)
+**What we did:**
+- Applied pastel earthy color scheme across entire application
+- Updated all pages: Welcome, Login, Home (Dashboard), Groceries, Calendar
+- Updated all components: LoadingSpinner, GroceryItemRow, Layout
+- Redesigned home page as dashboard with left sidebar navigation
+- Removed duplicate "Familjehubben" text (kept only in header)
+- Styled header with pastel earthy gradient background
+- Moved API status to bottom corner (tiny text)
+- Removed placeholder activity feed data
+- Comprehensive search and replace of all old color classes:
+  - Replaced bg-blue, bg-indigo, bg-gray-50/100 with orange/amber/yellow gradients
+  - Replaced text-primary, border-primary with stone/orange variants
+  - Updated 20+ instances across layout, pages, and components
+  - Fixed duplicate button matches in GroceryItemRow component
+
+**Design System - Pastel Earthy Palette:**
+- Backgrounds: `from-orange-100 via-amber-50 to-yellow-100` (light)
+- Header: Matching gradient with `border-orange-200`
+- Cards: `bg-white/90` with `backdrop-blur-lg`, `border-orange-200`
+- Titles: `from-orange-400 to-amber-400` gradient text
+- Text: stone-800 (headers), stone-700 (body), stone-600 (secondary)
+- Buttons Primary: `from-orange-400 to-amber-400` gradient
+- Buttons Secondary: `from-orange-300 to-amber-300` gradient
+- Neutral buttons: `bg-stone-100` hover `bg-stone-200`
+- Links: `text-stone-600` hover `text-orange-500`
+- Borders: `border-orange-200`, focus `border-orange-400`
+- Loading spinner: `border-orange-200 border-t-orange-500`
+
+**Files modified:**
+- `apps/web/src/routes/+layout.svelte` - Header gradient, navigation colors
+- `apps/web/src/routes/+page.svelte` - Dashboard layout, removed duplicate title
+- `apps/web/src/routes/welcome/+page.svelte` - All 485 lines updated
+- `apps/web/src/routes/login/[familyId]/+page.svelte` - Already done in previous session
+- `apps/web/src/routes/groceries/+page.svelte` - Back link, spinner, text colors
+- `apps/web/src/routes/calendar/+page.svelte` - Back link, text colors
+- `apps/web/src/lib/components/LoadingSpinner.svelte` - Orange/amber spinner
+- `apps/web/src/lib/components/GroceryItemRow.svelte` - All buttons, badges, backgrounds
+
+**Next session:**
+- Consider Phase 2: Account deletion (backend + frontend)
+- Consider Phase 3: Email password recovery
+- Continue with Phase 5: Google Calendar integration
+
 ### Session 3 - 2025-12-21
 **What we did:**
 - Completed Phase 1: Authentication
@@ -466,4 +510,4 @@ ssh robert@192.168.68.127 "journalctl -u family-hub-api -f"
 
 ---
 
-*Last updated: 2025-12-21*
+*Last updated: 2025-12-22*
