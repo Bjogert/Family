@@ -5,6 +5,11 @@ export interface User {
   familyId: number;
   username: string;
   displayName: string | null;
+  role?: string | null;
+  birthday?: string | null;
+  gender?: string | null;
+  avatarEmoji?: string | null;
+  color?: string | null;
 }
 
 export interface Session {
@@ -19,7 +24,7 @@ export interface Session {
 // User operations
 export async function findUserByUsername(familyId: number, username: string): Promise<User | null> {
   const result = await pool.query(
-    `SELECT id, family_id, username, display_name
+    `SELECT id, family_id, username, display_name, role, birthday, gender, avatar_emoji, color
      FROM users
      WHERE family_id = $1 AND username = $2`,
     [familyId, username]
@@ -35,12 +40,17 @@ export async function findUserByUsername(familyId: number, username: string): Pr
     familyId: row.family_id,
     username: row.username,
     displayName: row.display_name,
+    role: row.role,
+    birthday: row.birthday,
+    gender: row.gender,
+    avatarEmoji: row.avatar_emoji,
+    color: row.color,
   };
 }
 
 export async function findUserById(id: number): Promise<User | null> {
   const result = await pool.query(
-    `SELECT id, family_id, username, display_name
+    `SELECT id, family_id, username, display_name, role, birthday, gender, avatar_emoji, color
      FROM users
      WHERE id = $1`,
     [id]
@@ -56,6 +66,11 @@ export async function findUserById(id: number): Promise<User | null> {
     familyId: row.family_id,
     username: row.username,
     displayName: row.display_name,
+    role: row.role,
+    birthday: row.birthday,
+    gender: row.gender,
+    avatarEmoji: row.avatar_emoji,
+    color: row.color,
   };
 }
 

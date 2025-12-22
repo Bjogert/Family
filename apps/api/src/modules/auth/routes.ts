@@ -111,6 +111,11 @@ export default async function authRoutes(app: FastifyInstance) {
         id: user.id,
         username: user.username,
         displayName: user.displayName,
+        role: user.role || null,
+        birthday: user.birthday || null,
+        gender: user.gender || null,
+        avatarEmoji: user.avatarEmoji || null,
+        color: user.color || null,
       } : null,
     });
   });

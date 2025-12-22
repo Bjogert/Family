@@ -1,10 +1,34 @@
 import { z } from 'zod';
 
+// User roles
+export const UserRoleSchema = z.enum(['pappa', 'mamma', 'barn', 'bebis', 'annan']);
+
+// Gender options
+export const GenderSchema = z.enum(['pojke', 'flicka', 'annat']);
+
 // User type
 export const UserSchema = z.object({
   id: z.number(),
   username: z.string(),
   displayName: z.string().nullable(),
+  role: UserRoleSchema.nullable().optional(),
+  birthday: z.string().nullable().optional(), // ISO date string
+  gender: GenderSchema.nullable().optional(),
+  avatarEmoji: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
+  hasPassword: z.boolean().optional(),
+});
+
+// User creation/update schema
+export const CreateUserSchema = z.object({
+  username: z.string().min(2).max(50),
+  password: z.string().min(4).optional(),
+  displayName: z.string().min(1).max(100),
+  role: UserRoleSchema.optional(),
+  birthday: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), // YYYY-MM-DD
+  gender: GenderSchema.optional(),
+  avatarEmoji: z.string().max(10).optional(),
+  color: z.string().max(20).optional(),
 });
 
 // Login request

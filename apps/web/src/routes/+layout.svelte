@@ -14,12 +14,24 @@
   import { t, setLanguage, languages, currentLanguage } from '$lib/i18n';
   import InstallPrompt from '$lib/components/InstallPrompt.svelte';
 
+  // Color mapping for user indicators
+  const colorClasses: Record<string, string> = {
+    orange: 'bg-orange-400',
+    amber: 'bg-amber-400',
+    rose: 'bg-rose-400',
+    green: 'bg-emerald-400',
+    blue: 'bg-sky-400',
+    purple: 'bg-violet-400',
+    stone: 'bg-stone-400',
+  };
+
   let showLanguageMenu = false;
   let isFullscreen = false;
   let canFullscreen = false;
   let showFullscreenPrompt = false;
 
   $: currentLangData = languages.find((l) => l.code === $currentLanguage);
+  $: userColor = colorClasses[$currentUser?.color || 'orange'];
 
   // Pages that don't require authentication
   const publicPaths = ['/welcome', '/login'];
@@ -168,11 +180,16 @@
         <!-- Mobile Layout -->
         <div class="md:hidden">
           <div class="flex items-center justify-between mb-2">
-            <a
-              href="/"
-              class="text-sm font-bold bg-gradient-to-r from-orange-400 to-amber-400 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent"
-              >{$t('nav.familyHub')}</a
-            >
+            <div class="flex items-center gap-2">
+              <a
+                href="/"
+                class="text-sm font-bold bg-gradient-to-r from-orange-400 to-amber-400 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent"
+                >{$t('nav.familyHub')}</a
+              >
+              <!-- User indicator -->
+              <span class="text-base">{$currentUser?.avatarEmoji || '👤'}</span>
+              <span class="{userColor} w-2 h-2 rounded-full"></span>
+            </div>
             <div class="flex items-center gap-2">
               {#if canFullscreen}
                 <button
@@ -252,8 +269,12 @@
               {$t('nav.calendar')}
             </a>
 
-            <div class="text-sm text-gray-600 dark:text-gray-400">
-              {$currentUser?.displayName || $currentUser?.username || 'User'}
+            <div class="flex items-center gap-2">
+              <span class="text-xl">{$currentUser?.avatarEmoji || '👤'}</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">
+                {$currentUser?.displayName || $currentUser?.username || 'User'}
+              </span>
+              <span class="{userColor} w-2 h-2 rounded-full"></span>
             </div>
             <button
               on:click={handleLogout}

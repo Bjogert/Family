@@ -52,6 +52,11 @@ export interface FamilyMember {
     id: number;
     username: string;
     displayName: string | null;
+    role?: string | null;
+    birthday?: string | null;
+    gender?: string | null;
+    avatarEmoji?: string | null;
+    color?: string | null;
     hasPassword: boolean;
 }
 
@@ -64,9 +69,14 @@ export async function createFamilyMember(
     familyId: number,
     username: string,
     password?: string,
-    displayName?: string
+    displayName?: string,
+    role?: string,
+    birthday?: string,
+    gender?: string,
+    avatarEmoji?: string,
+    color?: string
 ): Promise<FamilyMember> {
-    return familyRepo.createFamilyMember(familyId, username, password, displayName);
+    return familyRepo.createFamilyMember(familyId, username, password, displayName, role, birthday, gender, avatarEmoji, color);
 }
 
 // Verify family password

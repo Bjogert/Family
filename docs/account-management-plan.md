@@ -1,14 +1,216 @@
-﻿# Account Management Features Plan
+﻿# Account Management & User Profile Enhancement Plan
 
 ## Overview
-This document outlines the implementation plan for three account management features:
-1. Account/Family deletion
-2. Password recovery via email
-3. Simplified member password UI (optional passwords hidden by default)
+This document outlines the implementation plan for enhanced user profiles and account management:
+1. **Enhanced User Profiles** - Role, birthday, gender, avatar, color, nicknames
+2. **Improved Family Creation** - Password confirmation, better member forms
+3. Account/Family deletion
+4. Password recovery via email
 
 ---
 
-## 1. Account/Family Deletion
+## 1. Enhanced User Profiles & Family Creation
+
+### Requirements
+- **Password Confirmation**: Two matching password fields for family password
+- **Single Name Field**: First name only (no last name - family name serves as last name)
+- **Family Roles**: Pappa, Mamma, Barn, Bebis, etc.
+- **Birthday**: Full date (YYYY-MM-DD) for auto-age calculation
+- **Gender**: For children (optional for parents)
+- **Avatar**: Emoji selector for profile picture
+- **Color Preference**: Personal color for UI distinction (calendar, grocery lists, etc.)
+- **Display Name/Nickname**: 
+  - Parents: Dropdown with role-based options (Far/Pappa/Farsan for Pappa, Mor/Mamma/Morsan for Mamma)
+  - Children: Use first name or custom nickname
+
+### Database Schema Changes
+
+#### Update `users` table:
+```sql
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS birthday DATE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(20);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_emoji VARCHAR(10);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS color VARCHAR(20);
+-- display_name already exists, will be used for nicknames
+```
+
+**User Roles:**
+- `pappa` - Father
+- `mamma` - Mother
+- `barn` - Child
+- `bebis` - Baby
+- `annan` - Other
+
+**Colors (Pastel Earthy Palette):**
+- `orange` - Orange tones
+- `amber` - Amber/yellow tones
+- `rose` - Pink/rose tones
+- `green` - Green tones
+- `blue` - Blue tones
+- `purple` - Purple tones
+- `stone` - Gray/neutral tones
+
+### Implementation Steps
+
+#### 1. Backend (API)
+
+**Files to Modify:**
+- `apps/api/src/db/index.ts` - Add new columns to users table
+- `packages/shared/src/types/auth.ts` - Update User type
+- `packages/shared/src/schemas/auth.ts` - Add validation for new fields
+- `apps/api/src/modules/auth/repository.ts` - Include new fields in queries
+- `apps/api/src/modules/auth/service.ts` - Handle new fields in user creation
+- `apps/api/src/modules/families/repository.ts` - Return new fields for family members
+
+**New Type Definition:**
+```typescript
+interface User {
+  id: number;
+  familyId: number;
+  username: string;
+  displayName: string;
+  role?: 'pappa' | 'mamma' | 'barn' | 'bebis' | 'annan';
+  birthday?: Date;
+  gender?: 'pojke' | 'flicka' | 'annat';
+  avatarEmoji?: string;
+  color?: string;
+  hasPassword: boolean;
+  createdAt: Date;
+  lastLogin?: Date;
+}
+```
+
+**Validation Schema:**
+```typescript
+createUserSchema = z.object({
+  username: z.string().min(2).max(50),
+  password: z.string().min(4).optional(),
+  displayName: z.string().min(1).max(100),
+  role: z.enum(['pappa', 'mamma', 'barn', 'bebis', 'annan']).optional(),
+  birthday: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  gender: z.enum(['pojke', 'flicka', 'annat']).optional(),
+  avatarEmoji: z.string().max(10).optional(),
+  color: z.string().max(20).optional(),
+});
+```
+
+#### 2. Frontend (Web)
+
+**Create Reusable Components:**
+
+1. **`EmojiPicker.svelte`** - Emoji selector component
+   - Categories: Faces (😀😃😄😁), Animals (🐶🐱🐭🐹), Objects (⚽🎨🎮🎸)
+   - Simple grid layout with click selection
+   - Store selected emoji as string
+
+2. **`ColorPicker.svelte`** - Color selector component
+   - Predefined pastel earthy colors matching theme
+   - Visual color swatches with selection indicator
+   - Store color name (not hex)
+
+3. **`NicknameDropdown.svelte`** - Role-based nickname selector
+   - For Pappa: Far, Pappa, Farsan, Papa, Paps
+   - For Mamma: Mor, Mamma, Morsan, Mama, Mams
+   - For Barn/Bebis: Use first name or custom input
+   - Allow custom entry
+
+**Update Welcome Page (`apps/web/src/routes/welcome/+page.svelte`):**
+
+**Family Password Section:**
+```svelte
+<label>Familjens Lösenord</label>
+<input type="password" bind:value={familyPassword} />
+
+<label>Bekräfta Lösenord</label>
+<input type="password" bind:value={familyPasswordConfirm} />
+{#if familyPassword !== familyPasswordConfirm}
+  <span class="error">Lösenorden matchar inte</span>
+{/if}
+```
+
+**Member Creation Form:**
+```svelte
+<label>Förnamn</label>
+<input type="text" bind:value={member.name} />
+
+<label>Familjeroll</label>
+<select bind:value={member.role}>
+  <option value="pappa">👨 Pappa</option>
+  <option value="mamma">👩 Mamma</option>
+  <option value="barn">🧒 Barn</option>
+  <option value="bebis">👶 Bebis</option>
+  <option value="annan">🙂 Annan</option>
+</select>
+
+<label>Födelsedatum</label>
+<input type="date" bind:value={member.birthday} />
+
+{#if member.role === 'barn' || member.role === 'bebis'}
+  <label>Kön</label>
+  <select bind:value={member.gender}>
+    <option value="">Välj...</option>
+    <option value="pojke">Pojke</option>
+    <option value="flicka">Flicka</option>
+    <option value="annat">Annat</option>
+  </select>
+{/if}
+
+<label>Avatar</label>
+<EmojiPicker bind:selected={member.avatarEmoji} />
+
+<label>Färg</label>
+<ColorPicker bind:selected={member.color} />
+
+<label>Visningsnamn/Smeknamn</label>
+{#if member.role === 'pappa' || member.role === 'mamma'}
+  <NicknameDropdown role={member.role} bind:value={member.displayName} />
+{:else}
+  <input type="text" bind:value={member.displayName} placeholder={member.name} />
+{/if}
+
+<details>
+  <summary class="text-sm text-stone-500">🔒 Lägg till lösenord (valfritt)</summary>
+  <label>Lösenord</label>
+  <input type="password" bind:value={member.password} />
+  <label>Bekräfta Lösenord</label>
+  <input type="password" bind:value={member.passwordConfirm} />
+  {#if member.password !== member.passwordConfirm}
+    <span class="error">Lösenorden matchar inte</span>
+  {/if}
+</details>
+```
+
+**Update Login Page (`apps/web/src/routes/login/[familyId]/+page.svelte`):**
+- Display avatar emoji in member cards
+- Show color as border or background accent
+- Display nickname (displayName) prominently
+- Calculate and show age from birthday
+
+**Update Navigation Header (`apps/web/src/routes/+layout.svelte`):**
+- Show logged-in user's emoji avatar
+- Use user's color for accent/border
+- Display nickname instead of username
+
+### Files to Create
+- `apps/web/src/lib/components/EmojiPicker.svelte`
+- `apps/web/src/lib/components/ColorPicker.svelte`
+- `apps/web/src/lib/components/NicknameDropdown.svelte`
+
+### Files to Modify
+- `apps/api/src/db/index.ts`
+- `packages/shared/src/types/auth.ts`
+- `packages/shared/src/schemas/auth.ts`
+- `apps/api/src/modules/auth/repository.ts`
+- `apps/api/src/modules/auth/service.ts`
+- `apps/api/src/modules/families/repository.ts`
+- `apps/web/src/routes/welcome/+page.svelte`
+- `apps/web/src/routes/login/[familyId]/+page.svelte`
+- `apps/web/src/routes/+layout.svelte`
+
+---
+
+## 2. Account/Family Deletion
 
 ### Requirements
 - Family admins can delete the entire family (and all members)
@@ -53,7 +255,7 @@ This document outlines the implementation plan for three account management feat
 
 ---
 
-## 2. Password Recovery via Email
+## 3. Password Recovery via Email
 
 ### Requirements
 - Users can request password reset
@@ -135,13 +337,15 @@ This document outlines the implementation plan for three account management feat
 
 ---
 
-## 3. Simplified Member Password UI
+## 4. Simplified Member Password UI (COMPLETED ✅)
 
 ### Requirements
 - Default: No password for individual members
 - Password option hidden by default
 - Small "Add password" button to reveal password field
 - Clean, uncluttered UI
+
+**Status: ✅ Completed in earlier sessions**
 
 ### Implementation Steps
 
@@ -186,22 +390,38 @@ Password:    [___________]  👁
 
 ## Implementation Priority
 
-### Phase 1 (Quick wins) ⚡
-- [x] Loading spinners (done!)
-- [ ] **Simplified member password UI** - Frontend only, ~30 min
+### Phase 1 (Enhanced User Profiles) 🎨 **← START HERE**
+- [ ] **Update database schema** - Add role, birthday, gender, avatar_emoji, color columns
+- [ ] **Update backend types and schemas** - TypeScript types, Zod validation
+- [ ] **Update repositories and services** - Handle new fields in queries/creation
+- [ ] **Create EmojiPicker component** - Simple emoji selector
+- [ ] **Create ColorPicker component** - Pastel earthy color swatches
+- [ ] **Create NicknameDropdown component** - Role-based nickname options
+- [ ] **Update welcome page** - Password confirmation, enhanced member form
+- [ ] **Update login page** - Show avatars, colors, nicknames, ages
+- [ ] **Update navigation header** - Display user avatar and color
+- [ ] **Test and deploy** - Verify all features work correctly
 
-### Phase 2 (Medium effort) 🔧
+**Estimated Time:** ~3-4 hours
+
+### Phase 2 (Account Deletion) 🔧
 - [ ] **Account deletion** - Backend + Frontend, ~2 hours
   - Delete family
   - Delete individual members
 
-### Phase 3 (Larger effort) 📧
+### Phase 3 (Password Recovery) 📧
 - [ ] **Password recovery via email** - ~4 hours
   - Database changes
   - Email service setup
   - API endpoints
   - Frontend pages
   - Email templates
+
+### Phase 4 (Loading Spinners) ⚡
+- [x] ✅ Loading spinners (DONE!)
+
+### Phase 5 (Simplified Passwords) ⚡
+- [x] ✅ Simplified member password UI (DONE!)
 
 ---
 
@@ -224,9 +444,12 @@ Password:    [___________]  👁
 
 ## Next Steps
 
-1. ✅ Review this plan
-2. Start with **Phase 1** - Simplified member password UI
-3. Then implement **Phase 2** - Account deletion
-4. Finally **Phase 3** - Email password recovery
+1. ✅ Review and update this plan with enhanced user profile requirements
+2. **START: Phase 1 - Enhanced User Profiles** (database → backend → components → pages)
+3. Then implement Phase 2 - Account deletion
+4. Finally Phase 3 - Email password recovery
 
-Let me know which feature you'd like to start with!
+**Current Focus: Phase 1 - Enhanced User Profiles**
+- Adds personalization and better UX to family member management
+- Foundation for future features (calendar color coding, avatar displays, etc.)
+- Makes the app feel more personal and family-oriented

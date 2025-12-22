@@ -15,6 +15,11 @@ export interface LoginResult {
     id: number;
     username: string;
     displayName: string | null;
+    role: string | null;
+    birthday: string | null;
+    gender: string | null;
+    avatarEmoji: string | null;
+    color: string | null;
   };
 }
 
@@ -59,6 +64,11 @@ export async function loginUser(
       id: user.id,
       username: user.username,
       displayName: user.displayName,
+      role: user.role || null,
+      birthday: user.birthday || null,
+      gender: user.gender || null,
+      avatarEmoji: user.avatarEmoji || null,
+      color: user.color || null,
     },
   };
 }

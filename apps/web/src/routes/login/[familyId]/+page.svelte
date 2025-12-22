@@ -10,6 +10,45 @@
     username: string;
     displayName: string | null;
     hasPassword: boolean;
+    role: string | null;
+    birthday: string | null;
+    gender: string | null;
+    avatarEmoji: string | null;
+    color: string | null;
+  }
+
+  // Color mapping for member cards
+  const colorClasses: Record<string, string> = {
+    orange: 'from-orange-300 to-amber-300 hover:from-orange-400 hover:to-amber-400',
+    amber: 'from-amber-300 to-yellow-300 hover:from-amber-400 hover:to-yellow-400',
+    rose: 'from-rose-300 to-pink-300 hover:from-rose-400 hover:to-pink-400',
+    green: 'from-emerald-300 to-teal-300 hover:from-emerald-400 hover:to-teal-400',
+    blue: 'from-sky-300 to-blue-300 hover:from-sky-400 hover:to-blue-400',
+    purple: 'from-violet-300 to-purple-300 hover:from-violet-400 hover:to-purple-400',
+    stone: 'from-stone-300 to-zinc-300 hover:from-stone-400 hover:to-zinc-400',
+  };
+
+  function calculateAge(birthday: string | null): number | null {
+    if (!birthday) return null;
+    const birthDate = new Date(birthday);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  function getRoleLabel(role: string | null): string {
+    switch (role) {
+      case 'pappa': return 'Pappa';
+      case 'mamma': return 'Mamma';
+      case 'barn': return 'Barn';
+      case 'bebis': return 'Bebis';
+      case 'annan': return 'Annan';
+      default: return '';
+    }
   }
 
   let familyId: number = 0;
@@ -102,11 +141,11 @@
           </h1>
           {#if familyName}
             <p class="text-xl lg:text-2xl text-stone-700 dark:text-stone-300 font-medium">
-              Welcome to {familyName}
+              Välkommen till {familyName}
             </p>
-            <p class="text-stone-600 dark:text-stone-400 mt-4">Select your profile to continue</p>
+            <p class="text-stone-600 dark:text-stone-400 mt-4">Välj din profil för att fortsätta</p>
           {:else}
-            <p class="text-xl text-stone-600 dark:text-stone-400">Loading...</p>
+            <p class="text-xl text-stone-600 dark:text-stone-400">Laddar...</p>
           {/if}
         </div>
 
@@ -126,7 +165,7 @@
               clip-rule="evenodd"
             />
           </svg>
-          Back to Family Selection
+          Tillbaka till familjeväljaren
         </button>
       </div>
 
@@ -138,21 +177,21 @@
           {#if loadingFamily}
             <!-- Loading spinner while fetching family data -->
             <div class="py-8">
-              <LoadingSpinner size="lg" text="Loading family members..." />
+              <LoadingSpinner size="lg" text="Laddar familjemedlemmar..." />
             </div>
           {:else if familyMembers.length === 0 && familyName}
             <div class="text-center text-stone-600 dark:text-stone-400 py-8">
-              <p>No family members found</p>
+              <p>Inga familjemedlemmar hittades</p>
             </div>
           {:else if selectedMemberForPassword}
             <!-- Password input modal/overlay -->
+            {@const selectedMember = familyMembers.find((m) => m.username === selectedMemberForPassword)}
             <form on:submit|preventDefault={handleSubmit} class="space-y-6">
               <div class="text-center mb-6">
-                <div class="text-5xl mb-4">🔐</div>
+                <div class="text-5xl mb-4">{selectedMember?.avatarEmoji || '🔐'}</div>
                 <p class="text-sm text-stone-600 dark:text-stone-400">
-                  Logging in as <span class="font-semibold text-stone-900 dark:text-white"
-                    >{familyMembers.find((m) => m.username === selectedMemberForPassword)
-                      ?.displayName || selectedMemberForPassword}</span
+                  Loggar in som <span class="font-semibold text-stone-900 dark:text-white"
+                    >{selectedMember?.displayName || selectedMemberForPassword}</span
                   >
                 </p>
               </div>
@@ -162,7 +201,7 @@
                   for="password"
                   class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2"
                 >
-                  Password
+                  Lösenord
                 </label>
                 <div class="relative">
                   <input
@@ -171,7 +210,7 @@
                     value={password}
                     on:input={(e) => (password = e.currentTarget.value)}
                     class="input w-full pr-12 bg-white dark:bg-stone-700"
-                    placeholder="Enter password"
+                    placeholder="Ange lösenord"
                     disabled={$loading}
                   />
                   <button
@@ -227,9 +266,9 @@
 
               <button type="submit" class="btn-primary w-full" disabled={$loading}>
                 {#if $loading}
-                  Logging in...
+                  Loggar in...
                 {:else}
-                  Log in
+                  Logga in
                 {/if}
               </button>
 
@@ -238,18 +277,20 @@
                 on:click={cancelPasswordPrompt}
                 class="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               >
-                ← Cancel
+                ← Avbryt
               </button>
             </form>
           {:else}
             <!-- Member selection view -->
             <div class="space-y-3">
               <p class="text-sm font-medium text-stone-600 dark:text-stone-400 mb-4">
-                Who are you?
+                Vem är du?
               </p>
               {#each familyMembers as member (member.id)}
+                {@const age = calculateAge(member.birthday)}
+                {@const cardColor = colorClasses[member.color || 'orange']}
                 <div
-                  class="group relative overflow-hidden bg-gradient-to-br from-orange-300 to-amber-300 hover:from-orange-400 hover:to-amber-400 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                  class="group relative overflow-hidden bg-gradient-to-br {cardColor} rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
                 >
                   <div class="p-4 flex items-center justify-between">
                     <button
@@ -260,9 +301,21 @@
                       disabled={$loading}
                       class="flex-1 text-left disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <div class="text-lg font-semibold text-stone-800 flex items-center gap-3">
-                        <span class="text-2xl">👤</span>
-                        <span>{member.displayName || member.username}</span>
+                      <div class="flex items-center gap-3">
+                        <span class="text-3xl">{member.avatarEmoji || '👤'}</span>
+                        <div>
+                          <div class="text-lg font-semibold text-stone-800">
+                            {member.displayName || member.username}
+                          </div>
+                          <div class="text-sm text-stone-600 flex items-center gap-2">
+                            {#if member.role}
+                              <span>{getRoleLabel(member.role)}</span>
+                            {/if}
+                            {#if age !== null}
+                              <span class="opacity-75">• {age} år</span>
+                            {/if}
+                          </div>
+                        </div>
                       </div>
                     </button>
                     {#if member.hasPassword}
@@ -283,7 +336,7 @@
                             clip-rule="evenodd"
                           />
                         </svg>
-                        Password
+                        Lösenord
                       </button>
                     {/if}
                   </div>
@@ -316,7 +369,7 @@
               clip-rule="evenodd"
             />
           </svg>
-          Back to Family Selection
+          Tillbaka till familjeväljaren
         </button>
       </div>
     </div>

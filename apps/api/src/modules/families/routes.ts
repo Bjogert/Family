@@ -10,6 +10,11 @@ interface CreateUserBody {
     username: string;
     password?: string;
     displayName?: string;
+    role?: string;
+    birthday?: string;
+    gender?: string;
+    avatarEmoji?: string;
+    color?: string;
 }
 
 interface SearchFamiliesQuery {
@@ -149,7 +154,7 @@ export default async function familyRoutes(app: FastifyInstance) {
         '/:id/users',
         async (request: FastifyRequest<{ Params: { id: string }; Body: CreateUserBody }>, reply: FastifyReply) => {
             const { id } = request.params;
-            const { username, password, displayName } = request.body;
+            const { username, password, displayName, role, birthday, gender, avatarEmoji, color } = request.body;
             const familyId = parseInt(id, 10);
 
             if (isNaN(familyId)) {
@@ -167,7 +172,9 @@ export default async function familyRoutes(app: FastifyInstance) {
             }
 
             try {
-                const user = await familyService.createFamilyMember(familyId, username, password, displayName);
+                const user = await familyService.createFamilyMember(
+                    familyId, username, password, displayName, role, birthday, gender, avatarEmoji, color
+                );
                 return reply.status(201).send({
                     success: true,
                     user,

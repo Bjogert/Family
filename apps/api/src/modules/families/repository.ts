@@ -69,12 +69,18 @@ export interface FamilyMember {
     id: number;
     username: string;
     displayName: string | null;
+    role?: string | null;
+    birthday?: string | null;
+    gender?: string | null;
+    avatarEmoji?: string | null;
+    color?: string | null;
     hasPassword: boolean;
 }
 
 export async function getFamilyMembers(familyId: number): Promise<FamilyMember[]> {
     const result = await pool.query(
         `SELECT id, username, display_name as "displayName",
+         role, birthday, gender, avatar_emoji as "avatarEmoji", color,
          (password_hash IS NOT NULL AND password_hash != '') as "hasPassword"
      FROM users
      WHERE family_id = $1
@@ -89,7 +95,12 @@ export async function createFamilyMember(
     familyId: number,
     username: string,
     password?: string,
-    displayName?: string
+    displayName?: string,
+    role?: string,
+    birthday?: string,
+    gender?: string,
+    avatarEmoji?: string,
+    color?: string
 ): Promise<FamilyMember> {
     // Check if user already exists in this family
     const existingUser = await pool.query(
@@ -109,10 +120,12 @@ export async function createFamilyMember(
     }
 
     const result = await pool.query(
-        `INSERT INTO users (family_id, username, password_hash, display_name)
-     VALUES ($1, $2, $3, $4)
-     RETURNING id, username, display_name as "displayName"`,
-        [familyId, username, passwordHash, displayName || username]
+        `INSERT INTO users (family_id, username, password_hash, display_name, role, birthday, gender, avatar_emoji, color)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     RETURNING id, username, display_name as "displayName", role, birthday, gender, 
+               avatar_emoji as "avatarEmoji", color,
+               (password_hash IS NOT NULL AND password_hash != '') as "hasPassword"`,
+        [familyId, username, passwordHash, displayName || username, role, birthday, gender, avatarEmoji, color]
     );
 
     return result.rows[0];

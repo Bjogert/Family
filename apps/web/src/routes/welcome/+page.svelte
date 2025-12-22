@@ -3,6 +3,45 @@
   import { onMount } from 'svelte';
   import { get, post } from '$lib/api/client';
   import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+  import EmojiPicker from '$lib/components/EmojiPicker.svelte';
+  import ColorPicker from '$lib/components/ColorPicker.svelte';
+
+  interface FamilyMember {
+    name: string;
+    password: string;
+    passwordConfirm: string;
+    displayName: string;
+    role: string;
+    birthday: string;
+    gender: string;
+    avatarEmoji: string;
+    color: string;
+    showPassword: boolean;
+    showPasswordFields: boolean;
+    showEmojiPicker: boolean;
+    showColorPicker: boolean;
+  }
+
+  const defaultMember = (): FamilyMember => ({
+    name: '',
+    password: '',
+    passwordConfirm: '',
+    displayName: '',
+    role: '',
+    birthday: '',
+    gender: '',
+    avatarEmoji: '😊',
+    color: 'orange',
+    showPassword: false,
+    showPasswordFields: false,
+    showEmojiPicker: false,
+    showColorPicker: false,
+  });
+
+  const roleNicknames: Record<string, string[]> = {
+    pappa: ['Pappa', 'Far', 'Farsan', 'Papa', 'Paps'],
+    mamma: ['Mamma', 'Mor', 'Morsan', 'Mama', 'Mams'],
+  };
 
   let families: Array<{ id: number; name: string }> = [];
   let showCreateForm = false;
@@ -11,15 +50,10 @@
   let showFamilyPassword = false;
   let newFamilyName = '';
   let newFamilyPassword = '';
+  let newFamilyPasswordConfirm = '';
   let showNewFamilyPassword = false;
-  let newFamilyMembers: Array<{
-    username: string;
-    password: string;
-    displayName: string;
-    showPassword: boolean;
-  }> = [{ username: '', password: '', displayName: '', showPassword: false }];
-  let showMemberPasswords: boolean[] = [];
-  let showPasswordFields: boolean[] = [false];
+  let showNewFamilyPasswordConfirm = false;
+  let newFamilyMembers: FamilyMember[] = [defaultMember()];
   let loading = false;
   let loadingFamilies = true;
   let error = '';
@@ -69,42 +103,58 @@
   }
 
   function addMemberField() {
-    newFamilyMembers = [
-      ...newFamilyMembers,
-      { username: '', password: '', displayName: '', showPassword: false },
-    ];
-    showPasswordFields = [...showPasswordFields, false];
+    newFamilyMembers = [...newFamilyMembers, defaultMember()];
   }
 
   function removeMemberField(index: number) {
     newFamilyMembers = newFamilyMembers.filter((_, i) => i !== index);
-    showPasswordFields = showPasswordFields.filter((_, i) => i !== index);
   }
 
   function togglePasswordField(index: number) {
-    showPasswordFields[index] = !showPasswordFields[index];
+    newFamilyMembers[index].showPasswordFields = !newFamilyMembers[index].showPasswordFields;
     // If hiding and password is empty, clear it
-    if (!showPasswordFields[index] && !newFamilyMembers[index].password) {
+    if (!newFamilyMembers[index].showPasswordFields && !newFamilyMembers[index].password) {
       newFamilyMembers[index].password = '';
+      newFamilyMembers[index].passwordConfirm = '';
     }
+  }
+
+  function getDisplayNameForRole(member: FamilyMember): string {
+    if (member.displayName) return member.displayName;
+    if (member.role === 'pappa') return 'Pappa';
+    if (member.role === 'mamma') return 'Mamma';
+    return member.name;
   }
 
   async function createFamily() {
     if (!newFamilyName.trim()) {
-      error = 'Family name is required';
+      error = 'Familjenamn krävs';
       return;
     }
 
     if (!newFamilyPassword.trim()) {
-      error = 'Family password is required';
+      error = 'Familjens lösenord krävs';
       return;
     }
 
-    // Validate at least one member with username
-    const validMembers = newFamilyMembers.filter((m) => m.username.trim());
-    if (validMembers.length === 0) {
-      error = 'At least one family member is required';
+    if (newFamilyPassword !== newFamilyPasswordConfirm) {
+      error = 'Lösenorden matchar inte';
       return;
+    }
+
+    // Validate at least one member with name
+    const validMembers = newFamilyMembers.filter((m) => m.name.trim());
+    if (validMembers.length === 0) {
+      error = 'Minst en familjemedlem krävs';
+      return;
+    }
+
+    // Validate member passwords match
+    for (const member of validMembers) {
+      if (member.password && member.password !== member.passwordConfirm) {
+        error = `Lösenorden matchar inte för ${member.name}`;
+        return;
+      }
     }
 
     loading = true;
@@ -118,26 +168,32 @@
         password: newFamilyPassword,
       });
 
-      // Then add all members
+      // Then add all members with new fields
       for (const member of validMembers) {
         await post(`/families/${familyData.family.id}/users`, {
-          username: member.username.trim(),
+          username: member.name.trim().toLowerCase().replace(/\s+/g, ''),
           password: member.password || undefined,
-          displayName: member.displayName.trim() || member.username.trim(),
+          displayName: getDisplayNameForRole(member),
+          role: member.role || undefined,
+          birthday: member.birthday || undefined,
+          gender: member.gender || undefined,
+          avatarEmoji: member.avatarEmoji || undefined,
+          color: member.color || undefined,
         });
       }
 
-      successMessage = `Family "${familyData.family.name}" created successfully with ${validMembers.length} member(s)!`;
+      successMessage = `Familjen "${familyData.family.name}" skapades med ${validMembers.length} medlem(mar)!`;
       newFamilyName = '';
       newFamilyPassword = '';
-      newFamilyMembers = [{ username: '', password: '', displayName: '', showPassword: false }];
+      newFamilyPasswordConfirm = '';
+      newFamilyMembers = [defaultMember()];
       showCreateForm = false;
       await loadFamilies();
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'statusCode' in err && err.statusCode === 409) {
-        error = 'A family with this name already exists';
+        error = 'En familj med detta namn finns redan';
       } else {
-        error = 'Failed to create family';
+        error = 'Kunde inte skapa familjen';
       }
     } finally {
       loading = false;
@@ -291,14 +347,14 @@
               for="familyPassword"
               class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
             >
-              Family Password
+              Familjens Lösenord
             </label>
             <div class="relative">
               <input
                 id="familyPassword"
                 name="familyPassword"
                 type={showNewFamilyPassword ? 'text' : 'password'}
-                placeholder="Password for this family"
+                placeholder="Lösenord för familjen"
                 value={newFamilyPassword}
                 on:input={(e) => (newFamilyPassword = e.currentTarget.value)}
                 class="w-full px-4 py-2 pr-12 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
@@ -349,11 +405,52 @@
             </div>
           </div>
 
+          <!-- Password Confirmation -->
+          <div>
+            <label
+              for="familyPasswordConfirm"
+              class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
+            >
+              Bekräfta Lösenord
+            </label>
+            <div class="relative">
+              <input
+                id="familyPasswordConfirm"
+                name="familyPasswordConfirm"
+                type={showNewFamilyPasswordConfirm ? 'text' : 'password'}
+                placeholder="Upprepa lösenordet"
+                value={newFamilyPasswordConfirm}
+                on:input={(e) => (newFamilyPasswordConfirm = e.currentTarget.value)}
+                class="w-full px-4 py-2 pr-12 border {newFamilyPassword && newFamilyPasswordConfirm && newFamilyPassword !== newFamilyPasswordConfirm ? 'border-red-400' : 'border-orange-200'} dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                on:click={() => (showNewFamilyPasswordConfirm = !showNewFamilyPasswordConfirm)}
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300"
+              >
+                {#if showNewFamilyPasswordConfirm}
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
+                  </svg>
+                {:else}
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                {/if}
+              </button>
+            </div>
+            {#if newFamilyPassword && newFamilyPasswordConfirm && newFamilyPassword !== newFamilyPasswordConfirm}
+              <p class="text-red-500 text-sm mt-1">Lösenorden matchar inte</p>
+            {/if}
+          </div>
+
           <div class="border-t border-orange-200 dark:border-stone-600 pt-4">
             <div class="flex items-center justify-between mb-2">
               <!-- svelte-ignore a11y-label-has-associated-control -->
               <label class="block text-sm font-medium text-stone-700 dark:text-stone-300"
-                >Family Members</label
+                >Familjemedlemmar</label
               >
               <button
                 type="button"
@@ -361,18 +458,19 @@
                 class="text-sm text-orange-500 hover:text-orange-600 dark:text-amber-400 dark:hover:text-amber-500 font-medium"
                 disabled={loading}
               >
-                + Add Member
+                + Lägg till medlem
               </button>
             </div>
 
             {#each newFamilyMembers as member, index (index)}
               <div
-                class="mb-3 p-3 bg-orange-50 dark:bg-stone-700/50 rounded-lg border border-orange-100 dark:border-stone-600"
+                class="mb-4 p-5 bg-orange-50 dark:bg-stone-700/50 rounded-xl border border-orange-100 dark:border-stone-600 shadow-sm"
               >
-                <div class="flex justify-between items-center mb-2">
-                  <span class="text-sm font-medium text-stone-700 dark:text-stone-300"
-                    >Member {index + 1}</span
-                  >
+                <div class="flex justify-between items-center mb-4">
+                  <span class="text-sm font-medium text-stone-700 dark:text-stone-300 flex items-center gap-2">
+                    <span class="text-2xl">{member.avatarEmoji || '😊'}</span>
+                    <span>Medlem {index + 1}</span>
+                  </span>
                   {#if newFamilyMembers.length > 1}
                     <button
                       type="button"
@@ -380,96 +478,180 @@
                       class="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500 text-sm font-medium"
                       disabled={loading}
                     >
-                      Remove
+                      ✕ Ta bort
                     </button>
                   {/if}
                 </div>
-                <div class="space-y-2">
+
+                <div class="space-y-4">
+                  <!-- Name - full width -->
                   <input
                     type="text"
-                    placeholder="Username (required)"
-                    bind:value={member.username}
-                    class="w-full px-3 py-2 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
-                    disabled={loading}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Display Name (optional)"
-                    bind:value={member.displayName}
-                    class="w-full px-3 py-2 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
+                    placeholder="Förnamn *"
+                    bind:value={member.name}
+                    class="w-full px-4 py-3 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
                     disabled={loading}
                   />
 
-                  <!-- Password field - hidden by default -->
-                  {#if showPasswordFields[index]}
-                    <div class="relative">
-                      <input
-                        type={showMemberPasswords[index] ? 'text' : 'password'}
-                        placeholder="Password"
-                        value={member.password}
-                        on:input={(e) => (member.password = e.currentTarget.value)}
-                        class="w-full px-3 py-2 pr-10 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
-                        disabled={loading}
-                      />
-                      <button
-                        type="button"
-                        on:click={() => (showMemberPasswords[index] = !showMemberPasswords[index])}
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300"
-                      >
-                        {#if showMemberPasswords[index]}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            class="w-4 h-4"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
-                            />
-                          </svg>
-                        {:else}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            class="w-4 h-4"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
-                            />
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                          </svg>
-                        {/if}
-                      </button>
-                    </div>
+                  <!-- Role - full width -->
+                  <select
+                    bind:value={member.role}
+                    class="w-full px-4 py-3 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
+                    disabled={loading}
+                  >
+                    <option value="">Välj roll...</option>
+                    <option value="pappa">👨 Pappa</option>
+                    <option value="mamma">👩 Mamma</option>
+                    <option value="barn">🧒 Barn</option>
+                    <option value="bebis">👶 Bebis</option>
+                    <option value="annan">🙂 Annan</option>
+                  </select>
+
+                  <!-- Avatar & Color - inline compact with separate toggles -->
+                  <div class="flex items-center gap-4 p-3 bg-white dark:bg-stone-800 rounded-lg border border-orange-100 dark:border-stone-700">
                     <button
                       type="button"
-                      on:click={() => togglePasswordField(index)}
-                      class="text-xs text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300"
-                      disabled={loading}
+                      on:click={() => {
+                        member.showEmojiPicker = !member.showEmojiPicker;
+                        member.showColorPicker = false;
+                      }}
+                      class="text-3xl p-2 bg-orange-50 dark:bg-stone-700 rounded-lg border-2 {member.showEmojiPicker ? 'border-orange-400' : 'border-transparent'} hover:border-orange-300 transition-colors"
+                      title="Välj avatar"
                     >
-                      🔓 Remove password
+                      {member.avatarEmoji || '😊'}
                     </button>
+                    <button
+                      type="button"
+                      on:click={() => {
+                        member.showColorPicker = !member.showColorPicker;
+                        member.showEmojiPicker = false;
+                      }}
+                      class="w-12 h-12 rounded-full border-4 {member.showColorPicker ? 'border-stone-800 dark:border-white' : 'border-stone-300 dark:border-stone-600'} hover:border-stone-400 transition-colors shadow-sm"
+                      style="background-color: {member.color === 'orange' ? '#fb923c' : member.color === 'amber' ? '#fbbf24' : member.color === 'rose' ? '#fb7185' : member.color === 'green' ? '#4ade80' : member.color === 'blue' ? '#60a5fa' : member.color === 'purple' ? '#c084fc' : '#a8a29e'}"
+                      title="Välj färg"
+                    ></button>
+                    <span class="text-xs text-stone-400 ml-auto">Tryck för att ändra</span>
+                  </div>
+
+                  <!-- Emoji Picker (shown when avatar is clicked) -->
+                  {#if member.showEmojiPicker}
+                    <div class="p-4 bg-white dark:bg-stone-800 rounded-lg border border-orange-200 dark:border-stone-700">
+                      <EmojiPicker bind:selected={member.avatarEmoji} />
+                    </div>
+                  {/if}
+
+                  <!-- Color Picker (shown when color is clicked) -->
+                  {#if member.showColorPicker}
+                    <div class="p-4 bg-white dark:bg-stone-800 rounded-lg border border-orange-200 dark:border-stone-700">
+                      <ColorPicker bind:selected={member.color} />
+                    </div>
+                  {/if}
+
+                  <!-- Birthday & Gender Row (gender only for children) -->
+                  <div class="grid {member.role === 'barn' || member.role === 'bebis' ? 'grid-cols-2' : 'grid-cols-1'} gap-3">
+                    <div>
+                      <!-- svelte-ignore a11y-label-has-associated-control -->
+                      <label class="block text-xs text-stone-500 dark:text-stone-400 mb-1">Födelsedag</label>
+                      <input
+                        type="date"
+                        bind:value={member.birthday}
+                        class="w-full px-4 py-3 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
+                        disabled={loading}
+                      />
+                    </div>
+                    {#if member.role === 'barn' || member.role === 'bebis'}
+                      <div>
+                        <!-- svelte-ignore a11y-label-has-associated-control -->
+                        <label class="block text-xs text-stone-500 dark:text-stone-400 mb-1">Kön</label>
+                        <select
+                          bind:value={member.gender}
+                          class="w-full px-4 py-3 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
+                          disabled={loading}
+                        >
+                          <option value="">Välj...</option>
+                          <option value="pojke">👦 Pojke</option>
+                          <option value="flicka">👧 Flicka</option>
+                          <option value="annat">🧒 Annat</option>
+                        </select>
+                      </div>
+                    {/if}
+                  </div>
+
+                  <!-- Nickname (for parents) -->
+                  {#if member.role === 'pappa' || member.role === 'mamma'}
+                    <div>
+                      <!-- svelte-ignore a11y-label-has-associated-control -->
+                      <label class="block text-xs text-stone-500 dark:text-stone-400 mb-1">Smeknamn (visas istället för förnamn)</label>
+                      <select
+                        bind:value={member.displayName}
+                        class="w-full px-4 py-3 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
+                        disabled={loading}
+                      >
+                        <option value="">Använd förnamn</option>
+                        {#each roleNicknames[member.role] || [] as nickname}
+                          <option value={nickname}>{nickname}</option>
+                        {/each}
+                      </select>
+                    </div>
+                  {/if}
+
+                  <!-- Password field - hidden by default -->
+                  {#if member.showPasswordFields}
+                    <div class="space-y-3 pt-4 mt-2 border-t border-orange-200 dark:border-stone-600">
+                      <div class="relative">
+                        <input
+                          type={member.showPassword ? 'text' : 'password'}
+                          placeholder="Lösenord"
+                          value={member.password}
+                          on:input={(e) => (member.password = e.currentTarget.value)}
+                          class="w-full px-4 py-3 pr-12 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
+                          disabled={loading}
+                        />
+                        <button
+                          type="button"
+                          on:click={() => (member.showPassword = !member.showPassword)}
+                          class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300"
+                        >
+                          {#if member.showPassword}
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
+                            </svg>
+                          {:else}
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                          {/if}
+                        </button>
+                      </div>
+                      <input
+                        type={member.showPassword ? 'text' : 'password'}
+                        placeholder="Bekräfta lösenord"
+                        value={member.passwordConfirm}
+                        on:input={(e) => (member.passwordConfirm = e.currentTarget.value)}
+                        class="w-full px-4 py-3 border {member.password && member.passwordConfirm && member.password !== member.passwordConfirm ? 'border-red-400' : 'border-orange-200'} dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
+                        disabled={loading}
+                      />
+                      {#if member.password && member.passwordConfirm && member.password !== member.passwordConfirm}
+                        <p class="text-red-500 text-sm">Lösenorden matchar inte</p>
+                      {/if}
+                      <button
+                        type="button"
+                        on:click={() => togglePasswordField(index)}
+                        class="text-sm text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300"
+                        disabled={loading}
+                      >
+                        🔓 Ta bort lösenord
+                      </button>
+                    </div>
                   {:else}
                     <button
                       type="button"
                       on:click={() => togglePasswordField(index)}
-                      class="text-xs text-orange-500 hover:text-orange-600 dark:text-amber-400 dark:hover:text-amber-500 font-medium"
+                      class="text-sm text-orange-500 hover:text-orange-600 dark:text-amber-400 dark:hover:text-amber-500 font-medium pt-3"
                       disabled={loading}
                     >
-                      🔒 Add password (optional)
+                      🔒 Lägg till lösenord (valfritt)
                     </button>
                   {/if}
                 </div>
@@ -477,13 +659,13 @@
             {/each}
           </div>
 
-          <div class="flex gap-2">
+          <div class="flex gap-3 mt-2">
             <button
               on:click={createFamily}
               disabled={loading || !newFamilyName.trim() || !newFamilyPassword.trim()}
-              class="flex-1 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-2 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+              class="flex-1 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
             >
-              {loading ? 'Creating...' : 'Create'}
+              {loading ? 'Skapar...' : 'Skapa familj'}
             </button>
             <button
               on:click={() => {
@@ -491,14 +673,13 @@
                 error = '';
                 newFamilyName = '';
                 newFamilyPassword = '';
-                newFamilyMembers = [
-                  { username: '', password: '', displayName: '', showPassword: false },
-                ];
+                newFamilyPasswordConfirm = '';
+                newFamilyMembers = [defaultMember()];
               }}
               disabled={loading}
               class="flex-1 bg-stone-200 hover:bg-stone-300 dark:bg-stone-600 dark:hover:bg-stone-500 text-stone-800 dark:text-white font-bold py-2 rounded-lg transition disabled:opacity-50"
             >
-              Cancel
+              Avbryt
             </button>
           </div>
         </div>
@@ -506,7 +687,7 @@
     </div>
 
     <p class="text-center text-stone-500 dark:text-stone-400 text-sm">
-      Enter your family name and password to continue to member login.
+      Ange familjens namn och lösenord för att fortsätta till inloggningen.
     </p>
   </div>
 </div>

@@ -5,6 +5,11 @@ interface User {
   id: number;
   username: string;
   displayName: string | null;
+  role: string | null;
+  birthday: string | null;
+  gender: string | null;
+  avatarEmoji: string | null;
+  color: string | null;
 }
 
 interface Family {

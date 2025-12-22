@@ -42,6 +42,11 @@ export async function initDatabase(): Promise<void> {
         username VARCHAR(50) NOT NULL,
         password_hash VARCHAR(255),
         display_name VARCHAR(100),
+        role VARCHAR(20),
+        birthday DATE,
+        gender VARCHAR(20),
+        avatar_emoji VARCHAR(10),
+        color VARCHAR(20),
         created_at TIMESTAMPTZ DEFAULT NOW(),
         last_login TIMESTAMPTZ,
         UNIQUE(family_id, username)
@@ -54,6 +59,23 @@ export async function initDatabase(): Promise<void> {
     `).catch(() => {
       // Column might already allow nulls, ignore error
     });
+
+    // Migration: Add new columns if they don't exist
+    const newColumns = [
+      { name: 'role', type: 'VARCHAR(20)' },
+      { name: 'birthday', type: 'DATE' },
+      { name: 'gender', type: 'VARCHAR(20)' },
+      { name: 'avatar_emoji', type: 'VARCHAR(10)' },
+      { name: 'color', type: 'VARCHAR(20)' }
+    ];
+
+    for (const col of newColumns) {
+      await client.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}
+      `).catch(() => {
+        // Column might already exist, ignore error
+      });
+    }
 
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_users_family_id ON users(family_id)
