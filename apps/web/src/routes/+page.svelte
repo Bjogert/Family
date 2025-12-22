@@ -49,13 +49,14 @@
   $: pendingCount = pendingItems.length;
 
   // Get the most recent item to show who updated the list
-  $: latestItem = groceryItems.length > 0
-    ? groceryItems.reduce((latest, item) => {
-        const latestDate = new Date(latest.updatedAt || latest.createdAt);
-        const itemDate = new Date(item.updatedAt || item.createdAt);
-        return itemDate > latestDate ? item : latest;
-      })
-    : null;
+  $: latestItem =
+    groceryItems.length > 0
+      ? groceryItems.reduce((latest, item) => {
+          const latestDate = new Date(latest.updatedAt || latest.createdAt);
+          const itemDate = new Date(item.updatedAt || item.createdAt);
+          return itemDate > latestDate ? item : latest;
+        })
+      : null;
 
   function timeAgo(dateString: string): string {
     const date = new Date(dateString);
@@ -116,7 +117,9 @@
       // Fetch family members
       if ($currentFamily) {
         try {
-          const membersRes = await get<{ users: FamilyMember[] }>(`/families/${$currentFamily.id}/users`);
+          const membersRes = await get<{ users: FamilyMember[] }>(
+            `/families/${$currentFamily.id}/users`
+          );
           familyMembers = membersRes.users || [];
           // TODO: Fetch actual task assignments - for now just simulate with pending grocery count for first member
           if (familyMembers.length > 0 && pendingCount > 0) {
@@ -192,7 +195,9 @@
 
         {#if loadingGroceries}
           <div class="text-center py-4">
-            <div class="animate-spin w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full mx-auto"></div>
+            <div
+              class="animate-spin w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full mx-auto"
+            ></div>
           </div>
         {:else if pendingCount > 0}
           <!-- Grocery List Activity Card -->
@@ -209,7 +214,9 @@
                 </p>
                 {#if latestItem}
                   <p class="text-sm text-stone-500 dark:text-stone-400 truncate">
-                    Uppdaterad av {latestItem.addedBy?.name || 'någon'}, {timeAgo(latestItem.updatedAt || latestItem.createdAt)}
+                    Uppdaterad av {latestItem.addedBy?.name || 'någon'}, {timeAgo(
+                      latestItem.updatedAt || latestItem.createdAt
+                    )}
                   </p>
                 {/if}
               </div>
