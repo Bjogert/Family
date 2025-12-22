@@ -3,11 +3,41 @@
   import { get } from '$lib/api/client';
   import { t } from '$lib/i18n';
   import { groceryWs } from '$lib/stores/groceryWs';
+  import { currentFamily } from '$lib/stores/auth';
   import type { GroceryItem } from '$lib/types/grocery';
+
+  interface FamilyMember {
+    id: number;
+    username: string;
+    displayName: string | null;
+    hasPassword: boolean;
+    role: string | null;
+    birthday: string | null;
+    gender: string | null;
+    avatarEmoji: string | null;
+    color: string | null;
+  }
+
+  // Color mapping for member cards
+  const colorClasses: Record<string, string> = {
+    orange: 'bg-orange-400',
+    amber: 'bg-amber-400',
+    rose: 'bg-rose-400',
+    green: 'bg-emerald-400',
+    blue: 'bg-sky-400',
+    purple: 'bg-violet-400',
+    stone: 'bg-stone-400',
+  };
 
   let apiStatus = 'Checking...';
   let groceryItems: GroceryItem[] = [];
   let loadingGroceries = true;
+  let familyMembers: FamilyMember[] = [];
+  let loadingMembers = true;
+
+  // TODO: This will be replaced with actual task assignments from API
+  // For now, simulate notification counts per user
+  let memberNotifications: Record<number, number> = {};
 
   interface ApiInfo {
     name: string;
@@ -65,7 +95,7 @@
   }
 
   onMount(() => {
-    // Fetch API status and groceries
+    // Fetch API status, groceries, and family members
     (async () => {
       try {
         const data = await get<ApiInfo>('');
@@ -81,6 +111,24 @@
         // Ignore errors
       } finally {
         loadingGroceries = false;
+      }
+
+      // Fetch family members
+      if ($currentFamily) {
+        try {
+          const membersRes = await get<{ users: FamilyMember[] }>(`/families/${$currentFamily.id}/users`);
+          familyMembers = membersRes.users || [];
+          // TODO: Fetch actual task assignments - for now just simulate with pending grocery count for first member
+          if (familyMembers.length > 0 && pendingCount > 0) {
+            memberNotifications = { [familyMembers[0].id]: pendingCount };
+          }
+        } catch {
+          // Ignore errors
+        } finally {
+          loadingMembers = false;
+        }
+      } else {
+        loadingMembers = false;
       }
     })();
 

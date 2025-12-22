@@ -317,7 +317,7 @@
                             {#if member.role}
                               <span>{getRoleLabel(member.role)}</span>
                             {/if}
-                            {#if age !== null}
+                            {#if age !== null && member.role !== 'pappa' && member.role !== 'mamma'}
                               <span class="opacity-75">• {age} år</span>
                             {/if}
                           </div>

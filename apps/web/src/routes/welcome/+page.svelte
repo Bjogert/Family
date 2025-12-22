@@ -80,12 +80,10 @@
     }
   }
 
-  // Reactive filtered families for autocomplete
+  // Reactive filtered families for autocomplete - only filter when user types something
   $: filteredFamilies = familySearchText.trim()
-    ? families.filter((f) =>
-        f.name.toLowerCase().startsWith(familySearchText.toLowerCase())
-      )
-    : families;
+    ? families.filter((f) => f.name.toLowerCase().startsWith(familySearchText.toLowerCase()))
+    : [];
 
   function selectFamily(family: { id: number; name: string }) {
     selectedFamilyId = family.id;
@@ -97,7 +95,7 @@
     const input = e.currentTarget as HTMLInputElement;
     familySearchText = input.value;
     showFamilySuggestions = true;
-    
+
     // Auto-select if exact match (case insensitive)
     const exactMatch = families.find(
       (f) => f.name.toLowerCase() === familySearchText.toLowerCase()
@@ -296,13 +294,15 @@
               placeholder="Type family name..."
               value={familySearchText}
               on:input={handleFamilyInput}
-              on:focus={() => (showFamilySuggestions = true)}
               on:blur={handleFamilyBlur}
+              autocomplete="off"
               class="w-full pl-10 pr-4 py-3 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
               disabled={loading}
             />
             {#if showFamilySuggestions && filteredFamilies.length > 0}
-              <div class="absolute z-10 w-full mt-1 bg-white dark:bg-stone-700 border border-orange-200 dark:border-stone-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              <div
+                class="absolute z-10 w-full mt-1 bg-white dark:bg-stone-700 border border-orange-200 dark:border-stone-600 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+              >
                 {#each filteredFamilies as family (family.id)}
                   <button
                     type="button"
@@ -323,6 +323,7 @@
               placeholder="Family password"
               value={familyPassword}
               on:input={(e) => (familyPassword = e.currentTarget.value)}
+              autocomplete="new-password"
               class="w-full px-4 py-3 pr-12 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
               disabled={loading}
             />
@@ -549,7 +550,9 @@
           <div class="border-t border-orange-200 dark:border-stone-600 pt-4">
             <!-- svelte-ignore a11y-label-has-associated-control -->
             <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-3"
-              >Familjemedlemmar {#if savedMembers.length > 0}<span class="text-orange-500">({savedMembers.length} sparad{savedMembers.length > 1 ? 'e' : ''})</span>{/if}</label
+              >Familjemedlemmar {#if savedMembers.length > 0}<span class="text-orange-500"
+                  >({savedMembers.length} sparad{savedMembers.length > 1 ? 'e' : ''})</span
+                >{/if}</label
             >
 
             <!-- Saved members displayed as compact cards -->
@@ -590,7 +593,15 @@
                         <span class="font-medium text-stone-800">{member.name}</span>
                         {#if member.role}
                           <span class="text-stone-500 text-sm ml-2">
-                            ({member.role === 'pappa' ? '👨 Pappa' : member.role === 'mamma' ? '👩 Mamma' : member.role === 'barn' ? '🧒 Barn' : member.role === 'bebis' ? '👶 Bebis' : '🙂 Annan'})
+                            ({member.role === 'pappa'
+                              ? '👨 Pappa'
+                              : member.role === 'mamma'
+                                ? '👩 Mamma'
+                                : member.role === 'barn'
+                                  ? '🧒 Barn'
+                                  : member.role === 'bebis'
+                                    ? '👶 Bebis'
+                                    : '🙂 Annan'})
                           </span>
                         {/if}
                       </div>
@@ -777,9 +788,7 @@
 
                 <!-- Password field - hidden by default -->
                 {#if currentMember.showPasswordFields}
-                  <div
-                    class="space-y-3 pt-4 mt-2 border-t border-orange-200 dark:border-stone-600"
-                  >
+                  <div class="space-y-3 pt-4 mt-2 border-t border-orange-200 dark:border-stone-600">
                     <div class="relative">
                       <input
                         type={currentMember.showPassword ? 'text' : 'password'}
@@ -883,10 +892,15 @@
           <div class="flex gap-3 mt-2">
             <button
               on:click={createFamily}
-              disabled={loading || !newFamilyName.trim() || !newFamilyPassword.trim() || savedMembers.length === 0}
+              disabled={loading ||
+                !newFamilyName.trim() ||
+                !newFamilyPassword.trim() ||
+                savedMembers.length === 0}
               class="flex-1 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
             >
-              {loading ? 'Skapar...' : `Skapa familj (${savedMembers.length} medlem${savedMembers.length !== 1 ? 'mar' : ''})`}
+              {loading
+                ? 'Skapar...'
+                : `Skapa familj (${savedMembers.length} medlem${savedMembers.length !== 1 ? 'mar' : ''})`}
             </button>
             <button
               on:click={() => {
