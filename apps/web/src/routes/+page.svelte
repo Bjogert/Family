@@ -61,39 +61,46 @@
   let tasks: Task[] = [];
 
   // Calculate task info per member (only open/in_progress tasks)
-  $: memberTaskInfo = familyMembers.reduce((acc, member) => {
-    const memberTasks = tasks.filter(
-      (t) => t.assignedTo === member.id && (t.status === 'open' || t.status === 'in_progress')
-    );
-    
-    const now = new Date();
-    const overdueTasks = memberTasks.filter((t) => {
-      if (!t.dueDate) return false;
-      const dueDate = new Date(t.dueDate);
-      return dueDate < now;
-    });
+  $: memberTaskInfo = familyMembers.reduce(
+    (acc, member) => {
+      const memberTasks = tasks.filter(
+        (t) => t.assignedTo === member.id && (t.status === 'open' || t.status === 'in_progress')
+      );
 
-    // Get unique categories
-    const categories = [...new Set(memberTasks.map((t) => t.category))];
-    
-    // Primary category is the most common one
-    const categoryCount = memberTasks.reduce((counts, t) => {
-      counts[t.category] = (counts[t.category] || 0) + 1;
-      return counts;
-    }, {} as Record<TaskCategory, number>);
-    
-    const primaryCategory = categories.length > 0
-      ? categories.reduce((a, b) => (categoryCount[a] >= categoryCount[b] ? a : b))
-      : null;
+      const now = new Date();
+      const overdueTasks = memberTasks.filter((t) => {
+        if (!t.dueDate) return false;
+        const dueDate = new Date(t.dueDate);
+        return dueDate < now;
+      });
 
-    acc[member.id] = {
-      total: memberTasks.length,
-      overdue: overdueTasks.length,
-      categories,
-      primaryCategory,
-    };
-    return acc;
-  }, {} as Record<number, MemberTaskInfo>);
+      // Get unique categories
+      const categories = [...new Set(memberTasks.map((t) => t.category))];
+
+      // Primary category is the most common one
+      const categoryCount = memberTasks.reduce(
+        (counts, t) => {
+          counts[t.category] = (counts[t.category] || 0) + 1;
+          return counts;
+        },
+        {} as Record<TaskCategory, number>
+      );
+
+      const primaryCategory =
+        categories.length > 0
+          ? categories.reduce((a, b) => (categoryCount[a] >= categoryCount[b] ? a : b))
+          : null;
+
+      acc[member.id] = {
+        total: memberTasks.length,
+        overdue: overdueTasks.length,
+        categories,
+        primaryCategory,
+      };
+      return acc;
+    },
+    {} as Record<number, MemberTaskInfo>
+  );
 
   // Notification counts per user based on actual grocery assignments
   $: memberGroceryNotifications = groceryAssignments.reduce(
@@ -273,8 +280,14 @@
             {#each familyMembers as member (member.id)}
               {@const bgColor = colorClasses[member.color || 'orange']}
               {@const groceryCount = memberGroceryNotifications[member.id] || 0}
-              {@const taskInfo = memberTaskInfo[member.id] || { total: 0, overdue: 0, categories: [], primaryCategory: null }}
-              {@const taskBadgeColor = taskInfo.overdue > 0 ? 'bg-red-500' : getTaskBadgeColor(taskInfo.primaryCategory)}
+              {@const taskInfo = memberTaskInfo[member.id] || {
+                total: 0,
+                overdue: 0,
+                categories: [],
+                primaryCategory: null,
+              }}
+              {@const taskBadgeColor =
+                taskInfo.overdue > 0 ? 'bg-red-500' : getTaskBadgeColor(taskInfo.primaryCategory)}
               <a
                 href="/profile/{member.id}"
                 class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 transition-colors text-left relative block"
@@ -290,7 +303,11 @@
                   {#if taskInfo.total > 0}
                     <div
                       class="absolute -top-1 -right-1 w-5 h-5 {taskBadgeColor} rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-md border-2 border-white dark:border-stone-800"
-                      title="{taskInfo.total} uppgift{taskInfo.total > 1 ? 'er' : ''}{taskInfo.overdue > 0 ? ` (${taskInfo.overdue} försenad${taskInfo.overdue > 1 ? 'e' : ''})` : ''}"
+                      title="{taskInfo.total} uppgift{taskInfo.total > 1
+                        ? 'er'
+                        : ''}{taskInfo.overdue > 0
+                        ? ` (${taskInfo.overdue} försenad${taskInfo.overdue > 1 ? 'e' : ''})`
+                        : ''}"
                     >
                       {taskInfo.total > 9 ? '9+' : taskInfo.total}
                     </div>
