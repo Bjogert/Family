@@ -1,5 +1,7 @@
 ﻿import * as taskRepo from './repository.js';
 import type { Task, CreateTaskInput, UpdateTaskInput } from '@family-hub/shared/types';
+import * as pushService from '../push/service.js';
+import * as authRepo from '../auth/repository.js';
 
 function mapRowToTask(row: taskRepo.TaskRow): Task {
     return {
@@ -73,6 +75,17 @@ export async function createTask(
         createdBy,
     });
 
+    // Send push notification if task is assigned to someone (not self-assigned)
+    if (input.assignedTo && createdBy && input.assignedTo !== createdBy) {
+        try {
+            const creator = await authRepo.findUserById(createdBy);
+            const creatorName = creator?.displayName || creator?.username || 'Någon';
+            await pushService.notifyTaskAssigned(input.assignedTo, input.title, creatorName);
+        } catch (error) {
+            console.error('Failed to send task assignment notification:', error);
+        }
+    }
+
     // Fetch with joined data
     return getTaskById(row.id, familyId) as Promise<Task>;
 }
@@ -80,8 +93,13 @@ export async function createTask(
 export async function updateTask(
     id: number,
     familyId: number,
-    input: UpdateTaskInput
+    input: UpdateTaskInput,
+    updatedBy?: number
 ): Promise<Task | null> {
+    // Get the current task to check if assignment changed
+    const currentTask = await getTaskById(id, familyId);
+    const previousAssignedTo = currentTask?.assignedTo;
+
     const row = await taskRepo.update(id, familyId, {
         title: input.title,
         description: input.description,
@@ -96,6 +114,19 @@ export async function updateTask(
     });
 
     if (!row) return null;
+
+    // Send push notification if task assignment changed (not self-assigned)
+    if (input.assignedTo && input.assignedTo !== previousAssignedTo && updatedBy && input.assignedTo !== updatedBy) {
+        try {
+            const updater = await authRepo.findUserById(updatedBy);
+            const updaterName = updater?.displayName || updater?.username || 'Någon';
+            const taskTitle = input.title || currentTask?.title || 'En uppgift';
+            await pushService.notifyTaskAssigned(input.assignedTo, taskTitle, updaterName);
+        } catch (error) {
+            console.error('Failed to send task assignment notification:', error);
+        }
+    }
+
     return getTaskById(id, familyId);
 }
 

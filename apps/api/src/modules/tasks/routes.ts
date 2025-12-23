@@ -87,6 +87,7 @@ export default async function taskRoutes(app: FastifyInstance) {
             reply: FastifyReply
         ) => {
             const familyId = request.headers['x-family-id'];
+            const userId = request.headers['x-user-id'];
             if (!familyId) {
                 return reply.status(400).send({ error: 'Family ID required' });
             }
@@ -94,7 +95,8 @@ export default async function taskRoutes(app: FastifyInstance) {
             const task = await taskService.updateTask(
                 parseInt(request.params.id, 10),
                 Number(familyId),
-                request.body
+                request.body,
+                userId ? Number(userId) : undefined
             );
 
             if (!task) {

@@ -1,6 +1,8 @@
 ﻿import * as repository from './repository.js';
 import type { GroceryRow, CreateGroceryData, UpdateGroceryData } from './repository.js';
 import { connectionManager } from '../../websocket/connectionManager.js';
+import * as pushService from '../push/service.js';
+import * as authRepo from '../auth/repository.js';
 
 export interface GroceryItem {
     id: number;
@@ -156,6 +158,17 @@ export async function assignGroceryList(familyId: number, userId: number, assign
         type: 'grocery:assigned',
         payload: { userId, assignedBy },
     });
+
+    // Send push notification if assigned to someone else (not self)
+    if (userId !== assignedBy) {
+        try {
+            const assigner = await authRepo.findUserById(assignedBy);
+            const assignerName = assigner?.displayName || assigner?.username || 'Någon';
+            await pushService.notifyGroceryAssigned(userId, 'inköpslistan', assignerName);
+        } catch (error) {
+            console.error('Failed to send grocery assignment notification:', error);
+        }
+    }
 
     return mapAssignment(assignment);
 }

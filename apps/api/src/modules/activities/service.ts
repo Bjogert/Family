@@ -1,6 +1,8 @@
 ﻿import * as activityRepo from './repository.js';
 import type { Activity, CreateActivityInput, UpdateActivityInput } from '@family-hub/shared/types';
 import type { GoogleCalendarService } from '../googleCalendar/service.js';
+import * as pushService from '../push/service.js';
+import * as authRepo from '../auth/repository.js';
 
 // Calendar service will be injected
 let calendarService: GoogleCalendarService | null = null;
@@ -151,6 +153,43 @@ export async function createActivity(
     // Set participants if provided
     if (input.participantIds && input.participantIds.length > 0) {
         await activityRepo.setParticipants(row.id, input.participantIds);
+
+        // Send push notifications to participants (except the creator)
+        const participantsToNotify = input.participantIds.filter(id => id !== createdBy);
+        if (participantsToNotify.length > 0 && createdBy) {
+            try {
+                const creator = await authRepo.findUserById(createdBy);
+                const creatorName = creator?.displayName || creator?.username || 'Någon';
+                const eventDate = new Date(input.startTime).toLocaleDateString('sv-SE');
+                
+                await pushService.sendToUsers(participantsToNotify, {
+                    title: '📅 Ny aktivitet',
+                    body: `${creatorName} har lagt till dig i "${input.title}" (${eventDate})`,
+                    url: '/calendar',
+                    tag: `activity-${row.id}`,
+                });
+            } catch (error) {
+                console.error('Failed to send activity participant notifications:', error);
+            }
+        }
+    }
+
+    // Notify transport user if assigned (and not the creator)
+    if (input.transportUserId && createdBy && input.transportUserId !== createdBy) {
+        try {
+            const creator = await authRepo.findUserById(createdBy);
+            const creatorName = creator?.displayName || creator?.username || 'Någon';
+            const eventDate = new Date(input.startTime).toLocaleDateString('sv-SE');
+            
+            await pushService.sendToUser(input.transportUserId, {
+                title: '🚗 Skjutsuppdrag',
+                body: `${creatorName} har tilldelat dig som skjuts för "${input.title}" (${eventDate})`,
+                url: '/calendar',
+                tag: `transport-${row.id}`,
+            });
+        } catch (error) {
+            console.error('Failed to send transport user notification:', error);
+        }
     }
 
     return getActivityById(row.id, familyId) as Promise<Activity>;
