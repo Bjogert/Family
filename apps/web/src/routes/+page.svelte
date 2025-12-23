@@ -5,7 +5,7 @@
   import { groceryWs } from '$lib/stores/groceryWs';
   import { currentFamily } from '$lib/stores/auth';
   import type { GroceryItem } from '$lib/types/grocery';
-  import type { Task, TaskCategory, TaskStatus } from '@family-hub/shared/types';
+  import type { Task, TaskCategory, TaskStatus, Activity } from '@family-hub/shared/types';
 
   interface FamilyMember {
     id: number;
@@ -59,6 +59,61 @@
   let loadingMembers = true;
   let groceryAssignments: GroceryAssignment[] = [];
   let tasks: Task[] = [];
+  let activities: Activity[] = [];
+
+  // Get upcoming activities (next 7 days)
+  $: upcomingActivities = activities
+    .filter((a) => {
+      const start = new Date(a.startTime);
+      const now = new Date();
+      const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      return start >= now && start <= weekFromNow;
+    })
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+    .slice(0, 5);
+
+  // Get open tasks grouped by assignee
+  $: openTasks = tasks.filter((t) => t.status === 'open' || t.status === 'in_progress');
+  $: unassignedTasks = openTasks.filter((t) => !t.assignedTo);
+  $: overdueTasks = openTasks.filter((t) => {
+    if (!t.dueDate) return false;
+    return new Date(t.dueDate) < new Date();
+  });
+
+  // Format date for display
+  function formatActivityDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const isToday = date.toDateString() === now.toDateString();
+    const isTomorrow = date.toDateString() === tomorrow.toDateString();
+
+    if (isToday) return `Idag ${date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`;
+    if (isTomorrow) return `Imorgon ${date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`;
+
+    return date.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Get category emoji for activities
+  function getActivityEmoji(category: string): string {
+    const emojis: Record<string, string> = {
+      sports: '⚽',
+      music: '🎵',
+      school: '📚',
+      hobbies: '🎨',
+      social: '👥',
+      medical: '🏥',
+      other: '📅',
+    };
+    return emojis[category] || '📅';
+  }
+
+  // Get who the grocery list is assigned to
+  $: groceryAssignedMembers = familyMembers.filter((m) =>
+    groceryAssignments.some((a) => a.userId === m.id)
+  );
 
   // Calculate task info per member (only open/in_progress tasks)
   $: memberTaskInfo = familyMembers.reduce(
@@ -224,6 +279,19 @@
           } catch {
             // Tasks fetch failed, continue without
           }
+
+          // Fetch activities
+          try {
+            const activitiesResponse = await fetch('/api/activities', {
+              headers: { 'x-family-id': String($currentFamily.id) },
+              credentials: 'include',
+            });
+            if (activitiesResponse.ok) {
+              activities = await activitiesResponse.json();
+            }
+          } catch {
+            // Activities fetch failed, continue without
+          }
         } catch {
           // Ignore errors
         } finally {
@@ -349,47 +417,152 @@
       </div>
     </aside>
 
-    <!-- Main Content - Activity Feed -->
-    <div class="flex-1 min-w-0">
+    <!-- Main Content - Bulletin Board (Anslagstavla) -->
+    <div class="flex-1 min-w-0 space-y-4">
+      
+      <!-- Upcoming Activities -->
       <div
-        class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-6"
+        class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-5"
       >
-        <h2 class="text-lg font-bold text-stone-800 dark:text-white mb-4">Aktivitet</h2>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-stone-600 dark:text-stone-400 flex items-center gap-2">
+            📅 Kommande aktiviteter
+          </h2>
+          <a href="/calendar" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Visa alla →</a>
+        </div>
 
-        {#if loadingGroceries}
-          <div class="text-center py-4">
-            <div
-              class="animate-spin w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full mx-auto"
-            ></div>
+        {#if loadingMembers}
+          <div class="flex justify-center py-3">
+            <div class="animate-spin w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full"></div>
           </div>
-        {:else if pendingCount > 0}
-          <!-- Grocery List Activity Card -->
-          <a
-            href="/groceries"
-            class="block p-4 bg-stone-50 dark:bg-stone-700/50 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors"
-          >
-            <div class="flex items-center gap-3">
-              <span class="text-2xl">🛒</span>
-              <div class="flex-1 min-w-0">
-                <p class="font-medium text-stone-800 dark:text-stone-200">
-                  Inköpslista
-                  <span class="text-orange-500 dark:text-amber-400">({pendingCount} varor)</span>
-                </p>
-                {#if latestItem}
-                  <p class="text-sm text-stone-500 dark:text-stone-400 truncate">
-                    Uppdaterad av {latestItem.addedBy?.name || 'någon'}, {timeAgo(
-                      latestItem.updatedAt || latestItem.createdAt
-                    )}
-                  </p>
-                {/if}
-              </div>
-              <span class="text-stone-400">→</span>
-            </div>
-          </a>
+        {:else if upcomingActivities.length === 0}
+          <p class="text-sm text-stone-400 dark:text-stone-500 py-2">Inga aktiviteter planerade denna vecka</p>
         {:else}
-          <p class="text-stone-500 dark:text-stone-400 text-sm py-4">Ingen aktivitet just nu</p>
+          <div class="space-y-2">
+            {#each upcomingActivities as activity (activity.id)}
+              <a
+                href="/calendar"
+                class="flex items-center gap-3 p-3 bg-stone-50 dark:bg-stone-700/50 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors"
+              >
+                <span class="text-xl">{getActivityEmoji(activity.category)}</span>
+                <div class="flex-1 min-w-0">
+                  <p class="font-medium text-stone-800 dark:text-stone-200 text-sm truncate">{activity.title}</p>
+                  <p class="text-xs text-stone-500 dark:text-stone-400">
+                    {formatActivityDate(activity.startTime)}
+                    {#if activity.participants && activity.participants.length > 0}
+                      · {activity.participants.map(p => p.user?.displayName || '').filter(Boolean).join(', ')}
+                    {/if}
+                  </p>
+                </div>
+              </a>
+            {/each}
+          </div>
         {/if}
       </div>
+
+      <!-- Tasks Overview -->
+      <div
+        class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-5"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-stone-600 dark:text-stone-400 flex items-center gap-2">
+            📋 Uppgifter
+          </h2>
+          <a href="/tasks" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Visa alla →</a>
+        </div>
+
+        {#if loadingMembers}
+          <div class="flex justify-center py-3">
+            <div class="animate-spin w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full"></div>
+          </div>
+        {:else if openTasks.length === 0}
+          <p class="text-sm text-stone-400 dark:text-stone-500 py-2">Inga öppna uppgifter 🎉</p>
+        {:else}
+          <div class="space-y-2">
+            <!-- Summary stats -->
+            <div class="flex flex-wrap gap-2 text-xs">
+              <span class="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full">
+                {openTasks.length} öppna
+              </span>
+              {#if overdueTasks.length > 0}
+                <span class="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full">
+                  {overdueTasks.length} försenade
+                </span>
+              {/if}
+              {#if unassignedTasks.length > 0}
+                <span class="px-2 py-1 bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-full">
+                  {unassignedTasks.length} otilldelade
+                </span>
+              {/if}
+            </div>
+            
+            <!-- Per-member task summary -->
+            <div class="flex flex-wrap gap-2 mt-2">
+              {#each familyMembers.filter(m => memberTaskInfo[m.id]?.total > 0) as member (member.id)}
+                {@const info = memberTaskInfo[member.id]}
+                <a
+                  href="/tasks"
+                  class="flex items-center gap-2 px-3 py-2 bg-stone-50 dark:bg-stone-700/50 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors"
+                >
+                  <span class="text-lg">{member.avatarEmoji || '👤'}</span>
+                  <span class="text-sm text-stone-700 dark:text-stone-300">
+                    {member.displayName || member.username}
+                  </span>
+                  <span class="text-xs px-1.5 py-0.5 rounded-full {info.overdue > 0 ? 'bg-red-500' : 'bg-teal-500'} text-white">
+                    {info.total}
+                  </span>
+                </a>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      </div>
+
+      <!-- Shopping List -->
+      <div
+        class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-5"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-stone-600 dark:text-stone-400 flex items-center gap-2">
+            🛒 Inköpslista
+          </h2>
+          <a href="/groceries" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Visa lista →</a>
+        </div>
+
+        {#if loadingGroceries}
+          <div class="flex justify-center py-3">
+            <div class="animate-spin w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full"></div>
+          </div>
+        {:else if pendingCount === 0}
+          <p class="text-sm text-stone-400 dark:text-stone-500 py-2">Inköpslistan är tom ✓</p>
+        {:else}
+          <a
+            href="/groceries"
+            class="block p-3 bg-stone-50 dark:bg-stone-700/50 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-2xl font-bold text-orange-500 dark:text-amber-400">{pendingCount}</span>
+                <span class="text-sm text-stone-600 dark:text-stone-300 ml-1">varor att handla</span>
+              </div>
+              {#if groceryAssignedMembers.length > 0}
+                <div class="flex items-center gap-1">
+                  <span class="text-xs text-stone-500 dark:text-stone-400 mr-1">Tilldelad:</span>
+                  {#each groceryAssignedMembers as member}
+                    <span class="text-lg" title={member.displayName || member.username}>{member.avatarEmoji || '👤'}</span>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+            {#if latestItem}
+              <p class="text-xs text-stone-400 dark:text-stone-500 mt-1">
+                Senast uppdaterad av {latestItem.addedBy?.name || 'någon'}, {timeAgo(latestItem.updatedAt || latestItem.createdAt)}
+              </p>
+            {/if}
+          </a>
+        {/if}
+      </div>
+
     </div>
 
     <!-- API Status - Bottom Right Corner -->
