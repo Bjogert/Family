@@ -176,6 +176,208 @@ export default async function authRoutes(app: FastifyInstance) {
     }
   );
 
+  // GET /api/users/:id - Get user profile
+  app.get<{ Params: { id: string } }>(
+    '/users/:id',
+    async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+      const sessionId = request.cookies.sessionId;
+      const userId = parseInt(request.params.id, 10);
+
+      if (!sessionId) {
+        return reply.status(401).send({ success: false, error: 'Not authenticated' });
+      }
+
+      const session = await authService.validateSession(sessionId);
+      if (!session) {
+        return reply.status(401).send({ success: false, error: 'Invalid session' });
+      }
+
+      // Users can only view profiles within their family
+      const user = await authRepo.findUserById(userId);
+      if (!user || user.familyId !== session.familyId) {
+        return reply.status(404).send({ success: false, error: 'User not found' });
+      }
+
+      return reply.send({
+        success: true,
+        user: {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          role: user.role,
+          birthday: user.birthday,
+          gender: user.gender,
+          avatarEmoji: user.avatarEmoji,
+          color: user.color,
+          createdAt: user.createdAt,
+          lastLogin: user.lastLogin,
+        },
+      });
+    }
+  );
+
+  // PUT /api/users/:id - Update user profile
+  app.put<{ Params: { id: string }; Body: { displayName?: string; role?: string; birthday?: string; gender?: string; avatarEmoji?: string; color?: string } }>(
+    '/users/:id',
+    async (request: FastifyRequest<{ Params: { id: string }; Body: { displayName?: string; role?: string; birthday?: string; gender?: string; avatarEmoji?: string; color?: string } }>, reply: FastifyReply) => {
+      const sessionId = request.cookies.sessionId;
+      const userId = parseInt(request.params.id, 10);
+
+      if (!sessionId) {
+        return reply.status(401).send({ success: false, error: 'Not authenticated' });
+      }
+
+      const session = await authService.validateSession(sessionId);
+      if (!session) {
+        return reply.status(401).send({ success: false, error: 'Invalid session' });
+      }
+
+      // Users can only update their own profile
+      if (session.userId !== userId) {
+        return reply.status(403).send({ success: false, error: 'You can only update your own profile' });
+      }
+
+      const { displayName, role, birthday, gender, avatarEmoji, color } = request.body;
+
+      await authRepo.updateUserProfile(userId, {
+        displayName,
+        role,
+        birthday,
+        gender,
+        avatarEmoji,
+        color,
+      });
+
+      return reply.send({ success: true, message: 'Profile updated' });
+    }
+  );
+
+  // GET /api/users/:id/preferences - Get user preferences
+  app.get<{ Params: { id: string } }>(
+    '/users/:id/preferences',
+    async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+      const sessionId = request.cookies.sessionId;
+      const userId = parseInt(request.params.id, 10);
+
+      if (!sessionId) {
+        return reply.status(401).send({ success: false, error: 'Not authenticated' });
+      }
+
+      const session = await authService.validateSession(sessionId);
+      if (!session) {
+        return reply.status(401).send({ success: false, error: 'Invalid session' });
+      }
+
+      // Users can only view their own preferences
+      if (session.userId !== userId) {
+        return reply.status(403).send({ success: false, error: 'You can only view your own preferences' });
+      }
+
+      const preferences = await authRepo.getUserPreferences(userId);
+
+      return reply.send({
+        success: true,
+        preferences: preferences || {
+          theme: 'system',
+          notifications: {
+            groceryAssigned: true,
+            groceryListUpdated: true,
+            calendarEventCreated: true,
+            calendarEventReminder: true,
+          },
+        },
+      });
+    }
+  );
+
+  // PUT /api/users/:id/preferences - Update user preferences
+  app.put<{ Params: { id: string }; Body: { theme?: string; notifications?: { groceryAssigned?: boolean; groceryListUpdated?: boolean; calendarEventCreated?: boolean; calendarEventReminder?: boolean } } }>(
+    '/users/:id/preferences',
+    async (request: FastifyRequest<{ Params: { id: string }; Body: { theme?: string; notifications?: { groceryAssigned?: boolean; groceryListUpdated?: boolean; calendarEventCreated?: boolean; calendarEventReminder?: boolean } } }>, reply: FastifyReply) => {
+      const sessionId = request.cookies.sessionId;
+      const userId = parseInt(request.params.id, 10);
+
+      if (!sessionId) {
+        return reply.status(401).send({ success: false, error: 'Not authenticated' });
+      }
+
+      const session = await authService.validateSession(sessionId);
+      if (!session) {
+        return reply.status(401).send({ success: false, error: 'Invalid session' });
+      }
+
+      // Users can only update their own preferences
+      if (session.userId !== userId) {
+        return reply.status(403).send({ success: false, error: 'You can only update your own preferences' });
+      }
+
+      const { theme, notifications } = request.body;
+
+      await authRepo.updateUserPreferences(userId, {
+        theme,
+        notifyGroceryAssigned: notifications?.groceryAssigned,
+        notifyGroceryUpdated: notifications?.groceryListUpdated,
+        notifyCalendarCreated: notifications?.calendarEventCreated,
+        notifyCalendarReminder: notifications?.calendarEventReminder,
+      });
+
+      return reply.send({ success: true, message: 'Preferences updated' });
+    }
+  );
+
+  // PUT /api/users/:id/password - Change user password
+  app.put<{ Params: { id: string }; Body: { currentPassword: string; newPassword: string } }>(
+    '/users/:id/password',
+    async (request: FastifyRequest<{ Params: { id: string }; Body: { currentPassword: string; newPassword: string } }>, reply: FastifyReply) => {
+      const sessionId = request.cookies.sessionId;
+      const userId = parseInt(request.params.id, 10);
+
+      if (!sessionId) {
+        return reply.status(401).send({ success: false, error: 'Not authenticated' });
+      }
+
+      const session = await authService.validateSession(sessionId);
+      if (!session) {
+        return reply.status(401).send({ success: false, error: 'Invalid session' });
+      }
+
+      // Users can only change their own password
+      if (session.userId !== userId) {
+        return reply.status(403).send({ success: false, error: 'You can only change your own password' });
+      }
+
+      const { currentPassword, newPassword } = request.body;
+
+      if (!newPassword || newPassword.length < 4) {
+        return reply.status(400).send({ success: false, error: 'Password must be at least 4 characters' });
+      }
+
+      // Verify current password if user has one
+      const user = await authRepo.findUserById(userId);
+      if (user) {
+        const passwordHash = await pool.query(
+          'SELECT password_hash FROM users WHERE id = $1',
+          [userId]
+        );
+        
+        if (passwordHash.rows[0]?.password_hash) {
+          const bcrypt = (await import('bcrypt')).default;
+          const isValid = await bcrypt.compare(currentPassword, passwordHash.rows[0].password_hash);
+          if (!isValid) {
+            return reply.status(400).send({ success: false, error: 'Current password is incorrect' });
+          }
+        }
+
+        // Set new password
+        const bcrypt = (await import('bcrypt')).default;
+        const newHash = await bcrypt.hash(newPassword, 10);
+        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, userId]);
+      }
+
+      return reply.send({ success: true, message: 'Password changed' });
+    }
+  );
+
   // POST /api/auth/forgot-password - Request password reset
   app.post<{ Body: { email: string } }>(
     '/forgot-password',

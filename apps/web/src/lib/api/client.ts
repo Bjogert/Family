@@ -62,6 +62,13 @@ export function patch<T>(endpoint: string, body?: unknown): Promise<T> {
   });
 }
 
+export function put<T>(endpoint: string, body?: unknown): Promise<T> {
+  return apiCall<T>(endpoint, {
+    method: 'PUT',
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
 export function del<T>(endpoint: string): Promise<T> {
   return apiCall<T>(endpoint, { method: 'DELETE' });
 }

@@ -105,6 +105,20 @@ export async function initDatabase(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_sessions_family_id ON sessions(family_id)
     `);
 
+    // Create user_preferences table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_preferences (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        theme VARCHAR(20) DEFAULT 'system',
+        notify_grocery_assigned BOOLEAN DEFAULT true,
+        notify_grocery_updated BOOLEAN DEFAULT true,
+        notify_calendar_created BOOLEAN DEFAULT true,
+        notify_calendar_reminder BOOLEAN DEFAULT true,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
     // Create grocery_categories table
     await client.query(`
       CREATE TABLE IF NOT EXISTS grocery_categories (

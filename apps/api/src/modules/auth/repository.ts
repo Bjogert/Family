@@ -52,9 +52,9 @@ export async function findUserByUsername(familyId: number, username: string): Pr
   };
 }
 
-export async function findUserById(id: number): Promise<User | null> {
+export async function findUserById(id: number): Promise<User & { createdAt?: string; lastLogin?: string } | null> {
   const result = await pool.query(
-    `SELECT id, family_id, username, display_name, role, birthday, gender, avatar_emoji, color, email, email_verified
+    `SELECT id, family_id, username, display_name, role, birthday, gender, avatar_emoji, color, email, email_verified, created_at, last_login
      FROM users
      WHERE id = $1`,
     [id]
@@ -77,6 +77,8 @@ export async function findUserById(id: number): Promise<User | null> {
     color: row.color,
     email: row.email,
     emailVerified: row.email_verified,
+    createdAt: row.created_at,
+    lastLogin: row.last_login,
   };
 }
 
@@ -306,6 +308,9 @@ export async function deleteUser(userId: number): Promise<boolean> {
     // Delete user's grocery assignments
     await client.query('DELETE FROM grocery_assignments WHERE user_id = $1', [userId]);
 
+    // Delete user preferences
+    await client.query('DELETE FROM user_preferences WHERE user_id = $1', [userId]);
+
     // Delete the user
     const result = await client.query('DELETE FROM users WHERE id = $1', [userId]);
 
@@ -318,3 +323,157 @@ export async function deleteUser(userId: number): Promise<boolean> {
     client.release();
   }
 }
+
+// Extended user profile with timestamps
+export interface UserProfile extends User {
+  createdAt: string;
+  lastLogin: string | null;
+}
+
+export async function findUserProfileById(id: number): Promise<UserProfile | null> {
+  const result = await pool.query(
+    `SELECT id, family_id, username, display_name, role, birthday, gender, avatar_emoji, color, email, email_verified, created_at, last_login
+     FROM users
+     WHERE id = $1`,
+    [id]
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    familyId: row.family_id,
+    username: row.username,
+    displayName: row.display_name,
+    role: row.role,
+    birthday: row.birthday,
+    gender: row.gender,
+    avatarEmoji: row.avatar_emoji,
+    color: row.color,
+    email: row.email,
+    emailVerified: row.email_verified,
+    createdAt: row.created_at,
+    lastLogin: row.last_login,
+  };
+}
+
+// Update user profile
+export async function updateUserProfile(
+  userId: number,
+  profile: {
+    displayName?: string;
+    role?: string;
+    birthday?: string;
+    gender?: string;
+    avatarEmoji?: string;
+    color?: string;
+  }
+): Promise<void> {
+  const updates: string[] = [];
+  const values: (string | number)[] = [];
+  let paramIndex = 1;
+
+  if (profile.displayName !== undefined) {
+    updates.push(`display_name = $${paramIndex++}`);
+    values.push(profile.displayName);
+  }
+  if (profile.role !== undefined) {
+    updates.push(`role = $${paramIndex++}`);
+    values.push(profile.role);
+  }
+  if (profile.birthday !== undefined) {
+    updates.push(`birthday = $${paramIndex++}`);
+    values.push(profile.birthday || null as any);
+  }
+  if (profile.gender !== undefined) {
+    updates.push(`gender = $${paramIndex++}`);
+    values.push(profile.gender);
+  }
+  if (profile.avatarEmoji !== undefined) {
+    updates.push(`avatar_emoji = $${paramIndex++}`);
+    values.push(profile.avatarEmoji);
+  }
+  if (profile.color !== undefined) {
+    updates.push(`color = $${paramIndex++}`);
+    values.push(profile.color);
+  }
+
+  if (updates.length > 0) {
+    values.push(userId);
+    await pool.query(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
+      values
+    );
+  }
+}
+
+// User preferences
+export interface UserPreferences {
+  theme: string;
+  notifications: {
+    groceryAssigned: boolean;
+    groceryListUpdated: boolean;
+    calendarEventCreated: boolean;
+    calendarEventReminder: boolean;
+  };
+}
+
+export async function getUserPreferences(userId: number): Promise<UserPreferences | null> {
+  const result = await pool.query(
+    `SELECT theme, notify_grocery_assigned, notify_grocery_updated, notify_calendar_created, notify_calendar_reminder
+     FROM user_preferences
+     WHERE user_id = $1`,
+    [userId]
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    theme: row.theme,
+    notifications: {
+      groceryAssigned: row.notify_grocery_assigned,
+      groceryListUpdated: row.notify_grocery_updated,
+      calendarEventCreated: row.notify_calendar_created,
+      calendarEventReminder: row.notify_calendar_reminder,
+    },
+  };
+}
+
+export async function updateUserPreferences(
+  userId: number,
+  prefs: {
+    theme?: string;
+    notifyGroceryAssigned?: boolean;
+    notifyGroceryUpdated?: boolean;
+    notifyCalendarCreated?: boolean;
+    notifyCalendarReminder?: boolean;
+  }
+): Promise<void> {
+  // Use upsert to create or update preferences
+  await pool.query(
+    `INSERT INTO user_preferences (user_id, theme, notify_grocery_assigned, notify_grocery_updated, notify_calendar_created, notify_calendar_reminder, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, NOW())
+     ON CONFLICT (user_id) DO UPDATE SET
+       theme = COALESCE($2, user_preferences.theme),
+       notify_grocery_assigned = COALESCE($3, user_preferences.notify_grocery_assigned),
+       notify_grocery_updated = COALESCE($4, user_preferences.notify_grocery_updated),
+       notify_calendar_created = COALESCE($5, user_preferences.notify_calendar_created),
+       notify_calendar_reminder = COALESCE($6, user_preferences.notify_calendar_reminder),
+       updated_at = NOW()`,
+    [
+      userId,
+      prefs.theme ?? null,
+      prefs.notifyGroceryAssigned ?? null,
+      prefs.notifyGroceryUpdated ?? null,
+      prefs.notifyCalendarCreated ?? null,
+      prefs.notifyCalendarReminder ?? null,
+    ]
+  );
+}
+
