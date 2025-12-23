@@ -74,7 +74,9 @@
     {#if !token}
       <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
         <div class="text-4xl mb-3">❌</div>
-        <h2 class="text-lg font-semibold text-red-800 mb-2">{$t('resetPassword.invalidLinkTitle')}</h2>
+        <h2 class="text-lg font-semibold text-red-800 mb-2">
+          {$t('resetPassword.invalidLinkTitle')}
+        </h2>
         <p class="text-red-700 text-sm">
           {$t('resetPassword.invalidLinkDesc')}
         </p>
@@ -172,7 +174,8 @@
 
       <div class="mt-6 text-center text-sm text-gray-600">
         <a href="/welcome" class="text-violet-600 hover:text-violet-700 font-medium">
-          {$t('nav.back')} {$t('resetPassword.backToLogin')}
+          {$t('nav.back')}
+          {$t('resetPassword.backToLogin')}
         </a>
       </div>
     {/if}

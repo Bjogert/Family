@@ -833,7 +833,9 @@
                 <div class="grid gap-4 sm:grid-cols-2">
                   {#if profile.birthday}
                     <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
-                      <p class="text-sm text-stone-500 dark:text-stone-400">{$t('profile.birthday')}</p>
+                      <p class="text-sm text-stone-500 dark:text-stone-400">
+                        {$t('profile.birthday')}
+                      </p>
                       <p class="text-lg font-medium text-stone-800 dark:text-white">
                         {formatDate(profile.birthday)}
                       </p>
@@ -841,7 +843,9 @@
                   {/if}
                   {#if profile.gender}
                     <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
-                      <p class="text-sm text-stone-500 dark:text-stone-400">{$t('profile.gender')}</p>
+                      <p class="text-sm text-stone-500 dark:text-stone-400">
+                        {$t('profile.gender')}
+                      </p>
                       <p class="text-lg font-medium text-stone-800 dark:text-white">
                         {genderOptions.find((g) => g.value === profile?.gender)?.label ||
                           profile.gender}
@@ -849,7 +853,9 @@
                     </div>
                   {/if}
                   <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
-                    <p class="text-sm text-stone-500 dark:text-stone-400">{$t('profile.memberSince')}</p>
+                    <p class="text-sm text-stone-500 dark:text-stone-400">
+                      {$t('profile.memberSince')}
+                    </p>
                     <p class="text-lg font-medium text-stone-800 dark:text-white">
                       {formatDate(profile.createdAt)}
                     </p>
