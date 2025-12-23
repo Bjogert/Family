@@ -287,7 +287,7 @@
       type="submit"
       class="flex-1 px-4 py-2 rounded-xl bg-teal-500 text-white font-medium hover:bg-teal-600 transition-colors"
     >
-      {note ? $t('common.save') : $t('welcome.create')}
+      {note ? $t('common.save') : $t('common.create')}
     </button>
   </div>
 </form>

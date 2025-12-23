@@ -19,6 +19,7 @@
         'common.edit': 'Redigera',
         'common.deleting': 'Tar bort',
         'common.all': 'Alla',
+        'common.create': 'Skapa',
 
         // Settings
         'settings.title': 'Inställningar',
@@ -437,6 +438,7 @@
         'common.edit': 'Edit',
         'common.deleting': 'Deleting',
         'common.all': 'All',
+        'common.create': 'Create',
 
         // Settings
         'settings.title': 'Settings',
@@ -855,6 +857,7 @@
         'common.edit': 'Editar',
         'common.deleting': 'Excluindo',
         'common.all': 'Todos',
+        'common.create': 'Criar',
 
         // Settings
         'settings.title': 'Configurações',
