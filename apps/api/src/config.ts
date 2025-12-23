@@ -19,7 +19,9 @@ export const config = {
   host: process.env.API_HOST || '0.0.0.0',
 
   // CORS (allow multiple origins for dev + Pi)
-  corsOrigin: process.env.CORS_ORIGIN || true, // true = reflect request origin (allow all with credentials)
+  corsOrigin: process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production' 
+    ? 'https://familjehubben.vip' 
+    : true), // Only allow all origins in development
 
   // Security
   sessionSecret: process.env.SESSION_SECRET || 'dev-secret-change-in-production',

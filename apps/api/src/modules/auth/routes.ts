@@ -348,8 +348,8 @@ export default async function authRoutes(app: FastifyInstance) {
 
       const { currentPassword, newPassword } = request.body;
 
-      if (!newPassword || newPassword.length < 4) {
-        return reply.status(400).send({ success: false, error: 'Password must be at least 4 characters' });
+      if (!newPassword || newPassword.length < 8) {
+        return reply.status(400).send({ success: false, error: 'Password must be at least 8 characters' });
       }
 
       // Verify current password if user has one
@@ -471,10 +471,10 @@ export default async function authRoutes(app: FastifyInstance) {
         });
       }
 
-      if (newPassword.length < 4) {
+      if (newPassword.length < 8) {
         return reply.status(400).send({
           success: false,
-          message: 'Lösenordet måste vara minst 4 tecken',
+          message: 'Lösenordet måste vara minst 8 tecken',
         });
       }
 
@@ -514,10 +514,10 @@ export default async function authRoutes(app: FastifyInstance) {
         });
       }
 
-      if (newPassword.length < 4) {
+      if (newPassword.length < 8) {
         return reply.status(400).send({
           success: false,
-          message: 'Lösenordet måste vara minst 4 tecken',
+          message: 'Lösenordet måste vara minst 8 tecken',
         });
       }
 

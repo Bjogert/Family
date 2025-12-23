@@ -9,11 +9,11 @@ A Raspberry Pi hosted web app for household management.
 
 ## Tech Stack
 
-- **Backend**: Fastify + TypeScript + SQLite (better-sqlite3)
+- **Backend**: Fastify + TypeScript + PostgreSQL
 - **Frontend**: SvelteKit + Tailwind CSS
 - **Validation**: Zod (shared schemas)
 - **Real-time**: WebSockets
-- **Deployment**: systemd + Caddy
+- **Deployment**: systemd + Caddy (Raspberry Pi 5)
 
 ## Quick Start
 
