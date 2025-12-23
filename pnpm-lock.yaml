@@ -36,8 +36,8 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0
       '@fastify/helmet':
-        specifier: ^13.0.2
-        version: 13.0.2
+        specifier: ^11.1.1
+        version: 11.1.1
       '@fastify/rate-limit':
         specifier: ^10.3.0
         version: 10.3.0
@@ -1152,11 +1152,11 @@ packages:
       fast-json-stringify: 5.16.1
     dev: false
 
-  /@fastify/helmet@13.0.2:
-    resolution: {integrity: sha512-tO1QMkOfNeCt9l4sG/FiWErH4QMm+RjHzbMTrgew1DYOQ2vb/6M1G2iNABBrD7Xq6dUk+HLzWW8u+rmmhQHifA==}
+  /@fastify/helmet@11.1.1:
+    resolution: {integrity: sha512-pjJxjk6SLEimITWadtYIXt6wBMfFC1I6OQyH/jYVCqSAn36sgAIFjeNiibHtifjCd+e25442pObis3Rjtame6A==}
     dependencies:
-      fastify-plugin: 5.1.0
-      helmet: 8.1.0
+      fastify-plugin: 4.5.1
+      helmet: 7.2.0
     dev: false
 
   /@fastify/merge-json-schemas@0.1.1:
@@ -2816,9 +2816,9 @@ packages:
       function-bind: 1.1.2
     dev: true
 
-  /helmet@8.1.0:
-    resolution: {integrity: sha512-jOiHyAZsmnr8LqoPGmCjYAaiuWwjAPLgY8ZX2XrmHawt99/u1y6RgrZMTeoPfpUbV96HOalYgz1qzkRbw54Pmg==}
-    engines: {node: '>=18.0.0'}
+  /helmet@7.2.0:
+    resolution: {integrity: sha512-ZRiwvN089JfMXokizgqEPXsl2Guk094yExfoDXR0cBYWxtBbaSww/w+vT4WEJsBW2iTUi1GgZ6swmoug3Oy4Xw==}
+    engines: {node: '>=16.0.0'}
     dev: false
 
   /help-me@5.0.0:
