@@ -420,112 +420,110 @@
     <!-- Main Content - Bulletin Board (Anslagstavla) -->
     <div class="flex-1 min-w-0 space-y-3">
       
-      <!-- Upcoming Activities - Compact -->
-      <div
-        class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4"
-      >
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-sm font-semibold text-stone-600 dark:text-stone-400">📅</span>
-          <a href="/calendar" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Kalender →</a>
+      {#if loadingMembers || loadingGroceries}
+        <!-- Loading state -->
+        <div class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4">
+          <div class="flex justify-center py-4">
+            <div class="animate-spin w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full"></div>
+          </div>
         </div>
-
-        {#if loadingMembers}
-          <div class="flex justify-center py-2">
-            <div class="animate-spin w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full"></div>
-          </div>
-        {:else if upcomingActivities.length === 0}
-          <p class="text-xs text-stone-400 dark:text-stone-500">Inget planerat denna vecka</p>
-        {:else}
-          <div class="space-y-1">
-            {#each upcomingActivities as activity (activity.id)}
-              <a
-                href="/calendar"
-                class="flex items-center gap-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-700/50 rounded px-1 -mx-1 transition-colors"
-              >
-                <span class="text-sm flex-shrink-0">{getActivityEmoji(activity.category)}</span>
-                <span class="text-sm text-stone-700 dark:text-stone-300 truncate flex-1">{activity.title}</span>
-                <span class="text-[10px] text-stone-400 dark:text-stone-500 flex-shrink-0">
-                  {formatActivityDate(activity.startTime)}
-                </span>
-              </a>
-            {/each}
-          </div>
-        {/if}
-      </div>
-
-      <!-- Tasks - Compact List -->
-      <div
-        class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4"
-      >
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-sm font-semibold text-stone-600 dark:text-stone-400">📋</span>
-          <a href="/tasks" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Alla uppgifter →</a>
-        </div>
-
-        {#if loadingMembers}
-          <div class="flex justify-center py-2">
-            <div class="animate-spin w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full"></div>
-          </div>
-        {:else if openTasks.length === 0}
-          <p class="text-xs text-stone-400 dark:text-stone-500">Inga uppgifter ✓</p>
-        {:else}
-          <div class="space-y-1">
-            {#each openTasks.slice(0, 6) as task (task.id)}
-              {@const assignee = familyMembers.find(m => m.id === task.assignedTo)}
-              {@const isOverdue = task.dueDate && new Date(task.dueDate) < new Date()}
-              <a
-                href="/tasks"
-                class="flex items-center gap-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-700/50 rounded px-1 -mx-1 transition-colors"
-              >
-                <span class="text-sm flex-shrink-0">{assignee?.avatarEmoji || '·'}</span>
-                <span class="text-sm text-stone-700 dark:text-stone-300 truncate flex-1 {isOverdue ? 'text-red-600 dark:text-red-400' : ''}">{task.title}</span>
-                {#if task.dueDate}
-                  <span class="text-[10px] text-stone-400 dark:text-stone-500 flex-shrink-0">
-                    {new Date(task.dueDate).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}
-                  </span>
-                {/if}
-              </a>
-            {/each}
-            {#if openTasks.length > 6}
-              <p class="text-[10px] text-stone-400 dark:text-stone-500 pt-1">+{openTasks.length - 6} till...</p>
-            {/if}
-          </div>
-        {/if}
-      </div>
-
-      <!-- Shopping List - Compact -->
-      <div
-        class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4"
-      >
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-sm font-semibold text-stone-600 dark:text-stone-400">🛒</span>
-          <a href="/groceries" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Visa lista →</a>
-        </div>
-
-        {#if loadingGroceries}
-          <div class="flex justify-center py-2">
-            <div class="animate-spin w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full"></div>
-          </div>
-        {:else if pendingCount === 0}
-          <p class="text-xs text-stone-400 dark:text-stone-500">Listan är tom ✓</p>
-        {:else}
-          <a
-            href="/groceries"
-            class="flex items-center justify-between hover:bg-stone-50 dark:hover:bg-stone-700/50 rounded px-1 -mx-1 py-1 transition-colors"
+      {:else}
+        <!-- Upcoming Activities - Only show if there are activities -->
+        {#if upcomingActivities.length > 0}
+          <div
+            class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4"
           >
-            <span class="text-sm text-stone-700 dark:text-stone-300">
-              <span class="font-semibold text-orange-500 dark:text-amber-400">{pendingCount}</span> varor
-            </span>
-            {#if groceryAssignedMembers.length > 0}
-              <div class="flex items-center gap-1">
-                {#each groceryAssignedMembers as member}
-                  <span class="text-sm" title={member.displayName || member.username}>{member.avatarEmoji || '👤'}</span>
-                {/each}
-              </div>
-            {/if}
-          </a>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-semibold text-stone-600 dark:text-stone-400">📅</span>
+              <a href="/calendar" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Kalender →</a>
+            </div>
+            <div class="space-y-1">
+              {#each upcomingActivities as activity (activity.id)}
+                <a
+                  href="/calendar"
+                  class="flex items-center gap-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-700/50 rounded px-1 -mx-1 transition-colors"
+                >
+                  <span class="text-sm flex-shrink-0">{getActivityEmoji(activity.category)}</span>
+                  <span class="text-sm text-stone-700 dark:text-stone-300 truncate flex-1">{activity.title}</span>
+                  <span class="text-[10px] text-stone-400 dark:text-stone-500 flex-shrink-0">
+                    {formatActivityDate(activity.startTime)}
+                  </span>
+                </a>
+              {/each}
+            </div>
+          </div>
         {/if}
-      </div>
+
+        <!-- Tasks - Only show if there are open tasks -->
+        {#if openTasks.length > 0}
+          <div
+            class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4"
+          >
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-semibold text-stone-600 dark:text-stone-400">📋</span>
+              <a href="/tasks" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Alla uppgifter →</a>
+            </div>
+            <div class="space-y-1">
+              {#each openTasks.slice(0, 6) as task (task.id)}
+                {@const assignee = familyMembers.find(m => m.id === task.assignedTo)}
+                {@const isOverdue = task.dueDate && new Date(task.dueDate) < new Date()}
+                <a
+                  href="/tasks"
+                  class="flex items-center gap-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-700/50 rounded px-1 -mx-1 transition-colors"
+                >
+                  <span class="text-sm flex-shrink-0">{assignee?.avatarEmoji || '·'}</span>
+                  <span class="text-sm text-stone-700 dark:text-stone-300 truncate flex-1 {isOverdue ? 'text-red-600 dark:text-red-400' : ''}">{task.title}</span>
+                  {#if task.dueDate}
+                    <span class="text-[10px] text-stone-400 dark:text-stone-500 flex-shrink-0">
+                      {new Date(task.dueDate).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}
+                    </span>
+                  {/if}
+                </a>
+              {/each}
+              {#if openTasks.length > 6}
+                <p class="text-[10px] text-stone-400 dark:text-stone-500 pt-1">+{openTasks.length - 6} till...</p>
+              {/if}
+            </div>
+          </div>
+        {/if}
+
+        <!-- Shopping List - Only show if there are items -->
+        {#if pendingCount > 0}
+          <div
+            class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4"
+          >
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-semibold text-stone-600 dark:text-stone-400">🛒</span>
+              <a href="/groceries" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Visa lista →</a>
+            </div>
+            <a
+              href="/groceries"
+              class="flex items-center justify-between hover:bg-stone-50 dark:hover:bg-stone-700/50 rounded px-1 -mx-1 py-1 transition-colors"
+            >
+              <span class="text-sm text-stone-700 dark:text-stone-300">
+                <span class="font-semibold text-orange-500 dark:text-amber-400">{pendingCount}</span> varor
+              </span>
+              {#if groceryAssignedMembers.length > 0}
+                <div class="flex items-center gap-1">
+                  {#each groceryAssignedMembers as member}
+                    <span class="text-sm" title={member.displayName || member.username}>{member.avatarEmoji || '👤'}</span>
+                  {/each}
+                </div>
+              {/if}
+            </a>
+          </div>
+        {/if}
+
+        <!-- Empty state - show when nothing is happening -->
+        {#if upcomingActivities.length === 0 && openTasks.length === 0 && pendingCount === 0}
+          <div
+            class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-6 text-center"
+          >
+            <p class="text-4xl mb-2">✨</p>
+            <p class="text-sm text-stone-500 dark:text-stone-400">Allt klart! Inget att göra just nu.</p>
+          </div>
+        {/if}
+      {/if}
 
     </div>
 
