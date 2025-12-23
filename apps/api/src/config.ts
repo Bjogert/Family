@@ -2,9 +2,12 @@ import { config as dotenvConfig } from 'dotenv';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-// Load .env from project root
+// Load .env from multiple possible locations
 const __dirname = dirname(fileURLToPath(import.meta.url));
-dotenvConfig({ path: resolve(__dirname, '../../../.env') });
+
+// Try loading from api folder first, then project root
+dotenvConfig({ path: resolve(__dirname, '../.env') }); // apps/api/.env
+dotenvConfig({ path: resolve(__dirname, '../../../.env') }); // project root .env
 
 export const config = {
   // Environment
@@ -31,11 +34,11 @@ export const config = {
     password: process.env.DB_PASSWORD || '',
   },
 
-  // Google Calendar (Phase 5)
+  // Google Calendar
   google: {
-    clientId: process.env.GOOGLE_CLIENT_ID || '',
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/calendar/auth/callback',
+    clientId: process.env.GOOGLE_CALENDAR_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CALENDAR_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET || '',
+    redirectUri: process.env.GOOGLE_CALENDAR_REDIRECT_URI || process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/calendar/auth/callback',
   },
 
   // Encryption for OAuth tokens

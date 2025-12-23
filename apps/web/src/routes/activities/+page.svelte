@@ -10,11 +10,13 @@
   let loading = true;
   let showForm = false;
   let editingActivity: Activity | null = null;
+  let calendarConnected = false;
   let familyMembers: Array<{
     id: number;
     displayName: string | null;
     avatarEmoji: string | null;
     color: string | null;
+    role: string | null;
   }> = [];
 
   const categories: { value: ActivityCategory; labelKey: string }[] = [
@@ -28,8 +30,23 @@
   ];
 
   onMount(async () => {
-    await Promise.all([loadActivities(), loadFamilyMembers()]);
+    await Promise.all([loadActivities(), loadFamilyMembers(), checkCalendarConnection()]);
   });
+
+  async function checkCalendarConnection() {
+    if (!$currentUser) return;
+    try {
+      const res = await fetch('/api/calendar/google/status', {
+        headers: { 'x-user-id': String($currentUser.id) },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        calendarConnected = data.connected && !!data.familyCalendarId;
+      }
+    } catch (err) {
+      console.error('Failed to check calendar connection:', err);
+    }
+  }
 
   async function loadActivities() {
     if (!$currentFamily) return;
@@ -96,7 +113,10 @@
     try {
       const res = await fetch(`/api/activities/${id}`, {
         method: 'DELETE',
-        headers: { 'x-family-id': String($currentFamily.id) },
+        headers: { 
+          'x-family-id': String($currentFamily.id),
+          'x-user-id': String($currentUser?.id || ''),
+        },
       });
       if (res.ok) {
         activities = activities.filter((a) => a.id !== id);
@@ -141,6 +161,7 @@
       activity={editingActivity}
       {categories}
       {familyMembers}
+      {calendarConnected}
       on:save={handleSave}
       on:cancel={handleCancel}
     />

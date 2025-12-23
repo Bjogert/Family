@@ -14,6 +14,7 @@ export interface ActivityRow {
     created_by: number | null;
     created_at: Date;
     updated_at: Date;
+    google_calendar_event_id: string | null;
 }
 
 export interface ActivityParticipantRow {
@@ -36,6 +37,7 @@ export interface CreateActivityData {
     recurringPattern?: string;
     transportUserId?: number;
     createdBy?: number;
+    googleCalendarEventId?: string;
 }
 
 export interface UpdateActivityData {
@@ -47,13 +49,14 @@ export interface UpdateActivityData {
     endTime?: Date | null;
     recurringPattern?: string | null;
     transportUserId?: number | null;
+    googleCalendarEventId?: string | null;
 }
 
 export async function findAllByFamily(familyId: number): Promise<ActivityRow[]> {
     const result = await pool.query<ActivityRow>(
         `SELECT id, family_id, title, description, category, location,
             start_time, end_time, recurring_pattern, transport_user_id,
-            created_by, created_at, updated_at
+            created_by, created_at, updated_at, google_calendar_event_id
      FROM activities
      WHERE family_id = $1
      ORDER BY start_time ASC`,
@@ -66,7 +69,7 @@ export async function findById(id: number, familyId: number): Promise<ActivityRo
     const result = await pool.query<ActivityRow>(
         `SELECT id, family_id, title, description, category, location,
             start_time, end_time, recurring_pattern, transport_user_id,
-            created_by, created_at, updated_at
+            created_by, created_at, updated_at, google_calendar_event_id
      FROM activities
      WHERE id = $1 AND family_id = $2`,
         [id, familyId]
@@ -77,8 +80,8 @@ export async function findById(id: number, familyId: number): Promise<ActivityRo
 export async function create(data: CreateActivityData): Promise<ActivityRow> {
     const result = await pool.query<ActivityRow>(
         `INSERT INTO activities (family_id, title, description, category, location,
-                             start_time, end_time, recurring_pattern, transport_user_id, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                             start_time, end_time, recurring_pattern, transport_user_id, created_by, google_calendar_event_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      RETURNING *`,
         [
             data.familyId,
@@ -90,7 +93,8 @@ export async function create(data: CreateActivityData): Promise<ActivityRow> {
             data.endTime || null,
             data.recurringPattern || null,
             data.transportUserId || null,
-            data.createdBy || null
+            data.createdBy || null,
+            data.googleCalendarEventId || null
         ]
     );
     return result.rows[0];
@@ -132,6 +136,10 @@ export async function update(id: number, familyId: number, data: UpdateActivityD
     if (data.transportUserId !== undefined) {
         fields.push(`transport_user_id = $${paramCount++}`);
         values.push(data.transportUserId);
+    }
+    if (data.googleCalendarEventId !== undefined) {
+        fields.push(`google_calendar_event_id = $${paramCount++}`);
+        values.push(data.googleCalendarEventId);
     }
 
     if (fields.length === 0) return findById(id, familyId);

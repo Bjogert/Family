@@ -4,13 +4,19 @@ import cookie from '@fastify/cookie';
 import websocket from '@fastify/websocket';
 import { config } from './config.js';
 import { logger } from './utils/logger.js';
-import { initDatabase } from './db/index.js';
+import { initDatabase, pool } from './db/index.js';
 import authRoutes from './modules/auth/routes.js';
 import familyRoutes from './modules/families/routes.js';
 import groceryRoutes from './modules/groceries/routes.js';
 import activityRoutes from './modules/activities/routes.js';
 import taskRoutes from './modules/tasks/routes.js';
 import websocketRoutes from './websocket/routes.js';
+import {
+  createGoogleCalendarRepository,
+  createGoogleCalendarService,
+  registerGoogleCalendarRoutes,
+} from './modules/googleCalendar/index.js';
+import { setCalendarService } from './modules/activities/service.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -63,8 +69,18 @@ export async function buildApp() {
   await app.register(activityRoutes, { prefix: '/api/activities' });
   await app.register(taskRoutes, { prefix: '/api/tasks' });
   await app.register(websocketRoutes, { prefix: '/api' });
-  // TODO: Register in later phases
-  // await app.register(calendarRoutes, { prefix: '/api/calendar' });
+
+  // Google Calendar integration
+  const calendarRepository = createGoogleCalendarRepository(pool);
+  const calendarService = createGoogleCalendarService(calendarRepository);
+  
+  // Inject calendar service into activity service for syncing
+  setCalendarService(calendarService);
+  
+  await app.register(
+    async (instance) => registerGoogleCalendarRoutes(instance, calendarService),
+    { prefix: '/api/calendar' }
+  );
 
   // Global error handler
   app.setErrorHandler((error, request, reply) => {

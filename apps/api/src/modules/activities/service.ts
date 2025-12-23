@@ -1,5 +1,13 @@
 ﻿import * as activityRepo from './repository.js';
 import type { Activity, CreateActivityInput, UpdateActivityInput } from '@family-hub/shared/types';
+import type { GoogleCalendarService } from '../googleCalendar/service.js';
+
+// Calendar service will be injected
+let calendarService: GoogleCalendarService | null = null;
+
+export function setCalendarService(service: GoogleCalendarService) {
+    calendarService = service;
+}
 
 function mapRowToActivity(row: activityRepo.ActivityRow): Activity {
     return {
@@ -16,6 +24,7 @@ function mapRowToActivity(row: activityRepo.ActivityRow): Activity {
         createdBy: row.created_by,
         createdAt: row.created_at.toISOString(),
         updatedAt: row.updated_at.toISOString(),
+        googleCalendarEventId: row.google_calendar_event_id,
     };
 }
 
@@ -96,8 +105,35 @@ export async function getActivityById(id: number, familyId: number): Promise<Act
 export async function createActivity(
     familyId: number,
     input: CreateActivityInput,
-    createdBy?: number
+    createdBy?: number,
+    userId?: number
 ): Promise<Activity> {
+    let googleCalendarEventId: string | undefined;
+
+    // Sync to Google Calendar if requested and user has a family calendar configured
+    if (input.syncToCalendar && userId && calendarService) {
+        try {
+            const connection = await calendarService.getConnection(userId);
+            if (connection?.familyCalendarId) {
+                const startTime = new Date(input.startTime);
+                const endTime = input.endTime ? new Date(input.endTime) : new Date(startTime.getTime() + 60 * 60 * 1000); // Default 1 hour
+
+                const calendarEvent = await calendarService.createEvent(userId, {
+                    calendarId: connection.familyCalendarId,
+                    summary: input.title,
+                    description: input.description || undefined,
+                    location: input.location || undefined,
+                    start: { dateTime: startTime.toISOString() },
+                    end: { dateTime: endTime.toISOString() },
+                });
+                googleCalendarEventId = calendarEvent.id;
+            }
+        } catch (err) {
+            console.error('Failed to create Google Calendar event:', err);
+            // Continue without syncing - don't fail the activity creation
+        }
+    }
+
     const row = await activityRepo.create({
         familyId,
         title: input.title,
@@ -109,6 +145,7 @@ export async function createActivity(
         recurringPattern: input.recurringPattern || undefined,
         transportUserId: input.transportUserId,
         createdBy,
+        googleCalendarEventId,
     });
 
     // Set participants if provided
@@ -122,8 +159,35 @@ export async function createActivity(
 export async function updateActivity(
     id: number,
     familyId: number,
-    input: UpdateActivityInput
+    input: UpdateActivityInput,
+    userId?: number
 ): Promise<Activity | null> {
+    // Get existing activity to check for calendar event
+    const existing = await activityRepo.findById(id, familyId);
+    if (!existing) return null;
+
+    // Update Google Calendar event if it exists
+    if (existing.google_calendar_event_id && userId && calendarService) {
+        try {
+            const connection = await calendarService.getConnection(userId);
+            if (connection?.familyCalendarId) {
+                const startTime = input.startTime ? new Date(input.startTime) : existing.start_time;
+                const endTime = input.endTime ? new Date(input.endTime) : (existing.end_time || new Date(startTime.getTime() + 60 * 60 * 1000));
+
+                await calendarService.updateEvent(userId, connection.familyCalendarId, existing.google_calendar_event_id, {
+                    summary: input.title || existing.title,
+                    description: input.description !== undefined ? (input.description || undefined) : (existing.description || undefined),
+                    location: input.location !== undefined ? (input.location || undefined) : (existing.location || undefined),
+                    start: { dateTime: startTime.toISOString() },
+                    end: { dateTime: endTime.toISOString() },
+                });
+            }
+        } catch (err) {
+            console.error('Failed to update Google Calendar event:', err);
+            // Continue without syncing - don't fail the activity update
+        }
+    }
+
     const row = await activityRepo.update(id, familyId, {
         title: input.title,
         description: input.description,
@@ -145,6 +209,22 @@ export async function updateActivity(
     return getActivityById(id, familyId);
 }
 
-export async function deleteActivity(id: number, familyId: number): Promise<boolean> {
+export async function deleteActivity(id: number, familyId: number, userId?: number): Promise<boolean> {
+    // Get activity to check for calendar event
+    const activity = await activityRepo.findById(id, familyId);
+    
+    // Delete Google Calendar event if it exists
+    if (activity?.google_calendar_event_id && userId && calendarService) {
+        try {
+            const connection = await calendarService.getConnection(userId);
+            if (connection?.familyCalendarId) {
+                await calendarService.deleteEvent(userId, connection.familyCalendarId, activity.google_calendar_event_id);
+            }
+        } catch (err) {
+            console.error('Failed to delete Google Calendar event:', err);
+            // Continue without syncing - don't fail the activity deletion
+        }
+    }
+
     return activityRepo.remove(id, familyId);
 }

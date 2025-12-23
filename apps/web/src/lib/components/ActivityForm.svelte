@@ -15,7 +15,14 @@
     displayName: string | null;
     avatarEmoji: string | null;
     color: string | null;
+    role: string | null;
   }> = [];
+  export let calendarConnected = false;
+
+  // Filter to only parents for transport
+  $: parents = familyMembers.filter(m => m.role === 'pappa' || m.role === 'mamma');
+  // Filter to only children for participants
+  $: children = familyMembers.filter(m => m.role === 'barn' || m.role === 'bebis');
 
   const dispatch = createEventDispatcher<{
     save: CreateActivityInput;
@@ -35,6 +42,7 @@
   let recurringPattern: RecurringPattern = activity?.recurringPattern || null;
   let transportUserId: number | null = activity?.transportUserId || null;
   let selectedParticipants: number[] = activity?.participants?.map((p) => p.userId) || [];
+  let syncToCalendar = calendarConnected && !activity; // Default to true for new activities if calendar is connected
 
   const recurringOptions: { value: RecurringPattern; labelKey: string }[] = [
     { value: null, labelKey: 'recurring.none' },
@@ -66,6 +74,7 @@
       recurringPattern,
       transportUserId: transportUserId || undefined,
       participantIds: selectedParticipants,
+      syncToCalendar: syncToCalendar && !activity, // Only sync new activities
     });
   }
 </script>
@@ -183,7 +192,7 @@
       👥 {$t('activities.participants')}
     </span>
     <div class="flex flex-wrap gap-2">
-      {#each familyMembers as member}
+      {#each children as member}
         <button
           type="button"
           on:click={() => toggleParticipant(member.id)}
@@ -209,7 +218,7 @@
       class="w-full px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700 text-stone-800 dark:text-stone-100"
     >
       <option value={null}>{$t('activities.noTransport')}</option>
-      {#each familyMembers as member}
+      {#each parents as member}
         <option value={member.id}>{member.avatarEmoji} {member.displayName}</option>
       {/each}
     </select>
@@ -229,6 +238,20 @@
       {/each}
     </select>
   </label>
+
+  <!-- Sync to Google Calendar (only show for new activities when connected) -->
+  {#if calendarConnected && !activity}
+    <label class="flex items-center gap-3 cursor-pointer">
+      <input
+        type="checkbox"
+        bind:checked={syncToCalendar}
+        class="w-5 h-5 rounded border-stone-300 dark:border-stone-600 text-amber-500 focus:ring-amber-400"
+      />
+      <span class="text-sm text-stone-700 dark:text-stone-200">
+        📅 Lägg till i Google Kalender
+      </span>
+    </label>
+  {/if}
 
   <!-- Actions -->
   <div class="flex gap-3 pt-4">

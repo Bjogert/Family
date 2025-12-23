@@ -59,7 +59,8 @@ export default async function activityRoutes(app: FastifyInstance) {
             const activity = await activityService.createActivity(
                 Number(familyId),
                 request.body,
-                userId ? Number(userId) : undefined
+                userId ? Number(userId) : undefined,
+                userId ? Number(userId) : undefined // For calendar sync
             );
 
             return reply.status(201).send(activity);
@@ -74,6 +75,7 @@ export default async function activityRoutes(app: FastifyInstance) {
             reply: FastifyReply
         ) => {
             const familyId = request.headers['x-family-id'];
+            const userId = request.headers['x-user-id'];
             if (!familyId) {
                 return reply.status(400).send({ error: 'Family ID required' });
             }
@@ -81,7 +83,8 @@ export default async function activityRoutes(app: FastifyInstance) {
             const activity = await activityService.updateActivity(
                 parseInt(request.params.id, 10),
                 Number(familyId),
-                request.body
+                request.body,
+                userId ? Number(userId) : undefined
             );
 
             if (!activity) {
@@ -97,13 +100,15 @@ export default async function activityRoutes(app: FastifyInstance) {
         '/:id',
         async (request: FastifyRequest<{ Params: ActivityParams }>, reply: FastifyReply) => {
             const familyId = request.headers['x-family-id'];
+            const userId = request.headers['x-user-id'];
             if (!familyId) {
                 return reply.status(400).send({ error: 'Family ID required' });
             }
 
             const deleted = await activityService.deleteActivity(
                 parseInt(request.params.id, 10),
-                Number(familyId)
+                Number(familyId),
+                userId ? Number(userId) : undefined
             );
 
             if (!deleted) {

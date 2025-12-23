@@ -4,3 +4,4 @@ export * from './calendar.js';
 export * from './api.js';
 export * from './activity.js';
 export * from './task.js';
+export * from './googleCalendar.js';

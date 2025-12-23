@@ -30,6 +30,7 @@ export interface Activity {
     createdBy: number | null;
     createdAt: string;
     updatedAt: string;
+    googleCalendarEventId: string | null; // Google Calendar event ID if synced
     // Populated fields
     participants?: ActivityParticipant[];
     transportUser?: { id: number; displayName: string; avatarEmoji: string | null };
@@ -58,6 +59,7 @@ export interface CreateActivityInput {
     recurringPattern?: RecurringPattern;
     transportUserId?: number;
     participantIds?: number[];
+    syncToCalendar?: boolean; // Whether to create a Google Calendar event
 }
 
 export interface UpdateActivityInput extends Partial<CreateActivityInput> {
