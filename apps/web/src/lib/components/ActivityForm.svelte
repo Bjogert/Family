@@ -25,7 +25,7 @@
   $: children = familyMembers.filter((m) => m.role === 'barn' || m.role === 'bebis');
 
   const dispatch = createEventDispatcher<{
-    save: CreateActivityInput;
+    save: CreateActivityInput & { sendNotification?: boolean };
     cancel: void;
   }>();
 
@@ -43,6 +43,7 @@
   let transportUserId: number | null = activity?.transportUserId || null;
   let selectedParticipants: number[] = activity?.participants?.map((p) => p.userId) || [];
   let syncToCalendar = calendarConnected && !activity; // Default to true for new activities if calendar is connected
+  let sendNotification = true; // Default to send notification
 
   const recurringOptions: { value: RecurringPattern; labelKey: string }[] = [
     { value: null, labelKey: 'recurring.none' },
@@ -75,6 +76,7 @@
       transportUserId: transportUserId || undefined,
       participantIds: selectedParticipants,
       syncToCalendar: syncToCalendar && !activity, // Only sync new activities
+      sendNotification,
     });
   }
 </script>
@@ -238,6 +240,20 @@
       {/each}
     </select>
   </label>
+
+  <!-- Send Notification (only show when participants or transport user selected) -->
+  {#if selectedParticipants.length > 0 || transportUserId}
+    <label class="flex items-center gap-3 cursor-pointer">
+      <input
+        type="checkbox"
+        bind:checked={sendNotification}
+        class="w-5 h-5 rounded border-stone-300 dark:border-stone-600 text-amber-500 focus:ring-amber-400"
+      />
+      <span class="text-sm text-stone-700 dark:text-stone-200">
+        🔔 {$t('activities.sendNotification')}
+      </span>
+    </label>
+  {/if}
 
   <!-- Sync to Google Calendar (only show for new activities when connected) -->
   {#if calendarConnected && !activity}

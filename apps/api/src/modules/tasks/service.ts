@@ -58,7 +58,7 @@ export async function getTasksByAssignee(familyId: number, userId: number): Prom
 
 export async function createTask(
     familyId: number,
-    input: CreateTaskInput,
+    input: CreateTaskInput & { sendNotification?: boolean },
     createdBy?: number
 ): Promise<Task> {
     const row = await taskRepo.create({
@@ -75,8 +75,9 @@ export async function createTask(
         createdBy,
     });
 
-    // Send push notification if task is assigned to someone (not self-assigned)
-    if (input.assignedTo && createdBy && input.assignedTo !== createdBy) {
+    // Send push notification if task is assigned to someone (not self-assigned) and notifications enabled
+    const sendNotification = input.sendNotification !== false; // Default to true
+    if (sendNotification && input.assignedTo && createdBy && input.assignedTo !== createdBy) {
         try {
             const creator = await authRepo.findUserById(createdBy);
             const creatorName = creator?.displayName || creator?.username || 'Någon';

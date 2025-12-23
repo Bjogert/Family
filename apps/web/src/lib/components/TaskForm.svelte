@@ -19,7 +19,7 @@
   }> = [];
 
   const dispatch = createEventDispatcher<{
-    save: Partial<Task>;
+    save: Partial<Task> & { sendNotification?: boolean };
     cancel: void;
   }>();
 
@@ -33,6 +33,7 @@
   let dueDate = task?.dueDate || '';
   let dueTime = task?.dueTime || '';
   let recurringPattern: RecurringPattern = task?.recurringPattern || null;
+  let sendNotification = true; // Default to send notification
 
   const recurringOptions: { value: RecurringPattern; labelKey: string }[] = [
     { value: null, labelKey: 'recurring.none' },
@@ -59,6 +60,7 @@
       dueDate: dueDate || undefined,
       dueTime: dueTime || undefined,
       recurringPattern,
+      sendNotification,
     });
   }
 </script>
@@ -226,6 +228,20 @@
       {/each}
     </select>
   </label>
+
+  <!-- Send Notification (only show when someone is assigned) -->
+  {#if assignedTo}
+    <label class="flex items-center gap-3 cursor-pointer">
+      <input
+        type="checkbox"
+        bind:checked={sendNotification}
+        class="w-5 h-5 rounded border-stone-300 dark:border-stone-600 text-teal-500 focus:ring-teal-400"
+      />
+      <span class="text-sm text-stone-700 dark:text-stone-200">
+        🔔 {$t('tasks.sendNotification')}
+      </span>
+    </label>
+  {/if}
 
   <!-- Actions -->
   <div class="flex gap-3 pt-4">

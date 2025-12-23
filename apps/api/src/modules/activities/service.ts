@@ -106,7 +106,7 @@ export async function getActivityById(id: number, familyId: number): Promise<Act
 
 export async function createActivity(
     familyId: number,
-    input: CreateActivityInput,
+    input: CreateActivityInput & { sendNotification?: boolean },
     createdBy?: number,
     userId?: number
 ): Promise<Activity> {
@@ -154,14 +154,15 @@ export async function createActivity(
     if (input.participantIds && input.participantIds.length > 0) {
         await activityRepo.setParticipants(row.id, input.participantIds);
 
-        // Send push notifications to participants (except the creator)
+        // Send push notifications to participants (except the creator) if enabled
+        const sendNotification = input.sendNotification !== false; // Default to true
         const participantsToNotify = input.participantIds.filter(id => id !== createdBy);
-        if (participantsToNotify.length > 0 && createdBy) {
+        if (sendNotification && participantsToNotify.length > 0 && createdBy) {
             try {
                 const creator = await authRepo.findUserById(createdBy);
                 const creatorName = creator?.displayName || creator?.username || 'Någon';
                 const eventDate = new Date(input.startTime).toLocaleDateString('sv-SE');
-                
+
                 await pushService.sendToUsers(participantsToNotify, {
                     title: '📅 Ny aktivitet',
                     body: `${creatorName} har lagt till dig i "${input.title}" (${eventDate})`,
@@ -174,13 +175,14 @@ export async function createActivity(
         }
     }
 
-    // Notify transport user if assigned (and not the creator)
-    if (input.transportUserId && createdBy && input.transportUserId !== createdBy) {
+    // Notify transport user if assigned (and not the creator) and notifications enabled
+    const sendNotification = input.sendNotification !== false; // Default to true
+    if (sendNotification && input.transportUserId && createdBy && input.transportUserId !== createdBy) {
         try {
             const creator = await authRepo.findUserById(createdBy);
             const creatorName = creator?.displayName || creator?.username || 'Någon';
             const eventDate = new Date(input.startTime).toLocaleDateString('sv-SE');
-            
+
             await pushService.sendToUser(input.transportUserId, {
                 title: '🚗 Skjutsuppdrag',
                 body: `${creatorName} har tilldelat dig som skjuts för "${input.title}" (${eventDate})`,
