@@ -34,7 +34,7 @@
   let newListItemText = '';
   let enableExpiry = !!note?.expiresAt;
   let expiresAt = note?.expiresAt ? note.expiresAt.split('T')[0] : '';
-  let assignedTo: number[] = note?.assignedTo?.map(a => a.id) || [];
+  let assignedTo: number[] = note?.assignedTo?.map((a) => a.id) || [];
 
   const colorOptions: { value: BulletinColor; bg: string; label: string }[] = [
     { value: 'yellow', bg: 'bg-yellow-200', label: 'Gul' },
@@ -55,19 +55,19 @@
   }
 
   function removeListItem(id: string) {
-    listItems = listItems.filter(item => item.id !== id);
+    listItems = listItems.filter((item) => item.id !== id);
   }
 
   function toggleAssignment(userId: number) {
     if (assignedTo.includes(userId)) {
-      assignedTo = assignedTo.filter(id => id !== userId);
+      assignedTo = assignedTo.filter((id) => id !== userId);
     } else {
       assignedTo = [...assignedTo, userId];
     }
   }
 
   function selectAllMembers() {
-    assignedTo = familyMembers.map(m => m.id);
+    assignedTo = familyMembers.map((m) => m.id);
   }
 
   function handleSubmit() {

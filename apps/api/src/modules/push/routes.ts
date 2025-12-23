@@ -4,7 +4,6 @@ import * as pushRepo from './repository.js';
 import * as pushService from './service.js';
 import { getPublicVapidKey, isPushEnabled } from './vapid.js';
 import { logger } from '../../utils/logger.js';
-import '../../types/fastify.js';
 
 interface SubscribeBody {
     endpoint: string;

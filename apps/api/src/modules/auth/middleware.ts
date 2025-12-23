@@ -2,7 +2,6 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import * as authService from './service.js';
 import * as authRepo from './repository.js';
 import { pool } from '../../db/index.js';
-import '../../types/fastify.js';
 
 export async function requireAuth(
   request: FastifyRequest,
@@ -34,15 +33,15 @@ export async function requireAuth(
   const familyResult = await pool.query('SELECT id, name FROM families WHERE id = $1', [session.familyId]);
   const family = familyResult.rows[0] || null;
 
-    if (user && family) {
-      request.user = {
-        id: user.id,
-        username: user.username,
-        displayName: user.displayName,
-      };
-      request.family = {
-        id: family.id,
-        name: family.name,
-      };
-    }
+  if (user && family) {
+    request.user = {
+      id: user.id,
+      username: user.username,
+      displayName: user.displayName,
+    };
+    request.family = {
+      id: family.id,
+      name: family.name,
+    };
   }
+}

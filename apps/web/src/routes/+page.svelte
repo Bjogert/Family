@@ -5,7 +5,14 @@
   import { groceryWs } from '$lib/stores/groceryWs';
   import { currentFamily, currentUser } from '$lib/stores/auth';
   import type { GroceryItem } from '$lib/types/grocery';
-  import type { Task, TaskCategory, TaskStatus, Activity, BulletinNote, BulletinListItem } from '@family-hub/shared/types';
+  import type {
+    Task,
+    TaskCategory,
+    TaskStatus,
+    Activity,
+    BulletinNote,
+    BulletinListItem,
+  } from '@family-hub/shared/types';
   import BulletinNoteForm from '$lib/components/BulletinNoteForm.svelte';
 
   interface FamilyMember {
@@ -94,10 +101,18 @@
     const isToday = date.toDateString() === now.toDateString();
     const isTomorrow = date.toDateString() === tomorrow.toDateString();
 
-    if (isToday) return `Idag ${date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`;
-    if (isTomorrow) return `Imorgon ${date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`;
+    if (isToday)
+      return `Idag ${date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`;
+    if (isTomorrow)
+      return `Imorgon ${date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`;
 
-    return date.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleDateString('sv-SE', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   // Get category emoji for activities
@@ -230,7 +245,11 @@
       });
       if (response.ok) {
         const newNote = await response.json();
-        bulletinNotes = [newNote, ...bulletinNotes.filter(n => !n.isPinned), ...bulletinNotes.filter(n => n.isPinned && n.id !== newNote.id)];
+        bulletinNotes = [
+          newNote,
+          ...bulletinNotes.filter((n) => !n.isPinned),
+          ...bulletinNotes.filter((n) => n.isPinned && n.id !== newNote.id),
+        ];
         // Re-sort: pinned first, then by date
         bulletinNotes = bulletinNotes.sort((a, b) => {
           if (a.isPinned && !b.isPinned) return -1;
@@ -259,7 +278,7 @@
       });
       if (response.ok) {
         const updatedNote = await response.json();
-        bulletinNotes = bulletinNotes.map(n => n.id === id ? updatedNote : n);
+        bulletinNotes = bulletinNotes.map((n) => (n.id === id ? updatedNote : n));
         // Re-sort
         bulletinNotes = bulletinNotes.sort((a, b) => {
           if (a.isPinned && !b.isPinned) return -1;
@@ -284,7 +303,7 @@
         credentials: 'include',
       });
       if (response.ok) {
-        bulletinNotes = bulletinNotes.filter(n => n.id !== id);
+        bulletinNotes = bulletinNotes.filter((n) => n.id !== id);
       }
     } catch (e) {
       console.error('Failed to delete note:', e);
@@ -293,7 +312,7 @@
 
   async function toggleListItem(note: BulletinNote, itemId: string) {
     if (!note.listItems) return;
-    const updatedItems = note.listItems.map(item =>
+    const updatedItems = note.listItems.map((item) =>
       item.id === itemId ? { ...item, isChecked: !item.isChecked } : item
     );
     await updateNote(note.id, { listItems: updatedItems });
@@ -531,10 +550,12 @@
 
     <!-- Main Content - Bulletin Board (Anslagstavla) -->
     <div class="flex-1 min-w-0 space-y-3">
-      
       <!-- Add Note Button -->
       <button
-        on:click={() => { editingNote = null; showNoteForm = true; }}
+        on:click={() => {
+          editingNote = null;
+          showNoteForm = true;
+        }}
         class="w-full bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-3 flex items-center justify-center gap-2 text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-700/50 transition-colors"
       >
         <span class="text-lg">📌</span>
@@ -543,16 +564,21 @@
 
       {#if loadingMembers || loadingGroceries}
         <!-- Loading state -->
-        <div class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4">
+        <div
+          class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4"
+        >
           <div class="flex justify-center py-4">
-            <div class="animate-spin w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full"></div>
+            <div
+              class="animate-spin w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full"
+            ></div>
           </div>
         </div>
       {:else}
         <!-- Bulletin Notes -->
         {#each bulletinNotes as note (note.id)}
           <div
-            class="rounded-2xl shadow-xl border p-4 {noteColorClasses[note.color] || noteColorClasses.yellow}"
+            class="rounded-2xl shadow-xl border p-4 {noteColorClasses[note.color] ||
+              noteColorClasses.yellow}"
           >
             <!-- Header: Creator + Pin + Actions -->
             <div class="flex items-start justify-between mb-2">
@@ -561,12 +587,16 @@
                   <span class="text-sm">📌</span>
                 {/if}
                 <span class="text-xs text-stone-500 dark:text-stone-400">
-                  {note.creator?.avatarEmoji || '👤'} {note.creator?.displayName || 'Någon'} · {timeAgo(note.createdAt)}
+                  {note.creator?.avatarEmoji || '👤'}
+                  {note.creator?.displayName || 'Någon'} · {timeAgo(note.createdAt)}
                 </span>
               </div>
               <div class="flex items-center gap-1">
                 <button
-                  on:click={() => { editingNote = note; showNoteForm = true; }}
+                  on:click={() => {
+                    editingNote = note;
+                    showNoteForm = true;
+                  }}
                   class="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
                   title="Redigera"
                 >
@@ -587,7 +617,9 @@
 
             <!-- Content or List -->
             {#if note.content}
-              <p class="text-sm text-stone-600 dark:text-stone-300 whitespace-pre-wrap">{note.content}</p>
+              <p class="text-sm text-stone-600 dark:text-stone-300 whitespace-pre-wrap">
+                {note.content}
+              </p>
             {/if}
             {#if note.listItems && note.listItems.length > 0}
               <div class="space-y-1">
@@ -596,10 +628,18 @@
                     on:click={() => toggleListItem(note, item.id)}
                     class="flex items-center gap-2 text-sm text-left w-full hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 -mx-1 py-0.5"
                   >
-                    <span class="w-4 h-4 rounded border border-stone-400 flex items-center justify-center text-xs {item.isChecked ? 'bg-teal-500 border-teal-500 text-white' : ''}">
+                    <span
+                      class="w-4 h-4 rounded border border-stone-400 flex items-center justify-center text-xs {item.isChecked
+                        ? 'bg-teal-500 border-teal-500 text-white'
+                        : ''}"
+                    >
                       {#if item.isChecked}✓{/if}
                     </span>
-                    <span class="{item.isChecked ? 'line-through text-stone-400' : 'text-stone-700 dark:text-stone-300'}">{item.text}</span>
+                    <span
+                      class={item.isChecked
+                        ? 'line-through text-stone-400'
+                        : 'text-stone-700 dark:text-stone-300'}>{item.text}</span
+                    >
                   </button>
                 {/each}
               </div>
@@ -621,7 +661,9 @@
           >
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-semibold text-stone-600 dark:text-stone-400">📅</span>
-              <a href="/calendar" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Kalender →</a>
+              <a href="/calendar" class="text-xs text-teal-600 dark:text-teal-400 hover:underline"
+                >Kalender →</a
+              >
             </div>
             <div class="space-y-1">
               {#each upcomingActivities as activity (activity.id)}
@@ -630,7 +672,9 @@
                   class="flex items-center gap-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-700/50 rounded px-1 -mx-1 transition-colors"
                 >
                   <span class="text-sm flex-shrink-0">{getActivityEmoji(activity.category)}</span>
-                  <span class="text-sm text-stone-700 dark:text-stone-300 truncate flex-1">{activity.title}</span>
+                  <span class="text-sm text-stone-700 dark:text-stone-300 truncate flex-1"
+                    >{activity.title}</span
+                  >
                   <span class="text-[10px] text-stone-400 dark:text-stone-500 flex-shrink-0">
                     {formatActivityDate(activity.startTime)}
                   </span>
@@ -647,27 +691,38 @@
           >
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-semibold text-stone-600 dark:text-stone-400">📋</span>
-              <a href="/tasks" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Alla uppgifter →</a>
+              <a href="/tasks" class="text-xs text-teal-600 dark:text-teal-400 hover:underline"
+                >Alla uppgifter →</a
+              >
             </div>
             <div class="space-y-1">
               {#each openTasks.slice(0, 6) as task (task.id)}
-                {@const assignee = familyMembers.find(m => m.id === task.assignedTo)}
+                {@const assignee = familyMembers.find((m) => m.id === task.assignedTo)}
                 {@const isOverdue = task.dueDate && new Date(task.dueDate) < new Date()}
                 <a
                   href="/tasks"
                   class="flex items-center gap-2 py-1 hover:bg-stone-50 dark:hover:bg-stone-700/50 rounded px-1 -mx-1 transition-colors"
                 >
                   <span class="text-sm flex-shrink-0">{assignee?.avatarEmoji || '·'}</span>
-                  <span class="text-sm text-stone-700 dark:text-stone-300 truncate flex-1 {isOverdue ? 'text-red-600 dark:text-red-400' : ''}">{task.title}</span>
+                  <span
+                    class="text-sm text-stone-700 dark:text-stone-300 truncate flex-1 {isOverdue
+                      ? 'text-red-600 dark:text-red-400'
+                      : ''}">{task.title}</span
+                  >
                   {#if task.dueDate}
                     <span class="text-[10px] text-stone-400 dark:text-stone-500 flex-shrink-0">
-                      {new Date(task.dueDate).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}
+                      {new Date(task.dueDate).toLocaleDateString('sv-SE', {
+                        day: 'numeric',
+                        month: 'short',
+                      })}
                     </span>
                   {/if}
                 </a>
               {/each}
               {#if openTasks.length > 6}
-                <p class="text-[10px] text-stone-400 dark:text-stone-500 pt-1">+{openTasks.length - 6} till...</p>
+                <p class="text-[10px] text-stone-400 dark:text-stone-500 pt-1">
+                  +{openTasks.length - 6} till...
+                </p>
               {/if}
             </div>
           </div>
@@ -680,19 +735,24 @@
           >
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-semibold text-stone-600 dark:text-stone-400">🛒</span>
-              <a href="/groceries" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Visa lista →</a>
+              <a href="/groceries" class="text-xs text-teal-600 dark:text-teal-400 hover:underline"
+                >Visa lista →</a
+              >
             </div>
             <a
               href="/groceries"
               class="flex items-center justify-between hover:bg-stone-50 dark:hover:bg-stone-700/50 rounded px-1 -mx-1 py-1 transition-colors"
             >
               <span class="text-sm text-stone-700 dark:text-stone-300">
-                <span class="font-semibold text-orange-500 dark:text-amber-400">{pendingCount}</span> varor
+                <span class="font-semibold text-orange-500 dark:text-amber-400">{pendingCount}</span
+                > varor
               </span>
               {#if groceryAssignedMembers.length > 0}
                 <div class="flex items-center gap-1">
                   {#each groceryAssignedMembers as member}
-                    <span class="text-sm" title={member.displayName || member.username}>{member.avatarEmoji || '👤'}</span>
+                    <span class="text-sm" title={member.displayName || member.username}
+                      >{member.avatarEmoji || '👤'}</span
+                    >
                   {/each}
                 </div>
               {/if}
@@ -706,11 +766,12 @@
             class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-6 text-center"
           >
             <p class="text-4xl mb-2">✨</p>
-            <p class="text-sm text-stone-500 dark:text-stone-400">Allt klart! Inget att göra just nu.</p>
+            <p class="text-sm text-stone-500 dark:text-stone-400">
+              Allt klart! Inget att göra just nu.
+            </p>
           </div>
         {/if}
       {/if}
-
     </div>
 
     <!-- Note Form Modal -->
@@ -720,8 +781,12 @@
           <BulletinNoteForm
             note={editingNote}
             {familyMembers}
-            on:save={(e) => editingNote ? updateNote(editingNote.id, e.detail) : createNote(e.detail)}
-            on:cancel={() => { showNoteForm = false; editingNote = null; }}
+            on:save={(e) =>
+              editingNote ? updateNote(editingNote.id, e.detail) : createNote(e.detail)}
+            on:cancel={() => {
+              showNoteForm = false;
+              editingNote = null;
+            }}
           />
         </div>
       </div>
