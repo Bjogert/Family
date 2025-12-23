@@ -1,7 +1,6 @@
 // Service Worker for Family Hub PWA
-// Minimal caching - only for PWA installability and offline fallback
-// All data fetched fresh to ensure real-time sync works correctly
-const CACHE_VERSION = 'family-hub-v4';
+// Handles caching, offline fallback, and push notifications
+const CACHE_VERSION = 'family-hub-v5';
 const OFFLINE_URL = '/offline';
 
 // Only cache the offline page - everything else is fetched fresh
@@ -78,4 +77,67 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+});
+
+// Handle push notifications
+self.addEventListener('push', (event) => {
+  if (!event.data) {
+    console.log('[SW] Push received but no data');
+    return;
+  }
+
+  let data;
+  try {
+    data = event.data.json();
+  } catch (e) {
+    console.error('[SW] Failed to parse push data:', e);
+    return;
+  }
+
+  const options = {
+    body: data.body || '',
+    icon: data.icon || '/icons/icon-192.png',
+    badge: '/icons/badge-72.png',
+    tag: data.tag || 'default',
+    data: { url: data.url || '/' },
+    vibrate: [200, 100, 200],
+    requireInteraction: data.requireInteraction || false,
+    actions: data.actions || [],
+  };
+
+  console.log('[SW] Showing notification:', data.title);
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Familjehubben', options)
+  );
+});
+
+// Handle notification click
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event.notification.tag);
+  event.notification.close();
+
+  const url = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Try to focus an existing window
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus().then(() => {
+            if ('navigate' in client) {
+              return client.navigate(url);
+            }
+          });
+        }
+      }
+      // Open new window if no existing window found
+      return clients.openWindow(url);
+    })
+  );
+});
+
+// Handle notification close (for analytics if needed)
+self.addEventListener('notificationclose', (event) => {
+  console.log('[SW] Notification closed:', event.notification.tag);
 });

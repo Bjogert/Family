@@ -55,6 +55,13 @@ export const config = {
     from: process.env.EMAIL_FROM || 'Familjehubben <noreply@familjehubben.vip>',
   },
 
+  // Web Push (VAPID)
+  vapid: {
+    publicKey: process.env.VAPID_PUBLIC_KEY || '',
+    privateKey: process.env.VAPID_PRIVATE_KEY || '',
+    subject: process.env.VAPID_SUBJECT || 'mailto:admin@familjehubben.vip',
+  },
+
   // App URLs
   appUrl: process.env.APP_URL || 'http://localhost:5173',
 } as const;

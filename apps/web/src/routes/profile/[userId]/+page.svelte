@@ -5,6 +5,14 @@
   import { browser } from '$app/environment';
   import { get, put } from '$lib/api/client';
   import { currentUser, currentFamily } from '$lib/stores/auth';
+  import {
+    isPushSupported,
+    getPermissionStatus,
+    subscribeToPush,
+    unsubscribeFromPush,
+    isSubscribed,
+    sendTestNotification,
+  } from '$lib/utils/pushNotifications';
 
   // Types
   interface UserProfile {
@@ -156,6 +164,13 @@
   let passwordError: string | null = null;
   let passwordSuccess = false;
 
+  // Push notifications
+  let pushSupported = false;
+  let pushSubscribed = false;
+  let pushPermission: NotificationPermission = 'default';
+  let pushLoading = false;
+  let pushTestSent = false;
+
   // Computed
   $: isOwnProfile = $currentUser?.id === userId;
   $: bgColor = colorClasses[profile?.color || 'orange'];
@@ -212,6 +227,15 @@
           }
         } catch {
           // Use defaults if no preferences exist
+        }
+
+        // Check push notification status
+        if (browser) {
+          pushSupported = isPushSupported();
+          pushPermission = getPermissionStatus();
+          if (pushSupported) {
+            pushSubscribed = await isSubscribed();
+          }
         }
       }
 
@@ -273,6 +297,50 @@
       error = 'Kunde inte spara inställningarna';
     } finally {
       saving = false;
+    }
+  }
+
+  async function togglePushNotifications() {
+    pushLoading = true;
+    pushTestSent = false;
+
+    try {
+      if (pushSubscribed) {
+        const success = await unsubscribeFromPush();
+        if (success) {
+          pushSubscribed = false;
+        }
+      } else {
+        const success = await subscribeToPush();
+        if (success) {
+          pushSubscribed = true;
+          pushPermission = getPermissionStatus();
+        } else {
+          pushPermission = getPermissionStatus();
+          if (pushPermission === 'denied') {
+            error = 'Notifikationer blockerade i webbläsaren. Ändra i webbläsarens inställningar.';
+            setTimeout(() => (error = null), 5000);
+          }
+        }
+      }
+    } catch (err) {
+      error = 'Kunde inte ändra notifikationsinställningar';
+    } finally {
+      pushLoading = false;
+    }
+  }
+
+  async function handleTestNotification() {
+    pushLoading = true;
+    const success = await sendTestNotification();
+    pushTestSent = success;
+    pushLoading = false;
+
+    if (!success) {
+      error = 'Kunde inte skicka testnotifikation';
+      setTimeout(() => (error = null), 3000);
+    } else {
+      setTimeout(() => (pushTestSent = false), 3000);
     }
   }
 
@@ -796,6 +864,65 @@
 
             <!-- Notification Settings -->
             <div class="space-y-6">
+              <!-- Push Notifications Master Toggle -->
+              {#if pushSupported}
+                <div>
+                  <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-4">
+                    Push-notifikationer
+                  </h3>
+                  <div class="space-y-3">
+                    <div
+                      class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl"
+                    >
+                      <div>
+                        <p class="font-medium text-stone-800 dark:text-white">
+                          Aktivera push-notifikationer
+                        </p>
+                        <p class="text-sm text-stone-500 dark:text-stone-400">
+                          {#if pushPermission === 'denied'}
+                            Blockerad i webbläsaren - ändra i inställningarna
+                          {:else if pushSubscribed}
+                            Notifikationer är aktiverade på denna enhet
+                          {:else}
+                            Få notifikationer även när appen är stängd
+                          {/if}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        on:click={togglePushNotifications}
+                        disabled={pushLoading || pushPermission === 'denied'}
+                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed
+                          {pushSubscribed ? 'bg-orange-500' : 'bg-stone-300 dark:bg-stone-600'}"
+                      >
+                        <span
+                          class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
+                            {pushSubscribed ? 'translate-x-5' : 'translate-x-0'}"
+                        />
+                      </button>
+                    </div>
+
+                    {#if pushSubscribed}
+                      <button
+                        type="button"
+                        on:click={handleTestNotification}
+                        disabled={pushLoading}
+                        class="w-full py-2 text-sm bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-300 dark:hover:bg-stone-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {#if pushTestSent}
+                          <span>✅ Testnotifikation skickad!</span>
+                        {:else if pushLoading}
+                          <span>Skickar...</span>
+                        {:else}
+                          <span>🔔 Skicka testnotifikation</span>
+                        {/if}
+                      </button>
+                    {/if}
+                  </div>
+                </div>
+              {/if}
+
+              <!-- Notification Types -->
               <div>
                 <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-4">
                   Notifikationer

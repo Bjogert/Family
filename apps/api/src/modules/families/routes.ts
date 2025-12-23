@@ -225,6 +225,7 @@ export default async function familyRoutes(app: FastifyInstance) {
                     valid: isValid,
                 });
             } catch (error) {
+                console.error('Password verification error:', error);
                 return reply.status(500).send({
                     success: false,
                     message: 'Failed to verify password',

@@ -11,6 +11,7 @@ import groceryRoutes from './modules/groceries/routes.js';
 import activityRoutes from './modules/activities/routes.js';
 import taskRoutes from './modules/tasks/routes.js';
 import websocketRoutes from './websocket/routes.js';
+import { pushRoutes, initializeVapid } from './modules/push/index.js';
 import {
   createGoogleCalendarRepository,
   createGoogleCalendarService,
@@ -62,12 +63,16 @@ export async function buildApp() {
   // Initialize database
   await initDatabase();
 
+  // Initialize VAPID for push notifications
+  initializeVapid();
+
   // Register module routes
   await app.register(authRoutes, { prefix: '/api/auth' });
   await app.register(familyRoutes, { prefix: '/api/families' });
   await app.register(groceryRoutes, { prefix: '/api/groceries' });
   await app.register(activityRoutes, { prefix: '/api/activities' });
   await app.register(taskRoutes, { prefix: '/api/tasks' });
+  await app.register(pushRoutes, { prefix: '/api/push' });
   await app.register(websocketRoutes, { prefix: '/api' });
 
   // Google Calendar integration
