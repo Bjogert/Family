@@ -310,10 +310,10 @@
     <div class="bg-white dark:bg-stone-800 rounded-2xl shadow-md p-8 text-center">
       <div class="text-6xl mb-4">🔗</div>
       <h2 class="text-xl font-bold text-stone-800 dark:text-stone-100 mb-2">
-        Anslut Google Calendar
+        {$t('calendar.connectTitle')}
       </h2>
       <p class="text-stone-600 dark:text-stone-400 mb-6 max-w-md mx-auto">
-        Koppla ditt Google-konto för att se alla dina kalendrar och aktiviteter på ett ställe.
+        {$t('calendar.connectDescription')}
       </p>
       <button
         on:click={connectGoogle}
@@ -502,7 +502,7 @@
 
     <!-- Connection Info -->
     <div class="mt-4 text-center text-sm text-stone-500 dark:text-stone-400">
-      Ansluten som: {googleEmail}
+      {$t('calendar.connectedAs').replace('{email}', googleEmail)}
     </div>
   {/if}
 </div>
@@ -568,13 +568,13 @@
             on:click={() => (showSettings = false)}
             class="flex-1 px-4 py-2 bg-stone-100 dark:bg-stone-700 text-stone-700 dark:text-stone-200 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors"
           >
-            Avbryt
+            {$t('common.cancel')}
           </button>
           <button
             on:click={saveSettings}
             class="flex-1 px-4 py-2 bg-gradient-to-r from-orange-400 to-amber-400 text-white rounded-xl font-medium hover:from-orange-500 hover:to-amber-500 transition-all"
           >
-            Spara
+            {$t('common.save')}
           </button>
         </div>
 
@@ -584,7 +584,7 @@
             on:click={disconnectGoogle}
             class="w-full px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
           >
-            Koppla bort Google Calendar
+            {$t('calendar.disconnect')}
           </button>
         </div>
       </div>

@@ -264,7 +264,7 @@
         class="w-5 h-5 rounded border-stone-300 dark:border-stone-600 text-amber-500 focus:ring-amber-400"
       />
       <span class="text-sm text-stone-700 dark:text-stone-200">
-        📅 Lägg till i Google Kalender
+        {$t('activities.syncToCalendar')}
       </span>
     </label>
   {/if}

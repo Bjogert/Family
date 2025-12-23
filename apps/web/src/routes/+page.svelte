@@ -306,7 +306,7 @@
 
   async function deleteNote(id: number) {
     if (!$currentFamily) return;
-    if (!confirm('Ta bort denna notis?')) return;
+    if (!confirm($t('bulletin.deleteConfirm'))) return;
     try {
       const response = await fetch(`/api/bulletin/${id}`, {
         method: 'DELETE',
@@ -570,7 +570,7 @@
         class="w-full bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-3 flex items-center justify-center gap-2 text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-700/50 transition-colors"
       >
         <span class="text-lg">📌</span>
-        <span class="text-sm">Lägg till notis...</span>
+        <span class="text-sm">{$t('bulletin.addNote')}</span>
       </button>
 
       {#if loadingMembers || loadingGroceries}
@@ -599,7 +599,7 @@
                 {/if}
                 <span class="text-xs text-stone-500 dark:text-stone-400">
                   {note.creator?.avatarEmoji || '👤'}
-                  {note.creator?.displayName || 'Någon'} · {timeAgo(note.createdAt)}
+                  {note.creator?.displayName || $t('bulletin.someone')} · {timeAgo(note.createdAt)}
                 </span>
               </div>
               <div class="flex items-center gap-1">
@@ -609,14 +609,14 @@
                     showNoteForm = true;
                   }}
                   class="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
-                  title="Redigera"
+                  title={$t('common.edit')}
                 >
                   ✏️
                 </button>
                 <button
                   on:click={() => deleteNote(note.id)}
                   class="p-1 text-stone-400 hover:text-red-500"
-                  title="Ta bort"
+                  title={$t('common.delete')}
                 >
                   🗑️
                 </button>

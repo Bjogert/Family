@@ -493,7 +493,7 @@
         <!-- Connection status indicator -->
         <div class="flex items-center gap-1.5">
           {#if $groceryWs.status === 'connected'}
-            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Ansluten"></div>
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" title={$t('calendar.connectionStatus')}></div>
           {:else if $groceryWs.status === 'connecting'}
             <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title="Ansluter..."></div>
           {:else if $groceryWs.status === 'error'}
@@ -585,7 +585,7 @@
     {#if error}
       <div class="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-3 rounded-lg mb-4">
         {error}
-        <button class="ml-2 underline" on:click={() => (error = '')}>Stäng</button>
+        <button class="ml-2 underline" on:click={() => (error = '')}>{$t('common.close')}</button>
       </div>
     {/if}
 
@@ -594,7 +594,7 @@
         <div
           class="animate-spin w-8 h-8 border-4 border-orange-400 border-t-transparent dark:border-amber-400 dark:border-t-transparent rounded-full mx-auto"
         ></div>
-        <p class="mt-4 text-stone-500 dark:text-stone-400">Laddar...</p>
+        <p class="mt-4 text-stone-500 dark:text-stone-400">{$t('common.loading')}</p>
       </div>
     {:else}
       <!-- Add item form -->

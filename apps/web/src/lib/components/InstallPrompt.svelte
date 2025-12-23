@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
+  import { t } from '$lib/i18n';
 
   let deferredPrompt: any = null;
   let showInstallButton = false;
@@ -58,19 +59,19 @@
     <div class="flex items-start gap-3">
       <div class="text-3xl">📱</div>
       <div class="flex-1">
-        <h3 class="font-semibold text-sm mb-1">Installera Family Hub</h3>
+        <h3 class="font-semibold text-sm mb-1">{$t('install.title')}</h3>
         <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">
-          Lägg till på din hemskärm för snabb åtkomst
+          {$t('install.description')}
         </p>
         <div class="flex gap-2">
           <button on:click={installApp} class="btn-primary text-xs py-1.5 px-3">
-            Installera
+            {$t('install.button')}
           </button>
           <button
             on:click={dismissPrompt}
             class="btn-secondary text-xs py-1.5 px-3"
           >
-            Inte nu
+            {$t('install.notNow')}
           </button>
         </div>
       </div>

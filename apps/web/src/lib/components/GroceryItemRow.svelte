@@ -103,7 +103,7 @@
   {/if}
 
   {#if !item.isBought}
-    <button on:click={onDelete} class="text-red-500 hover:text-red-700 p-1" aria-label="Ta bort">
+    <button on:click={onDelete} class="text-red-500 hover:text-red-700 p-1" aria-label={$t('common.delete')}>
       🗑️
     </button>
   {:else}

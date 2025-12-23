@@ -416,7 +416,7 @@
           }}
           class="w-full bg-gradient-to-br from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-3 rounded-lg transition shadow-md"
         >
-          + Create New Family
+          {$t('welcome.createNewFamily')}
         </button>
       {:else}
         <div class="space-y-4">

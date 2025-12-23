@@ -88,28 +88,28 @@
   class="bg-white dark:bg-stone-800 rounded-2xl shadow-md p-6 space-y-4"
 >
   <h2 class="text-lg font-bold text-stone-800 dark:text-stone-100 mb-4">
-    {note ? 'Redigera notis' : 'Ny notis'}
+    {note ? $t('bulletin.editNote') : $t('bulletin.newNote')}
   </h2>
 
   <!-- Title -->
   <div>
     <label class="block">
       <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-1">
-        Titel *
+        {$t('bulletin.titleRequired')}
       </span>
       <input
         type="text"
         bind:value={title}
         required
         class="w-full px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700 text-stone-800 dark:text-stone-100 focus:ring-2 focus:ring-teal-400 focus:border-transparent"
-        placeholder="T.ex. Middag kl 17"
+        placeholder={$t('bulletin.titlePlaceholder')}
       />
     </label>
   </div>
 
   <!-- Note Type Toggle -->
   <div>
-    <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Typ</span>
+    <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">{$t('bulletin.type')}</span>
     <div class="flex gap-2">
       <button
         type="button"
@@ -118,7 +118,7 @@
           ? 'bg-teal-500 text-white'
           : 'bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300'}"
       >
-        📝 Text
+        {$t('bulletin.typeText')}
       </button>
       <button
         type="button"
@@ -127,7 +127,7 @@
           ? 'bg-teal-500 text-white'
           : 'bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300'}"
       >
-        ☑️ Lista
+        {$t('bulletin.typeList')}
       </button>
     </div>
   </div>
@@ -137,13 +137,13 @@
     <div>
       <label class="block">
         <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-1">
-          Meddelande
+          {$t('bulletin.message')}
         </span>
         <textarea
           bind:value={content}
           rows="3"
           class="w-full px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700 text-stone-800 dark:text-stone-100 focus:ring-2 focus:ring-teal-400 focus:border-transparent"
-          placeholder="Skriv ditt meddelande..."
+          placeholder={$t('bulletin.messagePlaceholder')}
         ></textarea>
       </label>
     </div>
@@ -153,7 +153,7 @@
   {#if noteType === 'list'}
     <div>
       <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">
-        Listpunkter
+        {$t('bulletin.listItems')}
       </span>
 
       <!-- Existing items -->
@@ -181,7 +181,7 @@
           bind:value={newListItemText}
           on:keydown={(e) => e.key === 'Enter' && (e.preventDefault(), addListItem())}
           class="flex-1 px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700 text-stone-800 dark:text-stone-100 focus:ring-2 focus:ring-teal-400 focus:border-transparent"
-          placeholder="Ny punkt..."
+          placeholder={$t('bulletin.newItem')}
         />
         <button
           type="button"
@@ -196,7 +196,7 @@
 
   <!-- Color -->
   <div>
-    <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Färg</span>
+    <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">{$t('bulletin.color')}</span>
     <div class="flex gap-2 flex-wrap">
       {#each colorOptions as opt}
         <button
@@ -215,14 +215,14 @@
   <div>
     <div class="flex items-center justify-between mb-2">
       <span class="block text-sm font-medium text-stone-600 dark:text-stone-300">
-        Notifiera (push)
+        {$t('bulletin.notifyPush')}
       </span>
       <button
         type="button"
         on:click={selectAllMembers}
         class="text-xs text-teal-600 dark:text-teal-400 hover:underline"
       >
-        Alla
+        {$t('bulletin.allMembers')}
       </button>
     </div>
     <div class="flex flex-wrap gap-2">
@@ -237,7 +237,7 @@
             : 'bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300'}"
         >
           <span>{member.avatarEmoji || '👤'}</span>
-          <span>{member.displayName || 'Anonym'}</span>
+          <span>{member.displayName || $t('bulletin.anonymous')}</span>
         </button>
       {/each}
     </div>
@@ -251,7 +251,7 @@
         bind:checked={isPinned}
         class="w-4 h-4 rounded border-stone-300 dark:border-stone-600 text-teal-500 focus:ring-teal-400"
       />
-      <span class="text-sm text-stone-600 dark:text-stone-300">📌 Fäst högst upp</span>
+      <span class="text-sm text-stone-600 dark:text-stone-300">{$t('bulletin.pinTop')}</span>
     </label>
   </div>
 
@@ -263,7 +263,7 @@
         bind:checked={enableExpiry}
         class="w-4 h-4 rounded border-stone-300 dark:border-stone-600 text-teal-500 focus:ring-teal-400"
       />
-      <span class="text-sm text-stone-600 dark:text-stone-300">⏰ Förfaller</span>
+      <span class="text-sm text-stone-600 dark:text-stone-300">{$t('bulletin.expires')}</span>
     </label>
     {#if enableExpiry}
       <input
@@ -281,13 +281,13 @@
       on:click={() => dispatch('cancel')}
       class="flex-1 px-4 py-2 rounded-xl bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 font-medium hover:bg-stone-300 dark:hover:bg-stone-600 transition-colors"
     >
-      Avbryt
+      {$t('common.cancel')}
     </button>
     <button
       type="submit"
       class="flex-1 px-4 py-2 rounded-xl bg-teal-500 text-white font-medium hover:bg-teal-600 transition-colors"
     >
-      {note ? 'Spara' : 'Skapa'}
+      {note ? $t('common.save') : $t('welcome.create')}
     </button>
   </div>
 </form>
