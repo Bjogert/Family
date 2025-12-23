@@ -397,10 +397,18 @@
         'profile.passwordMismatchError': 'Lösenorden matchar inte',
         'profile.passwordTooShortError': 'Lösenordet måste vara minst 4 tecken',
         'profile.deleteAccountTitle': 'Radera konto',
+        'profile.deleteAccountDescription': 'Detta raderar ditt konto permanent. Denna åtgärd kan inte ångras.',
+        'profile.goToAccountSettings': 'Gå till kontoinställningar',
 
         // Groceries page - additional
         'groceries.connectionStatus': 'Ansluten',
         'groceries.assignedToList': 'Tilldelad inköpslistan',
+        'groceries.assigned': 'Tilldelad:',
+        'groceries.change': 'Ändra',
+        'groceries.connecting': 'Ansluter...',
+        'groceries.connectionError': 'Anslutningsfel',
+        'groceries.disconnected': 'Frånkopplad',
+        'groceries.anonymous': 'Anonym',
 
         // Home page
         'home.allDone': 'Allt klart! Inget att göra just nu.',
@@ -807,10 +815,18 @@
         'profile.passwordMismatchError': 'Passwords do not match',
         'profile.passwordTooShortError': 'Password must be at least 4 characters',
         'profile.deleteAccountTitle': 'Delete Account',
+        'profile.deleteAccountDescription': 'This will permanently delete your account. This action cannot be undone.',
+        'profile.goToAccountSettings': 'Go to account settings',
 
         // Groceries page - additional
         'groceries.connectionStatus': 'Connected',
         'groceries.assignedToList': 'Assigned to grocery list',
+        'groceries.assigned': 'Assigned:',
+        'groceries.change': 'Change',
+        'groceries.connecting': 'Connecting...',
+        'groceries.connectionError': 'Connection error',
+        'groceries.disconnected': 'Disconnected',
+        'groceries.anonymous': 'Anonymous',
 
         // Home page
         'home.allDone': 'All done! Nothing to do right now.',
@@ -1215,10 +1231,18 @@
         'profile.passwordMismatchError': 'As senhas não correspondem',
         'profile.passwordTooShortError': 'A senha deve ter pelo menos 4 caracteres',
         'profile.deleteAccountTitle': 'Excluir Conta',
+        'profile.deleteAccountDescription': 'Isso excluirá permanentemente sua conta. Esta ação não pode ser desfeita.',
+        'profile.goToAccountSettings': 'Ir para configurações da conta',
 
         // Groceries page - additional
         'groceries.connectionStatus': 'Conectado',
         'groceries.assignedToList': 'Atribuído à lista de compras',
+        'groceries.assigned': 'Atribuído:',
+        'groceries.change': 'Alterar',
+        'groceries.connecting': 'Conectando...',
+        'groceries.connectionError': 'Erro de conexão',
+        'groceries.disconnected': 'Desconectado',
+        'groceries.anonymous': 'Anônimo',
 
         // Home page
         'home.allDone': 'Tudo pronto! Nada a fazer agora.',

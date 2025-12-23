@@ -1126,13 +1126,13 @@
               >
                 <h3 class="font-semibold text-red-700 dark:text-red-400 mb-2">{$t('profile.deleteAccountTitle')}</h3>
                 <p class="text-sm text-red-600 dark:text-red-400/80 mb-4">
-                  Detta raderar ditt konto permanent. Denna åtgärd kan inte ångras.
+                  {$t('profile.deleteAccountDescription')}
                 </p>
                 <a
                   href="/settings"
                   class="inline-block px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
-                  Gå till kontoinställningar
+                  {$t('profile.goToAccountSettings')}
                 </a>
               </div>
             </div>
