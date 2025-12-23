@@ -382,16 +382,17 @@
             {loading ? 'Verifying...' : 'Continue'}
           </button>
 
-          <div class="text-center mt-3">
-            <a
-              href="/forgot-password?type=family"
-              class="text-sm text-orange-600 hover:text-orange-700 dark:text-amber-400 dark:hover:text-amber-300"
-            >
-              Glömt familjens lösenord?
-            </a>
-          </div>
         </div>
       </form>
+
+      <div class="text-center mt-3">
+        <a
+          href="/forgot-password?type=family"
+          class="text-sm text-orange-600 hover:text-orange-700 dark:text-amber-400 dark:hover:text-amber-300"
+        >
+          Glömt familjens lösenord?
+        </a>
+      </div>
     {/if}
 
     <div class="mb-6">

@@ -84,9 +84,6 @@ export async function initDatabase(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)
     `);
 
-    // Drop old sessions table if it exists (migration)
-    await client.query(`DROP TABLE IF EXISTS sessions CASCADE`);
-
     // Create sessions table (with family_id)
     await client.query(`
       CREATE TABLE IF NOT EXISTS sessions (

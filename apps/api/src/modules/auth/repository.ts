@@ -235,12 +235,14 @@ export async function createSession(
   expiresAt: Date,
   userAgent?: string
 ): Promise<Session> {
+  console.log('[CREATE SESSION] Creating session:', { id: id.substring(0, 10), familyId, userId });
   const result = await pool.query(
     `INSERT INTO sessions (id, family_id, user_id, expires_at, user_agent)
      VALUES ($1, $2, $3, $4, $5)
      RETURNING id, family_id, user_id, created_at, expires_at, user_agent`,
     [id, familyId, userId, expiresAt, userAgent || null]
   );
+  console.log('[CREATE SESSION] Session created, rows:', result.rowCount);
 
   const row = result.rows[0];
   return {

@@ -23,6 +23,7 @@
     try {
       const response = await fetch(`/api/auth/users/${$currentUser.id}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'x-family-id': String($currentFamily?.id || ''),

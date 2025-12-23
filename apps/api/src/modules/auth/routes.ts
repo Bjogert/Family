@@ -54,7 +54,7 @@ export default async function authRoutes(app: FastifyInstance) {
       reply.setCookie('sessionId', result.sessionId, {
         path: '/',
         httpOnly: true,
-        secure: false, // Set to true when using HTTPS
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
       });
@@ -130,6 +130,9 @@ export default async function authRoutes(app: FastifyInstance) {
       const sessionId = request.cookies.sessionId;
       const userIdToDelete = parseInt(request.params.id, 10);
 
+      console.log('[DELETE USER] sessionId:', sessionId ? sessionId.substring(0, 10) + '...' : 'MISSING');
+      console.log('[DELETE USER] cookies:', Object.keys(request.cookies));
+
       if (!sessionId) {
         return reply.status(401).send({
           success: false,
@@ -138,6 +141,7 @@ export default async function authRoutes(app: FastifyInstance) {
       }
 
       const session = await authService.validateSession(sessionId);
+      console.log('[DELETE USER] session result:', session);
       if (!session) {
         return reply.status(401).send({
           success: false,
