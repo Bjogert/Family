@@ -526,7 +526,7 @@
                   {#if groceryCount > 0}
                     <div
                       class="absolute -bottom-1 -right-1 w-4 h-4 bg-pink-500 rounded-full flex items-center justify-center text-[8px] font-bold text-white shadow-md border-2 border-white dark:border-stone-800"
-                      title="Tilldelad inköpslistan"
+                      title={$t('groceries.assignedToList')}
                     >
                       🛒
                     </div>
@@ -778,7 +778,7 @@
           >
             <p class="text-4xl mb-2">✨</p>
             <p class="text-sm text-stone-500 dark:text-stone-400">
-              Allt klart! Inget att göra just nu.
+              {$t('home.allDone')}
             </p>
           </div>
         {/if}

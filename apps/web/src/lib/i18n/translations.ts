@@ -400,6 +400,10 @@
 
         // Groceries page - additional
         'groceries.connectionStatus': 'Ansluten',
+        'groceries.assignedToList': 'Tilldelad inköpslistan',
+
+        // Home page
+        'home.allDone': 'Allt klart! Inget att göra just nu.',
 
         // Layout
         'layout.loading': 'Loading...',
@@ -806,6 +810,10 @@
 
         // Groceries page - additional
         'groceries.connectionStatus': 'Connected',
+        'groceries.assignedToList': 'Assigned to grocery list',
+
+        // Home page
+        'home.allDone': 'All done! Nothing to do right now.',
 
         // Layout
         'layout.loading': 'Loading...',
@@ -1210,6 +1218,10 @@
 
         // Groceries page - additional
         'groceries.connectionStatus': 'Conectado',
+        'groceries.assignedToList': 'Atribuído à lista de compras',
+
+        // Home page
+        'home.allDone': 'Tudo pronto! Nada a fazer agora.',
 
         // Layout
         'layout.loading': 'Carregando...',

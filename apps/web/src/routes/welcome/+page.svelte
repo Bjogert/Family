@@ -294,12 +294,12 @@
 
     {#if loadingFamilies}
       <div class="py-8">
-        <LoadingSpinner size="lg" text="Loading families..." />
+        <LoadingSpinner size="lg" text={$t('common.loading')} />
       </div>
     {:else if families.length > 0 && !showCreateForm}
       <form on:submit|preventDefault={verifyAndProceed} class="mb-8">
         <h2 class="text-lg font-semibold text-stone-700 dark:text-stone-300 mb-4">
-          Select your family:
+          {$t('welcome.selectFamily')}:
         </h2>
         <div class="space-y-3">
           <!-- Autocomplete family input -->
