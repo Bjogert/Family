@@ -10,13 +10,13 @@ interface WsMessage {
 
 const websocketRoutes: FastifyPluginAsync = async (fastify) => {
   // WebSocket endpoint
-  fastify.get('/ws', { websocket: true }, async (socket, request) => {
+  fastify.get('/ws', { websocket: true }, async (connection, request) => {
     // Extract session from cookie
     const sessionId = request.cookies.sessionId;
 
     if (!sessionId) {
       logger.warn('WebSocket connection rejected: no session');
-      socket.close(1008, 'Unauthorized');
+      connection.socket.close(1008, 'Unauthorized');
       return;
     }
 
@@ -25,7 +25,7 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
 
     if (!session) {
       logger.warn('WebSocket connection rejected: invalid session');
-      socket.close(1008, 'Unauthorized');
+      connection.socket.close(1008, 'Unauthorized');
       return;
     }
 
@@ -33,10 +33,10 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
     const userId = session.userId;
 
     // Add client to connection manager
-    connectionManager.addClient(socket, familyId, userId);
+    connectionManager.addClient(connection, familyId, userId);
 
     // Send welcome message
-    connectionManager.sendToClient(socket, {
+    connectionManager.sendToClient(connection, {
       type: 'connected',
       payload: {
         familyId,
@@ -45,13 +45,13 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
     });
 
     // Handle incoming messages
-    socket.on('message', (rawMessage: Buffer) => {
+    connection.socket.on('message', (rawMessage: Buffer) => {
       try {
         const message: WsMessage = JSON.parse(rawMessage.toString());
 
         switch (message.type) {
           case 'ping':
-            connectionManager.sendToClient(socket, {
+            connectionManager.sendToClient(connection, {
               type: 'pong',
               payload: { timestamp: new Date().toISOString() },
             });
@@ -73,13 +73,13 @@ const websocketRoutes: FastifyPluginAsync = async (fastify) => {
     });
 
     // Handle disconnection
-    socket.on('close', () => {
-      connectionManager.removeClient(socket);
+    connection.socket.on('close', () => {
+      connectionManager.removeClient(connection);
     });
 
-    socket.on('error', (error: Error) => {
+    connection.socket.on('error', (error: Error) => {
       logger.error('WebSocket error', { error: error.message });
-      connectionManager.removeClient(socket);
+      connectionManager.removeClient(connection);
     });
   });
 

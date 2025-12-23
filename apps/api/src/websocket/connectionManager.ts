@@ -1,24 +1,24 @@
-import type { WebSocket } from '@fastify/websocket';
+import type { SocketStream } from '@fastify/websocket';
 import { logger } from '../utils/logger.js';
 
 interface Client {
-  ws: WebSocket;
+  connection: SocketStream;
   familyId: number;
   userId: number | null;
   connectedAt: Date;
 }
 
 export class ConnectionManager {
-  private clients: Map<WebSocket, Client> = new Map();
+  private clients: Map<SocketStream, Client> = new Map();
 
-  addClient(ws: WebSocket, familyId: number, userId: number | null) {
+  addClient(connection: SocketStream, familyId: number, userId: number | null) {
     const client: Client = {
-      ws,
+      connection,
       familyId,
       userId,
       connectedAt: new Date(),
     };
-    this.clients.set(ws, client);
+    this.clients.set(connection, client);
     logger.info('WebSocket client connected', {
       familyId,
       userId,
@@ -26,10 +26,10 @@ export class ConnectionManager {
     });
   }
 
-  removeClient(ws: WebSocket) {
-    const client = this.clients.get(ws);
+  removeClient(connection: SocketStream) {
+    const client = this.clients.get(connection);
     if (client) {
-      this.clients.delete(ws);
+      this.clients.delete(connection);
       logger.info('WebSocket client disconnected', {
         familyId: client.familyId,
         userId: client.userId,
@@ -38,15 +38,16 @@ export class ConnectionManager {
     }
   }
 
-  getClient(ws: WebSocket): Client | undefined {
-    return this.clients.get(ws);
+  getClient(connection: SocketStream): Client | undefined {
+    return this.clients.get(connection);
   }
 
   // Broadcast to all clients in a specific family
-  broadcastToFamily(familyId: number, message: object, excludeWs?: WebSocket) {
+  broadcastToFamily(familyId: number, message: object, excludeConnection?: SocketStream) {
     let sentCount = 0;
-    for (const [ws, client] of this.clients.entries()) {
-      if (client.familyId === familyId && ws !== excludeWs && ws.readyState === ws.OPEN) {
+    for (const [connection, client] of this.clients.entries()) {
+      const ws = connection.socket;
+      if (client.familyId === familyId && connection !== excludeConnection && ws.readyState === ws.OPEN) {
         try {
           ws.send(JSON.stringify(message));
           sentCount++;
@@ -62,7 +63,8 @@ export class ConnectionManager {
   }
 
   // Send message to specific client
-  sendToClient(ws: WebSocket, message: object) {
+  sendToClient(connection: SocketStream, message: object) {
+    const ws = connection.socket;
     if (ws.readyState === ws.OPEN) {
       try {
         ws.send(JSON.stringify(message));
