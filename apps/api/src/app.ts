@@ -10,6 +10,7 @@ import familyRoutes from './modules/families/routes.js';
 import groceryRoutes from './modules/groceries/routes.js';
 import activityRoutes from './modules/activities/routes.js';
 import taskRoutes from './modules/tasks/routes.js';
+import { bulletinRoutes } from './modules/bulletin/index.js';
 import websocketRoutes from './websocket/routes.js';
 import { pushRoutes, initializeVapid } from './modules/push/index.js';
 import {
@@ -72,6 +73,7 @@ export async function buildApp() {
   await app.register(groceryRoutes, { prefix: '/api/groceries' });
   await app.register(activityRoutes, { prefix: '/api/activities' });
   await app.register(taskRoutes, { prefix: '/api/tasks' });
+  await app.register(bulletinRoutes, { prefix: '/api/bulletin' });
   await app.register(pushRoutes, { prefix: '/api/push' });
   await app.register(websocketRoutes, { prefix: '/api' });
 
