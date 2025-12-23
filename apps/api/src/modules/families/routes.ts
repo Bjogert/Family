@@ -1,5 +1,6 @@
 ﻿import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import * as familyService from './service.js';
+import { logger } from '../../utils/logger.js';
 
 interface CreateFamilyBody {
     name: string;
@@ -225,7 +226,7 @@ export default async function familyRoutes(app: FastifyInstance) {
                     valid: isValid,
                 });
             } catch (error) {
-                console.error('Password verification error:', error);
+                logger.error('Password verification error', { error });
                 return reply.status(500).send({
                     success: false,
                     message: 'Failed to verify password',
@@ -270,7 +271,7 @@ export default async function familyRoutes(app: FastifyInstance) {
                     });
                 }
             } catch (error) {
-                console.error('Failed to update password:', error);
+                logger.error('Failed to update password', { error });
                 return reply.status(500).send({
                     success: false,
                     message: 'Failed to update password',

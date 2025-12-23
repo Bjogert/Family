@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import websocket from '@fastify/websocket';
+import rateLimit from '@fastify/rate-limit';
 import { config } from './config.js';
 import { logger } from './utils/logger.js';
 import { initDatabase, pool } from './db/index.js';
@@ -45,6 +46,13 @@ export async function buildApp() {
 
   await app.register(websocket, {
     options: { maxPayload: 1048576 }, // 1MB max
+  });
+
+  // Rate limiting - protect against brute force and DoS
+  await app.register(rateLimit, {
+    max: 100, // 100 requests per window
+    timeWindow: '1 minute',
+    // Stricter limits for auth endpoints (applied via route config)
   });
 
   // Health check endpoint

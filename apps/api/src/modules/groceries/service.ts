@@ -3,6 +3,7 @@ import type { GroceryRow, CreateGroceryData, UpdateGroceryData } from './reposit
 import { connectionManager } from '../../websocket/connectionManager.js';
 import * as pushService from '../push/service.js';
 import * as authRepo from '../auth/repository.js';
+import { logger } from '../../utils/logger.js';
 
 export interface GroceryItem {
     id: number;
@@ -166,7 +167,7 @@ export async function assignGroceryList(familyId: number, userId: number, assign
             const assignerName = assigner?.displayName || assigner?.username || 'Någon';
             await pushService.notifyGroceryAssigned(userId, 'inköpslistan', assignerName);
         } catch (error) {
-            console.error('Failed to send grocery assignment notification:', error);
+            logger.error('Failed to send grocery assignment notification', { error });
         }
     }
 

@@ -1,6 +1,7 @@
 ﻿import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import type { GoogleCalendarService } from './service.js';
 import type { CalendarSettings, CreateCalendarEventInput } from '@family-hub/shared/types';
+import { logger } from '../../utils/logger.js';
 
 export function registerGoogleCalendarRoutes(
     app: FastifyInstance,
@@ -25,7 +26,7 @@ export function registerGoogleCalendarRoutes(
                     selectedCalendarIds: connection?.selectedCalendarIds || [],
                 });
             } catch (error) {
-                console.error('Failed to get calendar status:', error);
+                logger.error('Failed to get calendar status', { error });
                 return reply.status(500).send({ error: 'Failed to get calendar status' });
             }
         }
@@ -78,7 +79,7 @@ export function registerGoogleCalendarRoutes(
                 // Redirect to calendar page with success
                 return reply.redirect('/calendar?connected=true');
             } catch (err) {
-                console.error('OAuth callback error:', err);
+                logger.error('OAuth callback error', { error: err });
                 return reply.redirect('/?calendar_error=auth_failed');
             }
         }
@@ -98,7 +99,7 @@ export function registerGoogleCalendarRoutes(
                 const calendars = await calendarService.getCalendars(userId);
                 return reply.send(calendars);
             } catch (error) {
-                console.error('Failed to get calendars:', error);
+                logger.error('Failed to get calendars', { error });
                 return reply.status(500).send({ error: 'Failed to get calendars' });
             }
         }
@@ -118,7 +119,7 @@ export function registerGoogleCalendarRoutes(
                 await calendarService.updateSettings(userId, request.body);
                 return reply.send({ success: true });
             } catch (error) {
-                console.error('Failed to update settings:', error);
+                logger.error('Failed to update settings', { error });
                 return reply.status(500).send({ error: 'Failed to update settings' });
             }
         }
@@ -144,7 +145,7 @@ export function registerGoogleCalendarRoutes(
                 const events = await calendarService.getEvents(userId, start, end);
                 return reply.send(events);
             } catch (error) {
-                console.error('Failed to get events:', error);
+                logger.error('Failed to get events', { error });
                 return reply.status(500).send({ error: 'Failed to get events' });
             }
         }
@@ -164,7 +165,7 @@ export function registerGoogleCalendarRoutes(
                 const event = await calendarService.createEvent(userId, request.body);
                 return reply.send(event);
             } catch (error) {
-                console.error('Failed to create event:', error);
+                logger.error('Failed to create event', { error });
                 return reply.status(500).send({ error: 'Failed to create event' });
             }
         }
@@ -185,7 +186,7 @@ export function registerGoogleCalendarRoutes(
                 await calendarService.deleteEvent(userId, calendarId, eventId);
                 return reply.send({ success: true });
             } catch (error) {
-                console.error('Failed to delete event:', error);
+                logger.error('Failed to delete event', { error });
                 return reply.status(500).send({ error: 'Failed to delete event' });
             }
         }
@@ -205,7 +206,7 @@ export function registerGoogleCalendarRoutes(
                 await calendarService.deleteConnection(userId);
                 return reply.send({ success: true });
             } catch (error) {
-                console.error('Failed to disconnect:', error);
+                logger.error('Failed to disconnect', { error });
                 return reply.status(500).send({ error: 'Failed to disconnect' });
             }
         }

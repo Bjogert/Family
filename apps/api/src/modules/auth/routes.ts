@@ -22,9 +22,20 @@ interface FamilyLoginRequest extends FastifyRequest {
 }
 
 export default async function authRoutes(app: FastifyInstance) {
+  // Rate limit config for sensitive auth endpoints
+  const strictRateLimit = {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: '1 minute',
+      },
+    },
+  };
+
   // POST /api/auth/login
   app.post<{ Body: LoginBody }>(
     '/login',
+    strictRateLimit,
     async (request: FastifyRequest<{ Body: LoginBody }>, reply: FastifyReply) => {
       const { familyId, username, password } = request.body;
 
@@ -130,9 +141,6 @@ export default async function authRoutes(app: FastifyInstance) {
       const sessionId = request.cookies.sessionId;
       const userIdToDelete = parseInt(request.params.id, 10);
 
-      console.log('[DELETE USER] sessionId:', sessionId ? sessionId.substring(0, 10) + '...' : 'MISSING');
-      console.log('[DELETE USER] cookies:', Object.keys(request.cookies));
-
       if (!sessionId) {
         return reply.status(401).send({
           success: false,
@@ -141,7 +149,6 @@ export default async function authRoutes(app: FastifyInstance) {
       }
 
       const session = await authService.validateSession(sessionId);
-      console.log('[DELETE USER] session result:', session);
       if (!session) {
         return reply.status(401).send({
           success: false,
@@ -381,6 +388,7 @@ export default async function authRoutes(app: FastifyInstance) {
   // POST /api/auth/forgot-password - Request password reset
   app.post<{ Body: { email: string } }>(
     '/forgot-password',
+    strictRateLimit,
     async (request: FastifyRequest<{ Body: { email: string } }>, reply: FastifyReply) => {
       const { email } = request.body;
 
@@ -461,6 +469,7 @@ export default async function authRoutes(app: FastifyInstance) {
   // POST /api/auth/reset-family-password - Reset family password with token
   app.post<{ Body: { token: string; newPassword: string } }>(
     '/reset-family-password',
+    strictRateLimit,
     async (request: FastifyRequest<{ Body: { token: string; newPassword: string } }>, reply: FastifyReply) => {
       const { token, newPassword } = request.body;
 
@@ -504,6 +513,7 @@ export default async function authRoutes(app: FastifyInstance) {
   // POST /api/auth/reset-password - Reset password with token
   app.post<{ Body: { token: string; newPassword: string } }>(
     '/reset-password',
+    strictRateLimit,
     async (request: FastifyRequest<{ Body: { token: string; newPassword: string } }>, reply: FastifyReply) => {
       const { token, newPassword } = request.body;
 

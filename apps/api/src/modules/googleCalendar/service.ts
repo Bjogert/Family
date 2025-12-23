@@ -6,6 +6,7 @@ import type {
     CalendarSettings,
 } from '@family-hub/shared/types';
 import { config } from '../../config.js';
+import { logger } from '../../utils/logger.js';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CALENDAR_CLIENT_ID || config.google.clientId;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CALENDAR_CLIENT_SECRET || config.google.clientSecret;
@@ -197,7 +198,7 @@ export function createGoogleCalendarService(repository: GoogleCalendarRepository
                     allEvents.push(...events);
                 }
             } catch (err) {
-                console.error(`Failed to fetch events from calendar ${calendarId}:`, err);
+                logger.error(`Failed to fetch events from calendar ${calendarId}`, { error: err });
             }
         }
 

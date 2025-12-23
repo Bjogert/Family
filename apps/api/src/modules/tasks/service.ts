@@ -2,6 +2,7 @@
 import type { Task, CreateTaskInput, UpdateTaskInput } from '@family-hub/shared/types';
 import * as pushService from '../push/service.js';
 import * as authRepo from '../auth/repository.js';
+import { logger } from '../../utils/logger.js';
 
 function mapRowToTask(row: taskRepo.TaskRow): Task {
     return {
@@ -85,7 +86,7 @@ export async function createTask(
             const creatorName = creator?.displayName || creator?.username || 'Någon';
             await pushService.notifyTaskAssigned(input.assignedTo, input.title, creatorName);
         } catch (error) {
-            console.error('Failed to send task assignment notification:', error);
+            logger.error('Failed to send task assignment notification', { error });
         }
     }
 
@@ -127,7 +128,7 @@ export async function updateTask(
             const taskTitle = input.title || currentTask?.title || 'En uppgift';
             await pushService.notifyTaskAssigned(input.assignedTo, taskTitle, updaterName);
         } catch (error) {
-            console.error('Failed to send task assignment notification:', error);
+            logger.error('Failed to send task assignment notification', { error });
         }
     }
 

@@ -3,6 +3,7 @@ import type { Activity, CreateActivityInput, UpdateActivityInput } from '@family
 import type { GoogleCalendarService } from '../googleCalendar/service.js';
 import * as pushService from '../push/service.js';
 import * as authRepo from '../auth/repository.js';
+import { logger } from '../../utils/logger.js';
 
 // Calendar service will be injected
 let calendarService: GoogleCalendarService | null = null;
@@ -131,7 +132,7 @@ export async function createActivity(
                 googleCalendarEventId = calendarEvent.id;
             }
         } catch (err) {
-            console.error('Failed to create Google Calendar event:', err);
+            logger.error('Failed to create Google Calendar event', { error: err });
             // Continue without syncing - don't fail the activity creation
         }
     }
@@ -170,7 +171,7 @@ export async function createActivity(
                     tag: `activity-${row.id}`,
                 });
             } catch (error) {
-                console.error('Failed to send activity participant notifications:', error);
+                logger.error('Failed to send activity participant notifications', { error });
             }
         }
     }
@@ -190,7 +191,7 @@ export async function createActivity(
                 tag: `transport-${row.id}`,
             });
         } catch (error) {
-            console.error('Failed to send transport user notification:', error);
+            logger.error('Failed to send transport user notification', { error });
         }
     }
 
@@ -224,7 +225,7 @@ export async function updateActivity(
                 });
             }
         } catch (err) {
-            console.error('Failed to update Google Calendar event:', err);
+            logger.error('Failed to update Google Calendar event', { error: err });
             // Continue without syncing - don't fail the activity update
         }
     }
@@ -262,7 +263,7 @@ export async function deleteActivity(id: number, familyId: number, userId?: numb
                 await calendarService.deleteEvent(userId, connection.familyCalendarId, activity.google_calendar_event_id);
             }
         } catch (err) {
-            console.error('Failed to delete Google Calendar event:', err);
+            logger.error('Failed to delete Google Calendar event', { error: err });
             // Continue without syncing - don't fail the activity deletion
         }
     }
