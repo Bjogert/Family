@@ -238,14 +238,11 @@ export async function notifyTaskAssigned(
     taskTitle: string,
     assignedByName: string
 ): Promise<void> {
-    if (!await shouldNotify(assignedUserId, 'calendar_reminder')) {
-        return;
-    }
-
+    // Task notifications always enabled for now (no preference toggle yet)
     await sendToUser(assignedUserId, {
-        title: 'Ny uppgift',
+        title: '📋 Ny uppgift',
         body: `${assignedByName} tilldelade "${taskTitle}" till dig`,
-        url: '/',
+        url: '/tasks',
         tag: 'task-assigned',
     });
 }
