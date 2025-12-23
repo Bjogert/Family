@@ -1,21 +1,23 @@
 ﻿<script lang="ts">
+  import { t } from '$lib/i18n';
+
   export let selected: string = '😊';
 
-  const emojiCategories: Record<string, string[]> = {
-    Ansikten: ['😊', '😀', '😃', '😄', '😁', '🙂', '😉', '😎', '🤓', '🤗', '😇', '🥰'],
-    Djur: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐸'],
-    Aktiviteter: ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🎨', '🎮', '🎸', '🎹', '🎤', '🎧'],
-    Mat: ['🍕', '🍔', '🍟', '🌭', '🍿', '🧁', '🍰', '🎂', '🍪', '🍩', '🍦', '🍎'],
-    Natur: ['🌸', '🌺', '🌻', '🌷', '🌹', '🌼', '⭐', '✨', '🌈', '☀️', '🌙', '⚡'],
+  const emojiCategoriesData: Record<string, string[]> = {
+    faces: ['😊', '😀', '😃', '😄', '😁', '🙂', '😉', '😎', '🤓', '🤗', '😇', '🥰'],
+    animals: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐸'],
+    activities: ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🎨', '🎮', '🎸', '🎹', '🎤', '🎧'],
+    food: ['🍕', '🍔', '🍟', '🌭', '🍿', '🧁', '🍰', '🎂', '🍪', '🍩', '🍦', '🍎'],
+    nature: ['🌸', '🌺', '🌻', '🌷', '🌹', '🌼', '⭐', '✨', '🌈', '☀️', '🌙', '⚡'],
   };
 
-  let selectedCategory = 'Ansikten';
+  let selectedCategory = 'faces';
 </script>
 
 <div class="emoji-picker">
   <!-- Category tabs - flex wrap to prevent overflow -->
   <div class="flex flex-wrap gap-2 mb-3 border-b border-orange-200 dark:border-stone-700 pb-2">
-    {#each Object.keys(emojiCategories) as category}
+    {#each Object.keys(emojiCategoriesData) as category}
       <button
         type="button"
         class="px-3 py-1 text-sm rounded-lg transition-colors whitespace-nowrap {selectedCategory ===
@@ -24,14 +26,14 @@
           : 'bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-600'}"
         on:click={() => (selectedCategory = category)}
       >
-        {category}
+        {$t(`emoji.${category}`)}
       </button>
     {/each}
   </div>
 
   <!-- Emoji grid - centered emojis -->
   <div class="grid grid-cols-6 gap-2">
-    {#each emojiCategories[selectedCategory] as emoji}
+    {#each emojiCategoriesData[selectedCategory] as emoji}
       <button
         type="button"
         class="aspect-square flex items-center justify-center text-2xl rounded-lg transition-all {selected ===

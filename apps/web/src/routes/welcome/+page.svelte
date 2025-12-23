@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { get, post } from '$lib/api/client';
+  import { t } from '$lib/i18n';
   import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
   import EmojiPicker from '$lib/components/EmojiPicker.svelte';
   import ColorPicker from '$lib/components/ColorPicker.svelte';
@@ -40,9 +41,19 @@
     showColorPicker: false,
   });
 
-  const roleNicknames: Record<string, string[]> = {
-    pappa: ['Pappa', 'Far', 'Farsan', 'Papa', 'Paps'],
-    mamma: ['Mamma', 'Mor', 'Morsan', 'Mama', 'Mams'],
+  const roleNicknames: Record<string, Record<string, string[]>> = {
+    sv: {
+      pappa: ['Pappa', 'Far', 'Farsan', 'Papa', 'Paps'],
+      mamma: ['Mamma', 'Mor', 'Morsan', 'Mama', 'Mams'],
+    },
+    en: {
+      pappa: ['Dad', 'Father', 'Pop', 'Papa'],
+      mamma: ['Mom', 'Mother', 'Ma', 'Mama'],
+    },
+    pt: {
+      pappa: ['Pai', 'Papai', 'Vovô'],
+      mamma: ['Mãe', 'Mamãe', 'Vovó'],
+    },
   };
 
   let families: Array<{ id: number; name: string }> = [];
@@ -146,11 +157,11 @@
   function addMember() {
     // Validate current member
     if (!currentMember.name.trim()) {
-      error = 'Förnamn krävs';
+      error = $t('common.firstNameRequired');
       return;
     }
     if (currentMember.password && currentMember.password !== currentMember.passwordConfirm) {
-      error = 'Lösenorden matchar inte';
+      error = $t('common.passwordMismatch');
       return;
     }
     error = '';
@@ -181,30 +192,30 @@
 
   function getDisplayNameForRole(member: FamilyMember): string {
     if (member.displayName) return member.displayName;
-    if (member.role === 'pappa') return 'Pappa';
-    if (member.role === 'mamma') return 'Mamma';
+    if (member.role === 'pappa') return $t('role.father');
+    if (member.role === 'mamma') return $t('role.mother');
     return member.name;
   }
 
   async function createFamily() {
     if (!newFamilyName.trim()) {
-      error = 'Familjenamn krävs';
+      error = $t('common.familyRequired');
       return;
     }
 
     if (!newFamilyPassword.trim()) {
-      error = 'Familjens lösenord krävs';
+      error = $t('common.passwordRequired');
       return;
     }
 
     if (newFamilyPassword !== newFamilyPasswordConfirm) {
-      error = 'Lösenorden matchar inte';
+      error = $t('common.passwordMismatch');
       return;
     }
 
     // Check if there are saved members
     if (savedMembers.length === 0) {
-      error = 'Minst en familjemedlem krävs. Klicka "Lägg till" för att spara medlemmen.';
+      error = $t('common.minOneMember');
       return;
     }
 
@@ -234,7 +245,9 @@
         });
       }
 
-      successMessage = `Familjen "${familyData.family.name}" skapades med ${savedMembers.length} medlem(mar)!`;
+      successMessage = $t('common.createSuccess')
+        .replace('{familyName}', familyData.family.name)
+        .replace('{count}', String(savedMembers.length));
       newFamilyName = '';
       newFamilyPassword = '';
       newFamilyPasswordConfirm = '';
@@ -244,9 +257,9 @@
       await loadFamilies();
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'statusCode' in err && err.statusCode === 409) {
-        error = 'En familj med detta namn finns redan';
+        error = $t('common.familyExists');
       } else {
-        error = 'Kunde inte skapa familjen';
+        error = $t('common.couldNotCreate');
       }
     } finally {
       loading = false;
@@ -606,14 +619,12 @@
                         {#if member.role}
                           <span class="text-stone-500 text-sm ml-2">
                             ({member.role === 'pappa'
-                              ? '👨 Pappa'
+                              ? '👨 ' + $t('role.father')
                               : member.role === 'mamma'
-                                ? '👩 Mamma'
+                                ? '👩 ' + $t('role.mother')
                                 : member.role === 'barn'
-                                  ? '🧒 Barn'
-                                  : member.role === 'bebis'
-                                    ? '👶 Bebis'
-                                    : '🙂 Annan'})
+                                  ? '🧒 ' + $t('role.child')
+                                  : '🙂 ' + $t('role.other')})
                           </span>
                         {/if}
                       </div>
@@ -625,7 +636,7 @@
                         class="text-orange-500 hover:text-orange-600 text-sm font-medium"
                         disabled={loading}
                       >
-                        ✏️ Ändra
+                        ✏️ {$t('common.edit')}
                       </button>
                       <button
                         type="button"
@@ -650,7 +661,11 @@
                   class="text-sm font-medium text-stone-700 dark:text-stone-300 flex items-center gap-2"
                 >
                   <span class="text-2xl">{currentMember.avatarEmoji || '😊'}</span>
-                  <span>{savedMembers.length === 0 ? 'Första medlemmen' : 'Ny medlem'}</span>
+                  <span
+                    >{savedMembers.length === 0
+                      ? $t('welcome.firstMember')
+                      : $t('welcome.newMember')}</span
+                  >
                 </span>
               </div>
 
@@ -658,7 +673,7 @@
                 <!-- Name - full width -->
                 <input
                   type="text"
-                  placeholder="Förnamn *"
+                  placeholder="{$t('common.firstNameRequired')} *"
                   bind:value={currentMember.name}
                   class="w-full px-4 py-3 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
                   disabled={loading}
@@ -670,12 +685,11 @@
                   class="w-full px-4 py-3 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
                   disabled={loading}
                 >
-                  <option value="">Välj roll...</option>
-                  <option value="pappa">👨 Pappa</option>
-                  <option value="mamma">👩 Mamma</option>
-                  <option value="barn">🧒 Barn</option>
-                  <option value="bebis">👶 Bebis</option>
-                  <option value="annan">🙂 Annan</option>
+                  <option value="">{$t('common.selectRole')}...</option>
+                  <option value="pappa">👨 {$t('role.father')}</option>
+                  <option value="mamma">👩 {$t('role.mother')}</option>
+                  <option value="barn">🧒 {$t('role.child')}</option>
+                  <option value="annan">🙂 {$t('role.other')}</option>
                 </select>
 
                 <!-- Avatar & Color - inline compact with separate toggles -->
@@ -749,7 +763,7 @@
                   <div>
                     <!-- svelte-ignore a11y-label-has-associated-control -->
                     <label class="block text-xs text-stone-500 dark:text-stone-400 mb-1"
-                      >Födelsedag</label
+                      >{$t('profile.birthday')}</label
                     >
                     <input
                       type="date"
@@ -769,10 +783,10 @@
                         class="w-full px-4 py-3 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
                         disabled={loading}
                       >
-                        <option value="">Välj...</option>
-                        <option value="pojke">👦 Pojke</option>
-                        <option value="flicka">👧 Flicka</option>
-                        <option value="annat">🧒 Annat</option>
+                        <option value="">{$t('common.select')}...</option>
+                        <option value="pojke">👦 {$t('gender.boy')}</option>
+                        <option value="flicka">👧 {$t('gender.girl')}</option>
+                        <option value="annat">{$t('gender.other')}</option>
                       </select>
                     </div>
                   {/if}
@@ -783,15 +797,15 @@
                   <div>
                     <!-- svelte-ignore a11y-label-has-associated-control -->
                     <label class="block text-xs text-stone-500 dark:text-stone-400 mb-1"
-                      >Smeknamn (visas istället för förnamn)</label
+                      >{$t('profile.displayName')} ({$t('common.optional')})</label
                     >
                     <select
                       bind:value={currentMember.displayName}
                       class="w-full px-4 py-3 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
                       disabled={loading}
                     >
-                      <option value="">Använd förnamn</option>
-                      {#each roleNicknames[currentMember.role] || [] as nickname}
+                      <option value="">{$t('common.useFirstName')}</option>
+                      {#each roleNicknames['sv']?.[currentMember.role] || [] as nickname}
                         <option value={nickname}>{nickname}</option>
                       {/each}
                     </select>
@@ -802,12 +816,12 @@
                     <label
                       for="memberEmail"
                       class="block text-xs text-stone-500 dark:text-stone-400 mb-1"
-                      >E-post (för återställning av lösenord)</label
+                      >{$t('welcome.email')}</label
                     >
                     <input
                       id="memberEmail"
                       type="email"
-                      placeholder="exempel@email.se"
+                      placeholder="example@email.com"
                       bind:value={currentMember.email}
                       class="w-full px-4 py-3 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white placeholder-stone-400"
                       disabled={loading}

@@ -2,6 +2,7 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { post } from '$lib/api/client';
+  import { t } from '$lib/i18n';
 
   let newPassword = '';
   let confirmPassword = '';
@@ -17,17 +18,17 @@
     error = '';
 
     if (!token) {
-      error = 'Ogiltig återställningslänk';
+      error = $t('resetPassword.invalidToken');
       return;
     }
 
     if (!newPassword || newPassword.length < 4) {
-      error = 'Lösenordet måste vara minst 4 tecken';
+      error = $t('resetPassword.passwordTooShort');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      error = 'Lösenorden matchar inte';
+      error = $t('common.passwordMismatch');
       return;
     }
 
@@ -43,10 +44,10 @@
       if (response.success) {
         success = true;
       } else {
-        error = response.message || 'Kunde inte återställa lösenordet';
+        error = response.message || $t('resetPassword.failed');
       }
     } catch (err) {
-      error = 'Något gick fel. Försök igen.';
+      error = $t('resetPassword.error');
     } finally {
       loading = false;
     }
@@ -55,7 +56,7 @@
 
 <svelte:head>
   <title
-    >{isFamilyReset ? 'Återställ familjens lösenord' : 'Återställ lösenord'} - Familjehubben</title
+    >{isFamilyReset ? $t('resetPassword.familyTitle') : $t('resetPassword.title')} - Family Hub</title
   >
 </svelte:head>
 
@@ -66,16 +67,16 @@
     <div class="text-center mb-8">
       <div class="text-5xl mb-4">{isFamilyReset ? '🏠' : '🔐'}</div>
       <h1 class="text-2xl font-bold text-gray-800">
-        {isFamilyReset ? 'Välj nytt lösenord för familjen' : 'Välj nytt lösenord'}
+        {isFamilyReset ? $t('common.chooseNewPasswordFamily') : $t('common.chooseNewPassword')}
       </h1>
     </div>
 
     {#if !token}
       <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
         <div class="text-4xl mb-3">❌</div>
-        <h2 class="text-lg font-semibold text-red-800 mb-2">Ogiltig länk</h2>
+        <h2 class="text-lg font-semibold text-red-800 mb-2">{$t('resetPassword.invalidLinkTitle')}</h2>
         <p class="text-red-700 text-sm">
-          Återställningslänken saknas eller är felaktig. Begär en ny länk.
+          {$t('resetPassword.invalidLinkDesc')}
         </p>
       </div>
       <div class="mt-6 text-center">
@@ -83,23 +84,23 @@
           href="/forgot-password{isFamilyReset ? '?type=family' : ''}"
           class="text-violet-600 hover:text-violet-700 font-medium"
         >
-          Begär ny återställningslänk →
+          {$t('resetPassword.requestNewLink')} →
         </a>
       </div>
     {:else if success}
       <div class="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
         <div class="text-4xl mb-3">✅</div>
         <h2 class="text-lg font-semibold text-green-800 mb-2">
-          {isFamilyReset ? 'Familjens lösenord har återställts!' : 'Lösenordet har återställts!'}
+          {$t('resetPassword.success')}
         </h2>
-        <p class="text-green-700 text-sm">Du kan nu logga in med det nya lösenordet.</p>
+        <p class="text-green-700 text-sm">{$t('resetPassword.canLogin')}</p>
       </div>
       <div class="mt-6 text-center">
         <a
           href="/welcome"
           class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 px-6 rounded-xl inline-block transition-colors"
         >
-          Gå till inloggning
+          {$t('nav.back')}
         </a>
       </div>
     {:else}
@@ -112,13 +113,13 @@
 
         <div>
           <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-2">
-            {isFamilyReset ? 'Nytt familjlösenord' : 'Nytt lösenord'}
+            {isFamilyReset ? $t('common.chooseNewPasswordFamily') : $t('common.chooseNewPassword')}
           </label>
           <input
             type="password"
             id="newPassword"
             bind:value={newPassword}
-            placeholder="Minst 4 tecken"
+            placeholder={$t('resetPassword.passwordPlaceholder')}
             class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 outline-none transition-all"
             disabled={loading}
           />
@@ -126,13 +127,13 @@
 
         <div>
           <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">
-            Bekräfta lösenord
+            {$t('resetPassword.confirmPassword')}
           </label>
           <input
             type="password"
             id="confirmPassword"
             bind:value={confirmPassword}
-            placeholder="Skriv lösenordet igen"
+            placeholder={$t('resetPassword.confirmPasswordPlaceholder')}
             class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 outline-none transition-all"
             disabled={loading}
           />
@@ -161,17 +162,17 @@
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              Sparar...
+              {$t('common.saving')}
             </span>
           {:else}
-            Spara nytt lösenord
+            {$t('resetPassword.submitButton')}
           {/if}
         </button>
       </form>
 
       <div class="mt-6 text-center text-sm text-gray-600">
         <a href="/welcome" class="text-violet-600 hover:text-violet-700 font-medium">
-          ← Tillbaka till inloggning
+          {$t('nav.back')} {$t('resetPassword.backToLogin')}
         </a>
       </div>
     {/if}

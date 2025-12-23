@@ -3,6 +3,7 @@
   import { page } from '$app/stores';
   import { login, loading, error } from '$lib/stores/auth';
   import { get } from '$lib/api/client';
+  import { t } from '$lib/i18n';
   import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 
   interface FamilyMember {
@@ -43,15 +44,15 @@
   function getRoleLabel(role: string | null): string {
     switch (role) {
       case 'pappa':
-        return 'Pappa';
+        return $t('role.father');
       case 'mamma':
-        return 'Mamma';
+        return $t('role.mother');
       case 'barn':
-        return 'Barn';
+        return $t('role.child');
       case 'bebis':
-        return 'Bebis';
+        return $t('role.other');
       case 'annan':
-        return 'Annan';
+        return $t('role.other');
       default:
         return '';
     }

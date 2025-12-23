@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { get, post, put, del } from '$lib/api/client';
-  import { t } from '$lib/i18n';
+  import { t, currentLanguage } from '$lib/i18n';
   import { groceryWs } from '$lib/stores/groceryWs';
   import { currentFamily, currentUser } from '$lib/stores/auth';
   import type { GroceryItem } from '$lib/types/grocery';
@@ -92,21 +92,32 @@
   });
 
   // Format date for display
+  // Format date based on current language
+  function getLocaleCode(): string {
+    const lang = $currentLanguage;
+    return lang === 'sv' ? 'sv-SE' : lang === 'pt' ? 'pt-BR' : 'en-US';
+  }
+
   function formatActivityDate(dateStr: string): string {
     const date = new Date(dateStr);
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
+    const locale = getLocaleCode();
 
     const isToday = date.toDateString() === now.toDateString();
     const isTomorrow = date.toDateString() === tomorrow.toDateString();
 
-    if (isToday)
-      return `Idag ${date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`;
-    if (isTomorrow)
-      return `Imorgon ${date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`;
+    // Translate "Today" and "Tomorrow"
+    const todayText = $t('date.today') || 'Today';
+    const tomorrowText = $t('date.tomorrow') || 'Tomorrow';
 
-    return date.toLocaleDateString('sv-SE', {
+    if (isToday)
+      return `${todayText} ${date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`;
+    if (isTomorrow)
+      return `${tomorrowText} ${date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`;
+
+    return date.toLocaleDateString(locale, {
       weekday: 'short',
       day: 'numeric',
       month: 'short',

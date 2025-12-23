@@ -1,14 +1,18 @@
 ﻿<script lang="ts">
+  import { t } from '$lib/i18n';
+
   export let selected: string = 'orange';
 
-  const colors = [
-    { name: 'orange', hex: '#fb923c', label: 'Orange' },
-    { name: 'amber', hex: '#fbbf24', label: 'Gul' },
-    { name: 'rose', hex: '#fb7185', label: 'Rosa' },
-    { name: 'green', hex: '#4ade80', label: 'Grön' },
-    { name: 'blue', hex: '#60a5fa', label: 'Blå' },
-    { name: 'purple', hex: '#c084fc', label: 'Lila' },
-    { name: 'stone', hex: '#a8a29e', label: 'Grå' },
+  let colors: Array<{ name: string; hex: string; label: string }> = [];
+
+  $: colors = [
+    { name: 'orange', hex: '#fb923c', label: $t('color.orange') },
+    { name: 'amber', hex: '#fbbf24', label: $t('color.amber') },
+    { name: 'rose', hex: '#fb7185', label: $t('color.rose') },
+    { name: 'green', hex: '#4ade80', label: $t('color.green') },
+    { name: 'blue', hex: '#60a5fa', label: $t('color.blue') },
+    { name: 'purple', hex: '#c084fc', label: $t('color.purple') },
+    { name: 'stone', hex: '#a8a29e', label: $t('color.stone') },
   ];
 </script>
 

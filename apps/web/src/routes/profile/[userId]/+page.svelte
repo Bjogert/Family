@@ -5,6 +5,7 @@
   import { browser } from '$app/environment';
   import { get, put } from '$lib/api/client';
   import { currentUser, currentFamily } from '$lib/stores/auth';
+  import { t } from '$lib/i18n';
   import {
     isPushSupported,
     getPermissionStatus,
@@ -66,17 +67,12 @@
     stone: 'bg-stone-400',
   };
 
-  const colorOptions = [
-    { value: 'orange', label: 'Orange', class: 'bg-orange-400' },
-    { value: 'amber', label: 'Gul', class: 'bg-amber-400' },
-    { value: 'rose', label: 'Rosa', class: 'bg-rose-400' },
-    { value: 'green', label: 'Grön', class: 'bg-emerald-400' },
-    { value: 'blue', label: 'Blå', class: 'bg-sky-400' },
-    { value: 'purple', label: 'Lila', class: 'bg-violet-400' },
-    { value: 'stone', label: 'Grå', class: 'bg-stone-400' },
-  ];
+  // These will be set reactively with translations
+  let colorOptions: Array<{ value: string; label: string; class: string }> = [];
+  let roleOptions: Array<{ value: string; label: string }> = [];
+  let genderOptions: Array<{ value: string; label: string }> = [];
 
-  const emojiOptions = [
+  let emojiOptions = [
     '🐻',
     '🐱',
     '🐶',
@@ -105,22 +101,34 @@
     '🥳',
   ];
 
-  const roleOptions = [
-    { value: 'pappa', label: 'Pappa' },
-    { value: 'mamma', label: 'Mamma' },
-    { value: 'barn', label: 'Barn' },
-    { value: 'bebis', label: 'Bebis' },
-    { value: 'farfar', label: 'Farfar' },
-    { value: 'farmor', label: 'Farmor' },
-    { value: 'morfar', label: 'Morfar' },
-    { value: 'mormor', label: 'Mormor' },
-  ];
+  $: {
+    colorOptions = [
+      { value: 'orange', label: $t('color.orange'), class: 'bg-orange-400' },
+      { value: 'amber', label: $t('color.amber'), class: 'bg-amber-400' },
+      { value: 'rose', label: $t('color.rose'), class: 'bg-rose-400' },
+      { value: 'green', label: $t('color.green'), class: 'bg-emerald-400' },
+      { value: 'blue', label: $t('color.blue'), class: 'bg-sky-400' },
+      { value: 'purple', label: $t('color.purple'), class: 'bg-violet-400' },
+      { value: 'stone', label: $t('color.stone'), class: 'bg-stone-400' },
+    ];
 
-  const genderOptions = [
-    { value: 'male', label: 'Man' },
-    { value: 'female', label: 'Kvinna' },
-    { value: 'other', label: 'Annat' },
-  ];
+    roleOptions = [
+      { value: 'pappa', label: $t('role.father') },
+      { value: 'mamma', label: $t('role.mother') },
+      { value: 'barn', label: $t('role.child') },
+      { value: 'bebis', label: $t('role.other') },
+      { value: 'farfar', label: $t('role.grandfather') },
+      { value: 'farmor', label: $t('role.grandmother') },
+      { value: 'morfar', label: $t('role.grandfather2') },
+      { value: 'mormor', label: $t('role.grandmother2') },
+    ];
+
+    genderOptions = [
+      { value: 'male', label: $t('gender.male') },
+      { value: 'female', label: $t('gender.female') },
+      { value: 'other', label: $t('gender.other') },
+    ];
+  }
 
   // State
   let userId: number;
@@ -418,7 +426,7 @@
 </script>
 
 <svelte:head>
-  <title>{profile?.displayName || profile?.username || 'Profil'} - Family Hub</title>
+  <title>{profile?.displayName || profile?.username || $t('profile.title')} - Family Hub</title>
 </svelte:head>
 
 <main
@@ -439,7 +447,7 @@
             on:click={() => goto('/')}
             class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
           >
-            Tillbaka till startsidan
+            {$t('profile.backToHome')}
           </button>
         </div>
       </div>
@@ -705,14 +713,14 @@
                     for="displayName"
                     class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2"
                   >
-                    Visningsnamn
+                    {$t('profile.displayName')}
                   </label>
                   <input
                     type="text"
                     id="displayName"
                     bind:value={editForm.displayName}
                     class="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="Ditt namn"
+                    placeholder={$t('profile.displayName')}
                   />
                 </div>
 
@@ -722,14 +730,14 @@
                     for="role"
                     class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2"
                   >
-                    Roll i familjen
+                    {$t('profile.role')}
                   </label>
                   <select
                     id="role"
                     bind:value={editForm.role}
                     class="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   >
-                    <option value="">Välj roll...</option>
+                    <option value="">{$t('common.selectRole')}...</option>
                     {#each roleOptions as role}
                       <option value={role.value}>{role.label}</option>
                     {/each}
@@ -742,7 +750,7 @@
                     for="birthday"
                     class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2"
                   >
-                    Födelsedag
+                    {$t('profile.birthday')}
                   </label>
                   <input
                     type="date"
@@ -758,7 +766,7 @@
                     for="gender"
                     class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2"
                   >
-                    Kön
+                    {$t('profile.gender')}
                   </label>
                   <select
                     id="gender"
@@ -825,7 +833,7 @@
                 <div class="grid gap-4 sm:grid-cols-2">
                   {#if profile.birthday}
                     <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
-                      <p class="text-sm text-stone-500 dark:text-stone-400">Födelsedag</p>
+                      <p class="text-sm text-stone-500 dark:text-stone-400">{$t('profile.birthday')}</p>
                       <p class="text-lg font-medium text-stone-800 dark:text-white">
                         {formatDate(profile.birthday)}
                       </p>
@@ -833,7 +841,7 @@
                   {/if}
                   {#if profile.gender}
                     <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
-                      <p class="text-sm text-stone-500 dark:text-stone-400">Kön</p>
+                      <p class="text-sm text-stone-500 dark:text-stone-400">{$t('profile.gender')}</p>
                       <p class="text-lg font-medium text-stone-800 dark:text-white">
                         {genderOptions.find((g) => g.value === profile?.gender)?.label ||
                           profile.gender}
@@ -841,7 +849,7 @@
                     </div>
                   {/if}
                   <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
-                    <p class="text-sm text-stone-500 dark:text-stone-400">Medlem sedan</p>
+                    <p class="text-sm text-stone-500 dark:text-stone-400">{$t('profile.memberSince')}</p>
                     <p class="text-lg font-medium text-stone-800 dark:text-white">
                       {formatDate(profile.createdAt)}
                     </p>
