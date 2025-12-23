@@ -381,7 +381,6 @@
           >
             {loading ? 'Verifying...' : 'Continue'}
           </button>
-
         </div>
       </form>
 

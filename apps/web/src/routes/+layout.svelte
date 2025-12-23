@@ -36,7 +36,13 @@
   $: userColor = colorClasses[$currentUser?.color || 'orange'];
 
   // Pages that don't require authentication
-  const publicPaths = ['/welcome', '/login', '/forgot-password', '/reset-password', '/verify-email'];
+  const publicPaths = [
+    '/welcome',
+    '/login',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-email',
+  ];
 
   onMount(() => {
     checkAuth();
