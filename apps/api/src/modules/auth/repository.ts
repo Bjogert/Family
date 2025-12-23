@@ -10,6 +10,8 @@ export interface User {
   gender?: string | null;
   avatarEmoji?: string | null;
   color?: string | null;
+  email?: string | null;
+  emailVerified?: boolean;
 }
 
 export interface Session {
@@ -24,7 +26,7 @@ export interface Session {
 // User operations
 export async function findUserByUsername(familyId: number, username: string): Promise<User | null> {
   const result = await pool.query(
-    `SELECT id, family_id, username, display_name, role, birthday, gender, avatar_emoji, color
+    `SELECT id, family_id, username, display_name, role, birthday, gender, avatar_emoji, color, email, email_verified
      FROM users
      WHERE family_id = $1 AND username = $2`,
     [familyId, username]
@@ -45,12 +47,14 @@ export async function findUserByUsername(familyId: number, username: string): Pr
     gender: row.gender,
     avatarEmoji: row.avatar_emoji,
     color: row.color,
+    email: row.email,
+    emailVerified: row.email_verified,
   };
 }
 
 export async function findUserById(id: number): Promise<User | null> {
   const result = await pool.query(
-    `SELECT id, family_id, username, display_name, role, birthday, gender, avatar_emoji, color
+    `SELECT id, family_id, username, display_name, role, birthday, gender, avatar_emoji, color, email, email_verified
      FROM users
      WHERE id = $1`,
     [id]
@@ -71,6 +75,8 @@ export async function findUserById(id: number): Promise<User | null> {
     gender: row.gender,
     avatarEmoji: row.avatar_emoji,
     color: row.color,
+    email: row.email,
+    emailVerified: row.email_verified,
   };
 }
 
@@ -90,6 +96,133 @@ export async function getUserPasswordHash(familyId: number, username: string): P
 export async function updateLastLogin(userId: number): Promise<void> {
   await pool.query(
     `UPDATE users SET last_login = NOW() WHERE id = $1`,
+    [userId]
+  );
+}
+
+// Email operations
+export async function findUserByEmail(email: string): Promise<User | null> {
+  const result = await pool.query(
+    `SELECT id, family_id, username, display_name, role, birthday, gender, avatar_emoji, color, email, email_verified
+     FROM users
+     WHERE email = $1`,
+    [email]
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    familyId: row.family_id,
+    username: row.username,
+    displayName: row.display_name,
+    role: row.role,
+    birthday: row.birthday,
+    gender: row.gender,
+    avatarEmoji: row.avatar_emoji,
+    color: row.color,
+    email: row.email,
+    emailVerified: row.email_verified,
+  };
+}
+
+export async function updateUserEmail(userId: number, email: string | null): Promise<void> {
+  await pool.query(
+    `UPDATE users SET email = $1, email_verified = FALSE WHERE id = $2`,
+    [email, userId]
+  );
+}
+
+export async function setEmailVerificationToken(userId: number, token: string, expiresAt: Date): Promise<void> {
+  await pool.query(
+    `UPDATE users SET email_verification_token = $1, email_verification_expires = $2 WHERE id = $3`,
+    [token, expiresAt, userId]
+  );
+}
+
+export async function findUserByEmailVerificationToken(token: string): Promise<User | null> {
+  const result = await pool.query(
+    `SELECT id, family_id, username, display_name, role, birthday, gender, avatar_emoji, color, email, email_verified
+     FROM users
+     WHERE email_verification_token = $1 AND email_verification_expires > NOW()`,
+    [token]
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    familyId: row.family_id,
+    username: row.username,
+    displayName: row.display_name,
+    role: row.role,
+    birthday: row.birthday,
+    gender: row.gender,
+    avatarEmoji: row.avatar_emoji,
+    color: row.color,
+    email: row.email,
+    emailVerified: row.email_verified,
+  };
+}
+
+export async function markEmailVerified(userId: number): Promise<void> {
+  await pool.query(
+    `UPDATE users SET email_verified = TRUE, email_verification_token = NULL, email_verification_expires = NULL WHERE id = $1`,
+    [userId]
+  );
+}
+
+export async function setPasswordResetToken(userId: number, token: string, expiresAt: Date): Promise<void> {
+  await pool.query(
+    `UPDATE users SET password_reset_token = $1, password_reset_expires = $2 WHERE id = $3`,
+    [token, expiresAt, userId]
+  );
+}
+
+export async function findUserByPasswordResetToken(token: string): Promise<User | null> {
+  const result = await pool.query(
+    `SELECT id, family_id, username, display_name, role, birthday, gender, avatar_emoji, color, email, email_verified
+     FROM users
+     WHERE password_reset_token = $1 AND password_reset_expires > NOW()`,
+    [token]
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    familyId: row.family_id,
+    username: row.username,
+    displayName: row.display_name,
+    role: row.role,
+    birthday: row.birthday,
+    gender: row.gender,
+    avatarEmoji: row.avatar_emoji,
+    color: row.color,
+    email: row.email,
+    emailVerified: row.email_verified,
+  };
+}
+
+export async function updatePasswordAndClearResetToken(userId: number, passwordHash: string): Promise<void> {
+  await pool.query(
+    `UPDATE users SET password_hash = $1, password_reset_token = NULL, password_reset_expires = NULL WHERE id = $2`,
+    [passwordHash, userId]
+  );
+}
+
+export async function setPrivacyConsent(userId: number): Promise<void> {
+  await pool.query(
+    `UPDATE users SET privacy_consent_at = NOW() WHERE id = $1`,
     [userId]
   );
 }

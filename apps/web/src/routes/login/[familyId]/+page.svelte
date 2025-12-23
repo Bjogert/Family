@@ -280,13 +280,21 @@
                 {/if}
               </button>
 
-              <button
-                type="button"
-                on:click={cancelPasswordPrompt}
-                class="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-              >
-                ← Avbryt
-              </button>
+              <div class="flex items-center justify-between text-sm">
+                <button
+                  type="button"
+                  on:click={cancelPasswordPrompt}
+                  class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                >
+                  ← Avbryt
+                </button>
+                <a
+                  href="/forgot-password"
+                  class="text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+                >
+                  Glömt lösenord?
+                </a>
+              </div>
             </form>
           {:else}
             <!-- Member selection view -->

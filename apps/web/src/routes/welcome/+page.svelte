@@ -16,6 +16,7 @@
     gender: string;
     avatarEmoji: string;
     color: string;
+    email: string;
     showPassword: boolean;
     showPasswordFields: boolean;
     showEmojiPicker: boolean;
@@ -32,6 +33,7 @@
     gender: '',
     avatarEmoji: '😊',
     color: 'orange',
+    email: '',
     showPassword: false,
     showPasswordFields: false,
     showEmojiPicker: false,
@@ -228,6 +230,7 @@
           gender: member.gender || undefined,
           avatarEmoji: member.avatarEmoji || undefined,
           color: member.color || undefined,
+          email: member.email || undefined,
         });
       }
 
@@ -783,6 +786,23 @@
                         <option value={nickname}>{nickname}</option>
                       {/each}
                     </select>
+                  </div>
+
+                  <!-- Email (for parents only - used for password reset) -->
+                  <div>
+                    <label class="block text-xs text-stone-500 dark:text-stone-400 mb-1"
+                      >E-post (för återställning av lösenord)</label
+                    >
+                    <input
+                      type="email"
+                      placeholder="exempel@email.se"
+                      bind:value={currentMember.email}
+                      class="w-full px-4 py-3 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white placeholder-stone-400"
+                      disabled={loading}
+                    />
+                    <p class="text-xs text-stone-400 dark:text-stone-500 mt-1">
+                      Valfritt - behövs om du glömmer lösenordet
+                    </p>
                   </div>
                 {/if}
 

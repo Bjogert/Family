@@ -212,7 +212,7 @@ export async function updateActivity(
 export async function deleteActivity(id: number, familyId: number, userId?: number): Promise<boolean> {
     // Get activity to check for calendar event
     const activity = await activityRepo.findById(id, familyId);
-    
+
     // Delete Google Calendar event if it exists
     if (activity?.google_calendar_event_id && userId && calendarService) {
         try {

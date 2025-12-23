@@ -113,7 +113,7 @@
     try {
       const res = await fetch(`/api/activities/${id}`, {
         method: 'DELETE',
-        headers: { 
+        headers: {
           'x-family-id': String($currentFamily.id),
           'x-user-id': String($currentUser?.id || ''),
         },

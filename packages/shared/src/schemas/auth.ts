@@ -17,6 +17,8 @@ export const UserSchema = z.object({
   avatarEmoji: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
   hasPassword: z.boolean().optional(),
+  email: z.string().email().nullable().optional(),
+  emailVerified: z.boolean().optional(),
 });
 
 // User creation/update schema
@@ -29,6 +31,8 @@ export const CreateUserSchema = z.object({
   gender: GenderSchema.optional(),
   avatarEmoji: z.string().max(10).optional(),
   color: z.string().max(20).optional(),
+  email: z.string().email().optional(),
+  privacyConsent: z.boolean().optional(), // GDPR consent
 });
 
 // Login request
@@ -54,4 +58,20 @@ export const LoginResponseSchema = z.object({
   success: z.boolean(),
   message: z.string().optional(),
   user: UserSchema.optional(),
+});
+
+// Password reset request
+export const ForgotPasswordSchema = z.object({
+  email: z.string().email('Ogiltig e-postadress'),
+});
+
+// Password reset with token
+export const ResetPasswordSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(4, 'Lösenordet måste vara minst 4 tecken'),
+});
+
+// Email verification request
+export const VerifyEmailSchema = z.object({
+  token: z.string().min(1),
 });

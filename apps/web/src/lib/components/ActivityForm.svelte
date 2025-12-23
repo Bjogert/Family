@@ -20,9 +20,9 @@
   export let calendarConnected = false;
 
   // Filter to only parents for transport
-  $: parents = familyMembers.filter(m => m.role === 'pappa' || m.role === 'mamma');
+  $: parents = familyMembers.filter((m) => m.role === 'pappa' || m.role === 'mamma');
   // Filter to only children for participants
-  $: children = familyMembers.filter(m => m.role === 'barn' || m.role === 'bebis');
+  $: children = familyMembers.filter((m) => m.role === 'barn' || m.role === 'bebis');
 
   const dispatch = createEventDispatcher<{
     save: CreateActivityInput;

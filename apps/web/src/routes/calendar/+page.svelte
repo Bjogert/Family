@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { t } from '$lib/i18n';
-  import { currentUser } from '$lib/stores/auth';
+  import { currentUser, currentFamily } from '$lib/stores/auth';
   import type { GoogleCalendar, GoogleCalendarEvent } from '@family-hub/shared/types';
 
   let connected = false;
@@ -61,9 +61,9 @@
   async function connectGoogle() {
     try {
       const res = await fetch('/api/calendar/google/auth', {
-        headers: { 
+        headers: {
           'x-user-id': String($currentUser?.id || ''),
-          'x-family-id': String($currentUser?.familyId || ''),
+          'x-family-id': String($currentFamily?.id || ''),
         },
       });
       if (res.ok) {
@@ -77,7 +77,7 @@
 
   async function disconnectGoogle() {
     if (!confirm('Är du säker på att du vill koppla bort Google Calendar?')) return;
-    
+
     try {
       const res = await fetch('/api/calendar/google/disconnect', {
         method: 'DELETE',
@@ -157,7 +157,7 @@
 
   function toggleCalendar(calendarId: string) {
     if (selectedCalendarIds.includes(calendarId)) {
-      selectedCalendarIds = selectedCalendarIds.filter(id => id !== calendarId);
+      selectedCalendarIds = selectedCalendarIds.filter((id) => id !== calendarId);
     } else {
       selectedCalendarIds = [...selectedCalendarIds, calendarId];
     }
@@ -206,11 +206,11 @@
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    
+
     // Start from Monday of the first week
     const start = new Date(firstDay);
     start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
-    
+
     const days: Date[] = [];
     const current = new Date(start);
     while (current <= lastDay || days.length % 7 !== 0) {
@@ -222,7 +222,7 @@
 
   function getEventsForDay(day: Date): GoogleCalendarEvent[] {
     const dayStr = day.toISOString().slice(0, 10);
-    return events.filter(event => {
+    return events.filter((event) => {
       const eventDate = (event.start.dateTime || event.start.date || '').slice(0, 10);
       return eventDate === dayStr;
     });
@@ -231,16 +231,16 @@
   function formatEventTime(event: GoogleCalendarEvent): string {
     if (event.start.date) return 'Heldag';
     if (event.start.dateTime) {
-      return new Date(event.start.dateTime).toLocaleTimeString('sv-SE', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      return new Date(event.start.dateTime).toLocaleTimeString('sv-SE', {
+        hour: '2-digit',
+        minute: '2-digit',
       });
     }
     return '';
   }
 
   function getCalendarColor(calendarId: string): string {
-    const calendar = calendars.find(c => c.id === calendarId);
+    const calendar = calendars.find((c) => c.id === calendarId);
     return calendar?.backgroundColor || '#4285f4';
   }
 
@@ -293,7 +293,7 @@
     </h1>
     {#if connected}
       <button
-        on:click={() => showSettings = true}
+        on:click={() => (showSettings = true)}
         class="px-4 py-2 bg-stone-100 dark:bg-stone-700 text-stone-700 dark:text-stone-200 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors"
       >
         ⚙️ Inställningar
@@ -320,10 +320,22 @@
         class="px-6 py-3 bg-gradient-to-r from-orange-400 to-amber-400 text-white rounded-xl font-medium hover:from-orange-500 hover:to-amber-500 transition-all shadow-md inline-flex items-center gap-2"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24">
-          <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          <path
+            fill="currentColor"
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+          />
+          <path
+            fill="currentColor"
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+          />
+          <path
+            fill="currentColor"
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+          />
+          <path
+            fill="currentColor"
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+          />
         </svg>
         Anslut med Google
       </button>
@@ -355,17 +367,27 @@
             {currentMonth}
           </span>
         </div>
-        
+
         <div class="flex items-center gap-2">
           <button
-            on:click={() => { viewMode = 'week'; loadEvents(); }}
-            class="px-3 py-1 rounded-lg transition-colors {viewMode === 'week' ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-700'}"
+            on:click={() => {
+              viewMode = 'week';
+              loadEvents();
+            }}
+            class="px-3 py-1 rounded-lg transition-colors {viewMode === 'week'
+              ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-700'}"
           >
             Vecka
           </button>
           <button
-            on:click={() => { viewMode = 'month'; loadEvents(); }}
-            class="px-3 py-1 rounded-lg transition-colors {viewMode === 'month' ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-700'}"
+            on:click={() => {
+              viewMode = 'month';
+              loadEvents();
+            }}
+            class="px-3 py-1 rounded-lg transition-colors {viewMode === 'month'
+              ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-700'}"
           >
             Månad
           </button>
@@ -383,9 +405,15 @@
       <div class="bg-white dark:bg-stone-800 rounded-2xl shadow-md overflow-hidden">
         <div class="grid grid-cols-7 border-b border-stone-200 dark:border-stone-700">
           {#each ['Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön'] as day, i}
-            <div class="p-3 text-center border-r border-stone-200 dark:border-stone-700 last:border-r-0">
+            <div
+              class="p-3 text-center border-r border-stone-200 dark:border-stone-700 last:border-r-0"
+            >
               <div class="text-xs text-stone-500 dark:text-stone-400 uppercase">{day}</div>
-              <div class="text-lg font-semibold mt-1 {isToday(weekDays[i]) ? 'bg-amber-400 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto' : 'text-stone-800 dark:text-stone-100'}">
+              <div
+                class="text-lg font-semibold mt-1 {isToday(weekDays[i])
+                  ? 'bg-amber-400 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto'
+                  : 'text-stone-800 dark:text-stone-100'}"
+              >
                 {weekDays[i].getDate()}
               </div>
             </div>
@@ -394,14 +422,24 @@
         <div class="grid grid-cols-7 min-h-[400px]">
           {#each weekDays as day, i}
             {@const dayEvents = getEventsForDay(day)}
-            <div class="p-2 border-r border-stone-200 dark:border-stone-700 last:border-r-0 {isToday(day) ? 'bg-amber-50 dark:bg-amber-900/20' : ''}">
+            <div
+              class="p-2 border-r border-stone-200 dark:border-stone-700 last:border-r-0 {isToday(
+                day
+              )
+                ? 'bg-amber-50 dark:bg-amber-900/20'
+                : ''}"
+            >
               {#each dayEvents as event}
                 <div
                   class="text-xs p-1.5 mb-1 rounded-lg truncate"
-                  style="background-color: {getCalendarColor(event.calendarId)}20; border-left: 3px solid {getCalendarColor(event.calendarId)};"
+                  style="background-color: {getCalendarColor(
+                    event.calendarId
+                  )}20; border-left: 3px solid {getCalendarColor(event.calendarId)};"
                   title={event.summary}
                 >
-                  <span class="font-medium text-stone-700 dark:text-stone-200">{formatEventTime(event)}</span>
+                  <span class="font-medium text-stone-700 dark:text-stone-200"
+                    >{formatEventTime(event)}</span
+                  >
                   <span class="text-stone-600 dark:text-stone-300 ml-1">{event.summary}</span>
                 </div>
               {/each}
@@ -414,7 +452,9 @@
       <div class="bg-white dark:bg-stone-800 rounded-2xl shadow-md overflow-hidden">
         <div class="grid grid-cols-7 border-b border-stone-200 dark:border-stone-700">
           {#each ['Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön'] as day}
-            <div class="p-2 text-center text-xs text-stone-500 dark:text-stone-400 uppercase font-medium">
+            <div
+              class="p-2 text-center text-xs text-stone-500 dark:text-stone-400 uppercase font-medium"
+            >
               {day}
             </div>
           {/each}
@@ -422,14 +462,28 @@
         <div class="grid grid-cols-7">
           {#each monthDays as day}
             {@const dayEvents = getEventsForDay(day)}
-            <div class="min-h-[100px] p-1 border-r border-b border-stone-200 dark:border-stone-700 {!isCurrentMonth(day) ? 'bg-stone-50 dark:bg-stone-800/50' : ''} {isToday(day) ? 'bg-amber-50 dark:bg-amber-900/20' : ''}">
-              <div class="text-sm font-medium mb-1 {isToday(day) ? 'bg-amber-400 text-white rounded-full w-6 h-6 flex items-center justify-center' : isCurrentMonth(day) ? 'text-stone-800 dark:text-stone-100' : 'text-stone-400 dark:text-stone-600'}">
+            <div
+              class="min-h-[100px] p-1 border-r border-b border-stone-200 dark:border-stone-700 {!isCurrentMonth(
+                day
+              )
+                ? 'bg-stone-50 dark:bg-stone-800/50'
+                : ''} {isToday(day) ? 'bg-amber-50 dark:bg-amber-900/20' : ''}"
+            >
+              <div
+                class="text-sm font-medium mb-1 {isToday(day)
+                  ? 'bg-amber-400 text-white rounded-full w-6 h-6 flex items-center justify-center'
+                  : isCurrentMonth(day)
+                    ? 'text-stone-800 dark:text-stone-100'
+                    : 'text-stone-400 dark:text-stone-600'}"
+              >
                 {day.getDate()}
               </div>
               {#each dayEvents.slice(0, 3) as event}
                 <div
                   class="text-xs p-1 mb-0.5 rounded truncate"
-                  style="background-color: {getCalendarColor(event.calendarId)}30; color: {getCalendarColor(event.calendarId)};"
+                  style="background-color: {getCalendarColor(
+                    event.calendarId
+                  )}30; color: {getCalendarColor(event.calendarId)};"
                   title={event.summary}
                 >
                   {event.summary}
@@ -456,7 +510,9 @@
 <!-- Settings Modal -->
 {#if showSettings}
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-stone-800 rounded-2xl shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+    <div
+      class="bg-white dark:bg-stone-800 rounded-2xl shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto"
+    >
       <div class="p-6">
         <h2 class="text-xl font-bold text-stone-800 dark:text-stone-100 mb-4">
           Kalenderinställningar
@@ -464,12 +520,12 @@
 
         <!-- Select Calendars -->
         <div class="mb-6">
-          <h3 class="font-medium text-stone-700 dark:text-stone-200 mb-2">
-            Visa kalendrar
-          </h3>
+          <h3 class="font-medium text-stone-700 dark:text-stone-200 mb-2">Visa kalendrar</h3>
           <div class="space-y-2">
             {#each calendars as calendar}
-              <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 cursor-pointer">
+              <label
+                class="flex items-center gap-3 p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 cursor-pointer"
+              >
                 <input
                   type="checkbox"
                   checked={selectedCalendarIds.includes(calendar.id)}
@@ -491,9 +547,7 @@
 
         <!-- Family Calendar -->
         <div class="mb-6">
-          <h3 class="font-medium text-stone-700 dark:text-stone-200 mb-2">
-            Familjekalender
-          </h3>
+          <h3 class="font-medium text-stone-700 dark:text-stone-200 mb-2">Familjekalender</h3>
           <p class="text-sm text-stone-500 dark:text-stone-400 mb-2">
             Aktiviteter läggs till i denna kalender
           </p>
@@ -502,7 +556,7 @@
             class="w-full px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700 text-stone-800 dark:text-stone-100"
           >
             <option value={null}>Välj kalender...</option>
-            {#each calendars.filter(c => c.accessRole === 'owner' || c.accessRole === 'writer') as calendar}
+            {#each calendars.filter((c) => c.accessRole === 'owner' || c.accessRole === 'writer') as calendar}
               <option value={calendar.id}>{calendar.summary}</option>
             {/each}
           </select>
@@ -511,7 +565,7 @@
         <!-- Actions -->
         <div class="flex gap-3">
           <button
-            on:click={() => showSettings = false}
+            on:click={() => (showSettings = false)}
             class="flex-1 px-4 py-2 bg-stone-100 dark:bg-stone-700 text-stone-700 dark:text-stone-200 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors"
           >
             Avbryt

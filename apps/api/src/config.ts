@@ -43,6 +43,20 @@ export const config = {
 
   // Encryption for OAuth tokens
   encryptionKey: process.env.ENCRYPTION_KEY || 'dev-encryption-key-32-chars!!',
+
+  // Email configuration
+  email: {
+    enabled: process.env.EMAIL_ENABLED === 'true',
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.EMAIL_PORT || '587', 10),
+    secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
+    user: process.env.EMAIL_USER || '',
+    password: process.env.EMAIL_PASSWORD || '', // App password for Gmail
+    from: process.env.EMAIL_FROM || 'Familjehubben <noreply@familjehubben.vip>',
+  },
+
+  // App URLs
+  appUrl: process.env.APP_URL || 'http://localhost:5173',
 } as const;
 
 // Validate required config in production

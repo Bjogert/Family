@@ -74,9 +74,10 @@ export async function createFamilyMember(
     birthday?: string,
     gender?: string,
     avatarEmoji?: string,
-    color?: string
+    color?: string,
+    email?: string
 ): Promise<FamilyMember> {
-    return familyRepo.createFamilyMember(familyId, username, password, displayName, role, birthday, gender, avatarEmoji, color);
+    return familyRepo.createFamilyMember(familyId, username, password, displayName, role, birthday, gender, avatarEmoji, color, email);
 }
 
 // Verify family password

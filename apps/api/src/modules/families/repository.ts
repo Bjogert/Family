@@ -100,7 +100,8 @@ export async function createFamilyMember(
     birthday?: string,
     gender?: string,
     avatarEmoji?: string,
-    color?: string
+    color?: string,
+    email?: string
 ): Promise<FamilyMember> {
     // Check if user already exists in this family
     const existingUser = await pool.query(
@@ -112,6 +113,17 @@ export async function createFamilyMember(
         throw new Error(`User with username "${username}" already exists in this family`);
     }
 
+    // Check if email is already used by another user
+    if (email) {
+        const existingEmail = await pool.query(
+            'SELECT id FROM users WHERE email = $1',
+            [email]
+        );
+        if (existingEmail.rows.length > 0) {
+            throw new Error('This email address is already registered');
+        }
+    }
+
     // Hash password if provided, otherwise set to null
     let passwordHash: string | null = null;
     if (password && password.trim()) {
@@ -120,12 +132,12 @@ export async function createFamilyMember(
     }
 
     const result = await pool.query(
-        `INSERT INTO users (family_id, username, password_hash, display_name, role, birthday, gender, avatar_emoji, color)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO users (family_id, username, password_hash, display_name, role, birthday, gender, avatar_emoji, color, email)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING id, username, display_name as "displayName", role, birthday, gender, 
-               avatar_emoji as "avatarEmoji", color,
+               avatar_emoji as "avatarEmoji", color, email,
                (password_hash IS NOT NULL AND password_hash != '') as "hasPassword"`,
-        [familyId, username, passwordHash, displayName || username, role, birthday, gender, avatarEmoji, color]
+        [familyId, username, passwordHash, displayName || username, role, birthday, gender, avatarEmoji, color, email || null]
     );
 
     return result.rows[0];

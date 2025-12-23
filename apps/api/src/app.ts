@@ -73,10 +73,10 @@ export async function buildApp() {
   // Google Calendar integration
   const calendarRepository = createGoogleCalendarRepository(pool);
   const calendarService = createGoogleCalendarService(calendarRepository);
-  
+
   // Inject calendar service into activity service for syncing
   setCalendarService(calendarService);
-  
+
   await app.register(
     async (instance) => registerGoogleCalendarRoutes(instance, calendarService),
     { prefix: '/api/calendar' }
