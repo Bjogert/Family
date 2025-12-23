@@ -577,6 +577,75 @@ ssh robert@192.168.68.127 "journalctl --user -u family-web -f"
 - Created progress.md
 - Discussed tech stack
 
+### Session 9 - 2025-12-23 (Internationalization & Deployment)
+**What we did:**
+
+**1. Internationalization System (i18n) Implementation:**
+- Created shared i18n package: `packages/i18n/` with full support for Swedish/English
+- Built translation infrastructure:
+  - Core: `types.ts` with Message enum, `translations.ts` with full language data
+  - Utils: `getSystemLanguage()` to detect browser/OS language
+  - Exports: Simple API via `$lib/i18n`
+- Implemented system language detection (defaults to Swedish for Swedish OS)
+- Created reactive translation store: `$lib/stores/language.ts`
+- Built language picker component (English/Swedish flags) in header
+- Full UI translation coverage:
+  - Auth pages: Login, Welcome, Password reset
+  - Grocery page: Add item, categories, bought section, clear button
+  - Dashboard/Calendar: Stub pages with correct text
+  - Modals: Assignment panel, error messages, empty states
+- Fixed all hardcoded Swedish text throughout application
+
+**2. Comprehensive Translator Module:**
+- Built message-passing translator for dynamic text
+- Supports parameterized messages (e.g., "Welcome, {name}")
+- Supports plural forms (itemCount: 0 → "no items", 1 → "1 item", 2+ → "{n} items")
+- Support for dynamic translations in components
+- Used throughout: GroceryItemRow, AssignmentPanel, forms
+
+**3. Deployment & Status:**
+- ✅ Built and deployed to Pi successfully
+- ✅ Both API and Web services restarted
+- ✅ Services active (running) and accepting requests
+- ✅ All i18n changes live in production
+
+**New Files Created:**
+- `packages/i18n/src/types.ts` - Message enum with 90+ translation keys
+- `packages/i18n/src/translations.ts` - Swedish and English translation data
+- `packages/i18n/src/index.ts` - Translator class and utilities
+- `packages/i18n/package.json` - Module setup
+- `apps/web/src/lib/stores/language.ts` - Language picker store
+- `apps/web/src/lib/components/LanguagePicker.svelte` - Flags component
+
+**Files Modified (i18n integration):**
+- `packages/shared/package.json` - Added i18n as dependency
+- `apps/web/src/routes/+layout.svelte` - Language picker in header
+- `apps/web/src/routes/login/[familyId]/+page.svelte` - Full i18n
+- `apps/web/src/routes/welcome/+page.svelte` - Full i18n
+- `apps/web/src/routes/+page.svelte` - Dashboard i18n
+- `apps/web/src/routes/groceries/+page.svelte` - Full i18n + dynamic texts
+- `apps/web/src/routes/calendar/+page.svelte` - Calendar i18n
+- `apps/web/src/lib/components/GroceryItemRow.svelte` - Dynamic item label with count
+- `apps/web/src/lib/components/LoadingSpinner.svelte` - i18n loading text
+- All password reset pages: i18n text
+
+**Translation Statistics:**
+- Total messages: 90+
+- Supported languages: Swedish (sv-SE), English (en-US)
+- Coverage: 100% of user-facing text
+- System language detection: Automatic based on browser/OS
+
+**Deployment Notes:**
+- API rebuilt and deployed without issues
+- Web built with i18n integrated (no breaking changes)
+- Both services restarted successfully
+- Services running and responsive
+
+**Next session:**
+- Test i18n on real devices (verify language switching works)
+- Consider Phase 2b: Smart suggestions or Phase 3: Real-time improvements
+- Monitor for any i18n-related issues
+
 ### Session - 2025-01-XX - Security & Code Quality Improvements
 Based on comprehensive project review, implemented following improvements:
 
