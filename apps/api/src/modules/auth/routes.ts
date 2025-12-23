@@ -3,8 +3,9 @@ import { LoginSchema } from '@family-hub/shared/schemas';
 import { config } from '../../config.js';
 import * as authService from './service.js';
 import * as authRepo from './repository.js';
+import * as familiesRepo from '../families/repository.js';
 import { pool } from '../../db/index.js';
-import { sendVerificationEmail, sendPasswordResetEmail } from '../../services/email.js';
+import { sendVerificationEmail, sendPasswordResetEmail, sendFamilyPasswordResetEmail } from '../../services/email.js';
 import { generateSecureToken, getTokenExpiry } from '../../utils/tokens.js';
 
 interface LoginBody {
@@ -207,6 +208,89 @@ export default async function authRoutes(app: FastifyInstance) {
       return reply.send({
         success: true,
         message: 'Om e-postadressen finns i vårt system kommer ett återställningsmail att skickas',
+      });
+    }
+  );
+
+  // POST /api/auth/forgot-family-password - Request family password reset
+  app.post<{ Body: { email: string } }>(
+    '/forgot-family-password',
+    async (request: FastifyRequest<{ Body: { email: string } }>, reply: FastifyReply) => {
+      const { email } = request.body;
+
+      if (!email) {
+        return reply.status(400).send({
+          success: false,
+          message: 'E-postadress krävs',
+        });
+      }
+
+      // Find family by parent email
+      const familyInfo = await familiesRepo.findFamilyIdByParentEmail(email);
+
+      // Always return success to prevent email enumeration
+      if (!familyInfo) {
+        return reply.send({
+          success: true,
+          message: 'Om e-postadressen finns i vårt system kommer ett återställningsmail att skickas',
+        });
+      }
+
+      // Generate reset token (valid for 1 hour)
+      const token = generateSecureToken();
+      const expiresAt = getTokenExpiry(1); // 1 hour
+
+      await familiesRepo.setFamilyPasswordResetToken(familyInfo.familyId, token, expiresAt);
+
+      // Send reset email
+      await sendFamilyPasswordResetEmail(email, token, familyInfo.familyName, familyInfo.parentName);
+
+      return reply.send({
+        success: true,
+        message: 'Om e-postadressen finns i vårt system kommer ett återställningsmail att skickas',
+      });
+    }
+  );
+
+  // POST /api/auth/reset-family-password - Reset family password with token
+  app.post<{ Body: { token: string; newPassword: string } }>(
+    '/reset-family-password',
+    async (request: FastifyRequest<{ Body: { token: string; newPassword: string } }>, reply: FastifyReply) => {
+      const { token, newPassword } = request.body;
+
+      if (!token || !newPassword) {
+        return reply.status(400).send({
+          success: false,
+          message: 'Token och nytt lösenord krävs',
+        });
+      }
+
+      if (newPassword.length < 4) {
+        return reply.status(400).send({
+          success: false,
+          message: 'Lösenordet måste vara minst 4 tecken',
+        });
+      }
+
+      // Find family by reset token
+      const family = await familiesRepo.findFamilyByPasswordResetToken(token);
+
+      if (!family) {
+        return reply.status(400).send({
+          success: false,
+          message: 'Ogiltig eller utgången länk. Begär en ny återställningslänk.',
+        });
+      }
+
+      // Hash new password and update
+      const bcrypt = (await import('bcrypt')).default;
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+
+      await familiesRepo.updateFamilyPasswordAndClearResetToken(family.id, passwordHash);
+
+      return reply.send({
+        success: true,
+        message: 'Familjens lösenord har återställts. Du kan nu logga in med det nya lösenordet.',
       });
     }
   );

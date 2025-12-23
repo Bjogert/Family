@@ -185,3 +185,66 @@ Om du inte har begärt att återställa ditt lösenord kan du ignorera detta mai
         text,
     });
 }
+
+export async function sendFamilyPasswordResetEmail(email: string, token: string, familyName: string, parentName: string): Promise<boolean> {
+    const resetUrl = `${config.appUrl}/reset-password?token=${token}&type=family`;
+
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #7c3aed; margin: 0; }
+        .button { display: inline-block; background: #7c3aed; color: white !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
+        .warning { background: #fef3c7; border: 1px solid #f59e0b; padding: 12px; border-radius: 6px; margin: 20px 0; }
+        .family-name { font-weight: bold; color: #7c3aed; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🏠 Familjehubben</h1>
+        </div>
+        <p>Hej ${parentName}!</p>
+        <p>Vi har fått en begäran om att återställa lösenordet för familjen <span class="family-name">${familyName}</span>. Klicka på knappen nedan för att välja ett nytt lösenord:</p>
+        <p style="text-align: center;">
+          <a href="${resetUrl}" class="button">Återställ familjens lösenord</a>
+        </p>
+        <p>Om knappen inte fungerar kan du kopiera och klistra in följande länk i din webbläsare:</p>
+        <p style="word-break: break-all; font-size: 12px;">${resetUrl}</p>
+        <p>Länken är giltig i 1 timme.</p>
+        <div class="warning">
+          <strong>⚠️ Obs!</strong> Om du inte har begärt att återställa familjens lösenord kan du ignorera detta mail. Lösenordet kommer inte att ändras.
+        </div>
+        <div class="footer">
+          <p>Detta är ett automatiskt mail från Familjehubben.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+    const text = `
+Hej ${parentName}!
+
+Vi har fått en begäran om att återställa lösenordet för familjen ${familyName}. Besök följande länk för att välja ett nytt lösenord:
+
+${resetUrl}
+
+Länken är giltig i 1 timme.
+
+Om du inte har begärt att återställa familjens lösenord kan du ignorera detta mail. Lösenordet kommer inte att ändras.
+  `.trim();
+
+    return sendEmail({
+        to: email,
+        subject: `Återställ lösenord för ${familyName} - Familjehubben`,
+        html,
+        text,
+    });
+}

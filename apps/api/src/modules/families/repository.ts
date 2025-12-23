@@ -170,3 +170,50 @@ export async function updateFamilyPassword(familyId: number, newPassword: string
 
     return (result.rowCount ?? 0) > 0;
 }
+
+// Family password reset functions
+export async function setFamilyPasswordResetToken(familyId: number, token: string, expiresAt: Date): Promise<void> {
+    await pool.query(
+        `UPDATE families SET password_reset_token = $1, password_reset_expires = $2 WHERE id = $3`,
+        [token, expiresAt, familyId]
+    );
+}
+
+export async function findFamilyByPasswordResetToken(token: string): Promise<Family | null> {
+    const result = await pool.query(
+        `SELECT id, name, created_at as "createdAt"
+         FROM families
+         WHERE password_reset_token = $1 AND password_reset_expires > NOW()`,
+        [token]
+    );
+    return result.rows[0] || null;
+}
+
+export async function updateFamilyPasswordAndClearResetToken(familyId: number, passwordHash: string): Promise<void> {
+    await pool.query(
+        `UPDATE families SET password_hash = $1, password_reset_token = NULL, password_reset_expires = NULL WHERE id = $2`,
+        [passwordHash, familyId]
+    );
+}
+
+// Find family ID by parent email
+export async function findFamilyIdByParentEmail(email: string): Promise<{ familyId: number; familyName: string; parentName: string } | null> {
+    const result = await pool.query(
+        `SELECT u.family_id, f.name as family_name, COALESCE(u.display_name, u.username) as parent_name
+         FROM users u
+         JOIN families f ON u.family_id = f.id
+         WHERE u.email = $1 AND u.role IN ('mamma', 'pappa')
+         LIMIT 1`,
+        [email]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return {
+        familyId: result.rows[0].family_id,
+        familyName: result.rows[0].family_name,
+        parentName: result.rows[0].parent_name
+    };
+}

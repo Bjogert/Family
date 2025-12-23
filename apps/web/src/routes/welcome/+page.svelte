@@ -381,6 +381,15 @@
           >
             {loading ? 'Verifying...' : 'Continue'}
           </button>
+
+          <div class="text-center mt-3">
+            <a
+              href="/forgot-password?type=family"
+              class="text-sm text-orange-600 hover:text-orange-700 dark:text-amber-400 dark:hover:text-amber-300"
+            >
+              Glömt familjens lösenord?
+            </a>
+          </div>
         </div>
       </form>
     {/if}
@@ -790,10 +799,13 @@
 
                   <!-- Email (for parents only - used for password reset) -->
                   <div>
-                    <label class="block text-xs text-stone-500 dark:text-stone-400 mb-1"
+                    <label
+                      for="memberEmail"
+                      class="block text-xs text-stone-500 dark:text-stone-400 mb-1"
                       >E-post (för återställning av lösenord)</label
                     >
                     <input
+                      id="memberEmail"
                       type="email"
                       placeholder="exempel@email.se"
                       bind:value={currentMember.email}

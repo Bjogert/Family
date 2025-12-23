@@ -10,6 +10,8 @@
   let error = '';
 
   $: token = $page.url.searchParams.get('token') || '';
+  $: resetType = $page.url.searchParams.get('type') === 'family' ? 'family' : 'user';
+  $: isFamilyReset = resetType === 'family';
 
   async function handleSubmit() {
     error = '';
@@ -32,7 +34,8 @@
     loading = true;
 
     try {
-      const response = await post<{ success: boolean; message?: string }>('/auth/reset-password', {
+      const endpoint = isFamilyReset ? '/auth/reset-family-password' : '/auth/reset-password';
+      const response = await post<{ success: boolean; message?: string }>(endpoint, {
         token,
         newPassword,
       });
@@ -51,7 +54,9 @@
 </script>
 
 <svelte:head>
-  <title>Återställ lösenord - Familjehubben</title>
+  <title
+    >{isFamilyReset ? 'Återställ familjens lösenord' : 'Återställ lösenord'} - Familjehubben</title
+  >
 </svelte:head>
 
 <div
@@ -59,8 +64,10 @@
 >
   <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
     <div class="text-center mb-8">
-      <div class="text-5xl mb-4">🔐</div>
-      <h1 class="text-2xl font-bold text-gray-800">Välj nytt lösenord</h1>
+      <div class="text-5xl mb-4">{isFamilyReset ? '🏠' : '🔐'}</div>
+      <h1 class="text-2xl font-bold text-gray-800">
+        {isFamilyReset ? 'Välj nytt lösenord för familjen' : 'Välj nytt lösenord'}
+      </h1>
     </div>
 
     {#if !token}
@@ -72,19 +79,24 @@
         </p>
       </div>
       <div class="mt-6 text-center">
-        <a href="/forgot-password" class="text-violet-600 hover:text-violet-700 font-medium">
+        <a
+          href="/forgot-password{isFamilyReset ? '?type=family' : ''}"
+          class="text-violet-600 hover:text-violet-700 font-medium"
+        >
           Begär ny återställningslänk →
         </a>
       </div>
     {:else if success}
       <div class="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
         <div class="text-4xl mb-3">✅</div>
-        <h2 class="text-lg font-semibold text-green-800 mb-2">Lösenordet har återställts!</h2>
-        <p class="text-green-700 text-sm">Du kan nu logga in med ditt nya lösenord.</p>
+        <h2 class="text-lg font-semibold text-green-800 mb-2">
+          {isFamilyReset ? 'Familjens lösenord har återställts!' : 'Lösenordet har återställts!'}
+        </h2>
+        <p class="text-green-700 text-sm">Du kan nu logga in med det nya lösenordet.</p>
       </div>
       <div class="mt-6 text-center">
         <a
-          href="/"
+          href="/welcome"
           class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 px-6 rounded-xl inline-block transition-colors"
         >
           Gå till inloggning
@@ -100,7 +112,7 @@
 
         <div>
           <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-2">
-            Nytt lösenord
+            {isFamilyReset ? 'Nytt familjlösenord' : 'Nytt lösenord'}
           </label>
           <input
             type="password"
@@ -158,7 +170,7 @@
       </form>
 
       <div class="mt-6 text-center text-sm text-gray-600">
-        <a href="/" class="text-violet-600 hover:text-violet-700 font-medium">
+        <a href="/welcome" class="text-violet-600 hover:text-violet-700 font-medium">
           ← Tillbaka till inloggning
         </a>
       </div>

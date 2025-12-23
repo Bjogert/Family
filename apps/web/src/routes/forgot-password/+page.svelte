@@ -1,10 +1,15 @@
 ﻿<script lang="ts">
+  import { page } from '$app/stores';
   import { post } from '$lib/api/client';
 
   let email = '';
   let loading = false;
   let submitted = false;
   let error = '';
+
+  // Check if this is family password reset
+  $: resetType = $page.url.searchParams.get('type') === 'family' ? 'family' : 'user';
+  $: isFamilyReset = resetType === 'family';
 
   async function handleSubmit() {
     if (!email.trim()) {
@@ -16,7 +21,8 @@
     error = '';
 
     try {
-      const response = await post<{ success: boolean; message?: string }>('/auth/forgot-password', {
+      const endpoint = isFamilyReset ? '/auth/forgot-family-password' : '/auth/forgot-password';
+      const response = await post<{ success: boolean; message?: string }>(endpoint, {
         email,
       });
       if (response.success) {
@@ -41,10 +47,17 @@
 >
   <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
     <div class="text-center mb-8">
-      <div class="text-5xl mb-4">🔑</div>
-      <h1 class="text-2xl font-bold text-gray-800">Glömt lösenord?</h1>
+      <div class="text-5xl mb-4">{isFamilyReset ? '🏠' : '🔑'}</div>
+      <h1 class="text-2xl font-bold text-gray-800">
+        {isFamilyReset ? 'Glömt familjens lösenord?' : 'Glömt lösenord?'}
+      </h1>
       <p class="text-gray-600 mt-2">
-        Ange din e-postadress så skickar vi en länk för att återställa ditt lösenord.
+        {#if isFamilyReset}
+          Ange e-postadressen för en förälder i familjen så skickar vi en länk för att återställa
+          familjens lösenord.
+        {:else}
+          Ange din e-postadress så skickar vi en länk för att återställa ditt lösenord.
+        {/if}
       </p>
     </div>
 
@@ -54,13 +67,13 @@
         <h2 class="text-lg font-semibold text-green-800 mb-2">Kolla din inbox!</h2>
         <p class="text-green-700 text-sm">
           Om e-postadressen finns i vårt system har vi skickat ett mail med instruktioner för att
-          återställa ditt lösenord.
+          återställa {isFamilyReset ? 'familjens' : 'ditt'} lösenord.
         </p>
         <p class="text-green-600 text-xs mt-3">Glöm inte att kolla skräpposten!</p>
       </div>
 
       <div class="mt-6 text-center">
-        <a href="/" class="text-violet-600 hover:text-violet-700 font-medium">
+        <a href="/welcome" class="text-violet-600 hover:text-violet-700 font-medium">
           ← Tillbaka till startsidan
         </a>
       </div>
@@ -74,7 +87,7 @@
 
         <div>
           <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-            E-postadress
+            {isFamilyReset ? 'Förälderns e-postadress' : 'E-postadress'}
           </label>
           <input
             type="email"
@@ -118,7 +131,7 @@
       </form>
 
       <div class="mt-6 text-center text-sm text-gray-600">
-        <a href="/" class="text-violet-600 hover:text-violet-700 font-medium">
+        <a href="/welcome" class="text-violet-600 hover:text-violet-700 font-medium">
           ← Tillbaka till inloggning
         </a>
       </div>
