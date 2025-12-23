@@ -4,6 +4,7 @@ import * as pushRepo from './repository.js';
 import * as pushService from './service.js';
 import { getPublicVapidKey, isPushEnabled } from './vapid.js';
 import { logger } from '../../utils/logger.js';
+import '../../types/fastify.js';
 
 interface SubscribeBody {
     endpoint: string;
@@ -56,8 +57,15 @@ export default async function pushRoutes(app: FastifyInstance) {
     app.post<{ Body: SubscribeBody }>(
         '/subscribe',
         async (request: FastifyRequest<{ Body: SubscribeBody }>, reply: FastifyReply) => {
-            const user = (request as any).user;
+            const user = request.user;
             const { endpoint, keys } = request.body;
+
+            if (!user) {
+                return reply.status(401).send({
+                    success: false,
+                    message: 'Unauthorized',
+                });
+            }
 
             if (!endpoint || !keys?.p256dh || !keys?.auth) {
                 return reply.status(400).send({
@@ -88,8 +96,9 @@ export default async function pushRoutes(app: FastifyInstance) {
                     success: true,
                     message: 'Successfully subscribed to push notifications',
                 });
-            } catch (error: any) {
-                logger.error('Failed to save push subscription', { error: error.message });
+            } catch (error: unknown) {
+                const err = error as Error;
+                logger.error('Failed to save push subscription', { error: err.message });
                 return reply.status(500).send({
                     success: false,
                     message: 'Failed to save subscription',

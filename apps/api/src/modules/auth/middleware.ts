@@ -2,6 +2,7 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import * as authService from './service.js';
 import * as authRepo from './repository.js';
 import { pool } from '../../db/index.js';
+import '../../types/fastify.js';
 
 export async function requireAuth(
   request: FastifyRequest,
@@ -34,12 +35,12 @@ export async function requireAuth(
   const family = familyResult.rows[0] || null;
 
     if (user && family) {
-      (request as any).user = {
+      request.user = {
         id: user.id,
         username: user.username,
         displayName: user.displayName,
       };
-      (request as any).family = {
+      request.family = {
         id: family.id,
         name: family.name,
       };

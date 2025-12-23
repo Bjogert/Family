@@ -384,7 +384,7 @@ export async function updateUserProfile(
   }
   if (profile.birthday !== undefined) {
     updates.push(`birthday = $${paramIndex++}`);
-    values.push(profile.birthday || null as any);
+    values.push(profile.birthday ?? null);
   }
   if (profile.gender !== undefined) {
     updates.push(`gender = $${paramIndex++}`);
