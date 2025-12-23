@@ -34,6 +34,8 @@
   let dueTime = task?.dueTime || '';
   let recurringPattern: RecurringPattern = task?.recurringPattern || null;
   let sendNotification = true; // Default to send notification
+  let enableReminder = (task as any)?.reminderMinutes != null;
+  let reminderMinutes: number = (task as any)?.reminderMinutes || 60;
 
   const recurringOptions: { value: RecurringPattern; labelKey: string }[] = [
     { value: null, labelKey: 'recurring.none' },
@@ -41,6 +43,16 @@
     { value: 'weekly', labelKey: 'recurring.weekly' },
     { value: 'biweekly', labelKey: 'recurring.biweekly' },
     { value: 'monthly', labelKey: 'recurring.monthly' },
+  ];
+
+  const reminderOptions = [
+    { value: 0, labelKey: 'reminder.atTime' },
+    { value: 5, labelKey: 'reminder.5min' },
+    { value: 15, labelKey: 'reminder.15min' },
+    { value: 30, labelKey: 'reminder.30min' },
+    { value: 60, labelKey: 'reminder.1hour' },
+    { value: 120, labelKey: 'reminder.2hours' },
+    { value: 1440, labelKey: 'reminder.1day' },
   ];
 
   // Auto-calculate points based on difficulty
@@ -61,6 +73,7 @@
       dueTime: dueTime || undefined,
       recurringPattern,
       sendNotification,
+      reminderMinutes: enableReminder && dueDate ? reminderMinutes : undefined,
     });
   }
 </script>
@@ -165,6 +178,32 @@
       />
     </label>
   </div>
+
+  <!-- Reminder (only show when due date is set) -->
+  {#if dueDate}
+    <div class="flex items-center gap-4">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          bind:checked={enableReminder}
+          class="w-5 h-5 rounded border-stone-300 dark:border-stone-600 text-teal-500 focus:ring-teal-400"
+        />
+        <span class="text-sm text-stone-700 dark:text-stone-200">
+          🔔 {$t('tasks.remindMe')}
+        </span>
+      </label>
+      {#if enableReminder}
+        <select
+          bind:value={reminderMinutes}
+          class="flex-1 px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700 text-stone-800 dark:text-stone-100 text-sm"
+        >
+          {#each reminderOptions as opt}
+            <option value={opt.value}>{$t(opt.labelKey)}</option>
+          {/each}
+        </select>
+      {/if}
+    </div>
+  {/if}
 
   <!-- Difficulty and Points -->
   <div class="grid grid-cols-2 gap-4">

@@ -12,6 +12,8 @@ export interface TaskRow {
     due_date: string | null;
     due_time: string | null;
     recurring_pattern: string | null;
+    reminder_minutes: number | null;
+    reminder_sent: boolean;
     status: string;
     completed_at: Date | null;
     verified_by: number | null;
@@ -38,6 +40,7 @@ export interface CreateTaskData {
     dueDate?: string;
     dueTime?: string;
     recurringPattern?: string;
+    reminderMinutes?: number;
     createdBy?: number;
 }
 
@@ -51,12 +54,14 @@ export interface UpdateTaskData {
     dueDate?: string | null;
     dueTime?: string | null;
     recurringPattern?: string | null;
+    reminderMinutes?: number | null;
     status?: string;
 }
 
 const SELECT_TASK = `
   SELECT t.id, t.family_id, t.title, t.description, t.category, t.difficulty,
          t.points, t.assigned_to, t.due_date, t.due_time, t.recurring_pattern,
+         t.reminder_minutes, t.reminder_sent,
          t.status, t.completed_at, t.verified_by, t.verified_at, t.created_by,
          t.created_at, t.updated_at,
          ua.display_name as assignee_name, ua.avatar_emoji as assignee_emoji, ua.color as assignee_color,
@@ -98,8 +103,8 @@ export async function findById(id: number, familyId: number): Promise<TaskRow | 
 export async function create(data: CreateTaskData): Promise<TaskRow> {
     const result = await pool.query<TaskRow>(
         `INSERT INTO tasks (family_id, title, description, category, difficulty, points,
-                        assigned_to, due_date, due_time, recurring_pattern, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                        assigned_to, due_date, due_time, recurring_pattern, reminder_minutes, created_by)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
      RETURNING *`,
         [
             data.familyId,
@@ -112,6 +117,7 @@ export async function create(data: CreateTaskData): Promise<TaskRow> {
             data.dueDate || null,
             data.dueTime || null,
             data.recurringPattern || null,
+            data.reminderMinutes ?? null,
             data.createdBy || null
         ]
     );
@@ -158,6 +164,12 @@ export async function update(id: number, familyId: number, data: UpdateTaskData)
     if (data.recurringPattern !== undefined) {
         fields.push(`recurring_pattern = $${paramCount++}`);
         values.push(data.recurringPattern);
+    }
+    if (data.reminderMinutes !== undefined) {
+        fields.push(`reminder_minutes = $${paramCount++}`);
+        values.push(data.reminderMinutes);
+        // Reset reminder_sent when reminder time changes
+        fields.push(`reminder_sent = false`);
     }
     if (data.status !== undefined) {
         fields.push(`status = $${paramCount++}`);
@@ -212,4 +224,31 @@ export async function findByAssignee(familyId: number, userId: number): Promise<
         [familyId, userId]
     );
     return result.rows;
+}
+
+// Find tasks that need reminder notifications
+export async function findTasksNeedingReminder(): Promise<TaskRow[]> {
+    const result = await pool.query<TaskRow>(
+        `${SELECT_TASK}
+     WHERE t.reminder_minutes IS NOT NULL
+       AND t.reminder_sent = false
+       AND t.due_date IS NOT NULL
+       AND t.status NOT IN ('done', 'verified')
+       AND (
+         -- Calculate when reminder should be sent
+         (t.due_date || ' ' || COALESCE(t.due_time, '00:00'))::timestamp 
+         - (t.reminder_minutes || ' minutes')::interval
+         <= NOW()
+       )
+     ORDER BY t.due_date ASC`
+    );
+    return result.rows;
+}
+
+// Mark reminder as sent
+export async function markReminderSent(taskId: number): Promise<void> {
+    await pool.query(
+        `UPDATE tasks SET reminder_sent = true WHERE id = $1`,
+        [taskId]
+    );
 }

@@ -1,6 +1,7 @@
 import { buildApp } from './app.js';
 import { config } from './config.js';
 import { logger } from './utils/logger.js';
+import { startScheduler, stopScheduler } from './modules/tasks/scheduler.js';
 
 async function start() {
   try {
@@ -10,6 +11,9 @@ async function start() {
       port: config.port,
       host: config.host,
     });
+
+    // Start the task reminder scheduler
+    startScheduler();
 
     logger.info(`Family Hub API running`, {
       port: config.port,
@@ -25,11 +29,13 @@ async function start() {
 // Handle graceful shutdown
 process.on('SIGINT', () => {
   logger.info('Shutting down...');
+  stopScheduler();
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
   logger.info('Shutting down...');
+  stopScheduler();
   process.exit(0);
 });
 

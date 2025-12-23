@@ -41,6 +41,7 @@ export interface Task {
     createdBy: number | null;
     createdAt: string;
     updatedAt: string;
+    reminderMinutes: number | null; // Minutes before due to send reminder
     // Populated fields
     assignee?: {
         id: number;
@@ -68,6 +69,7 @@ export interface CreateTaskInput {
     dueDate?: string;
     dueTime?: string;
     recurringPattern?: TaskRecurringPattern;
+    reminderMinutes?: number;
 }
 
 export interface UpdateTaskInput extends Partial<CreateTaskInput> {

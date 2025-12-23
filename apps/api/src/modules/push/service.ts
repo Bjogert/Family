@@ -248,6 +248,38 @@ export async function notifyTaskAssigned(
 }
 
 /**
+ * Notify user about task reminder (upcoming due time)
+ */
+export async function notifyTaskReminder(
+    userId: number,
+    taskTitle: string,
+    minutesBefore: number
+): Promise<void> {
+    let body: string;
+    if (minutesBefore === 0) {
+        body = `"${taskTitle}" ska göras nu!`;
+    } else if (minutesBefore < 60) {
+        body = `"${taskTitle}" ska göras om ${minutesBefore} minuter`;
+    } else if (minutesBefore === 60) {
+        body = `"${taskTitle}" ska göras om 1 timme`;
+    } else if (minutesBefore === 120) {
+        body = `"${taskTitle}" ska göras om 2 timmar`;
+    } else if (minutesBefore === 1440) {
+        body = `"${taskTitle}" ska göras imorgon`;
+    } else {
+        body = `"${taskTitle}" påminnelse`;
+    }
+
+    await sendToUser(userId, {
+        title: '⏰ Påminnelse',
+        body,
+        url: '/tasks',
+        tag: `task-reminder-${userId}`,
+        requireInteraction: true,
+    });
+}
+
+/**
  * Send a test notification to a user
  */
 export async function sendTestNotification(userId: number): Promise<boolean> {

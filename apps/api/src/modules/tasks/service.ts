@@ -23,6 +23,7 @@ function mapRowToTask(row: taskRepo.TaskRow): Task {
         createdBy: row.created_by,
         createdAt: row.created_at.toISOString(),
         updatedAt: row.updated_at.toISOString(),
+        reminderMinutes: row.reminder_minutes,
         assignee: row.assigned_to ? {
             id: row.assigned_to,
             displayName: row.assignee_name || null,
@@ -58,7 +59,7 @@ export async function getTasksByAssignee(familyId: number, userId: number): Prom
 
 export async function createTask(
     familyId: number,
-    input: CreateTaskInput & { sendNotification?: boolean },
+    input: CreateTaskInput & { sendNotification?: boolean; reminderMinutes?: number },
     createdBy?: number
 ): Promise<Task> {
     const row = await taskRepo.create({
@@ -72,6 +73,7 @@ export async function createTask(
         dueDate: input.dueDate,
         dueTime: input.dueTime,
         recurringPattern: input.recurringPattern || undefined,
+        reminderMinutes: input.reminderMinutes,
         createdBy,
     });
 
@@ -112,6 +114,7 @@ export async function updateTask(
         dueTime: input.dueTime,
         recurringPattern: input.recurringPattern,
         status: input.status,
+        reminderMinutes: input.reminderMinutes,
     });
 
     if (!row) return null;

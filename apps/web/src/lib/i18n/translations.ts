@@ -134,6 +134,7 @@
         'tasks.assignee': 'Tilldelad till',
         'tasks.recurring': 'Återkommande',
         'tasks.sendNotification': 'Skicka notis till tilldelad',
+        'tasks.remindMe': 'Påminn mig',
         'tasks.markDone': 'Markera klar',
         'tasks.verify': 'Godkänn',
         'tasks.reopen': 'Öppna igen',
@@ -160,6 +161,14 @@
         'recurring.biweekly': 'Varannan vecka',
         'recurring.monthly': 'Månadsvis',
         'recurring.none': 'Ingen upprepning',
+        // Reminder options
+        'reminder.atTime': 'Vid tiden',
+        'reminder.5min': '5 minuter innan',
+        'reminder.15min': '15 minuter innan',
+        'reminder.30min': '30 minuter innan',
+        'reminder.1hour': '1 timme innan',
+        'reminder.2hours': '2 timmar innan',
+        'reminder.1day': '1 dag innan',
     },
 
     en: {
@@ -297,6 +306,7 @@
         'tasks.assignee': 'Assignee',
         'tasks.recurring': 'Recurring',
         'tasks.sendNotification': 'Send notification to assignee',
+        'tasks.remindMe': 'Remind me',
         'tasks.markDone': 'Mark done',
         'tasks.verify': 'Verify',
         'tasks.reopen': 'Reopen',
@@ -323,6 +333,14 @@
         'recurring.biweekly': 'Biweekly',
         'recurring.monthly': 'Monthly',
         'recurring.none': 'No repeat',
+        // Reminder options
+        'reminder.atTime': 'At the time',
+        'reminder.5min': '5 minutes before',
+        'reminder.15min': '15 minutes before',
+        'reminder.30min': '30 minutes before',
+        'reminder.1hour': '1 hour before',
+        'reminder.2hours': '2 hours before',
+        'reminder.1day': '1 day before',
     },
 
     pt: {
@@ -460,6 +478,7 @@
         'tasks.assignee': 'Responsável',
         'tasks.recurring': 'Recorrente',
         'tasks.sendNotification': 'Enviar notificação ao responsável',
+        'tasks.remindMe': 'Lembrar-me',
         'tasks.markDone': 'Marcar como feito',
         'tasks.verify': 'Verificar',
         'tasks.reopen': 'Reabrir',
@@ -486,6 +505,14 @@
         'recurring.biweekly': 'Quinzenal',
         'recurring.monthly': 'Mensal',
         'recurring.none': 'Não repetir',
+        // Reminder options
+        'reminder.atTime': 'Na hora',
+        'reminder.5min': '5 minutos antes',
+        'reminder.15min': '15 minutos antes',
+        'reminder.30min': '30 minutos antes',
+        'reminder.1hour': '1 hora antes',
+        'reminder.2hours': '2 horas antes',
+        'reminder.1day': '1 dia antes',
     },
 };
 
