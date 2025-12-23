@@ -130,7 +130,7 @@
   <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
     <label class="block">
       <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-1">
-        📅 Datum *
+        {$t('activities.dateLabel')}
       </span>
       <input
         type="date"
