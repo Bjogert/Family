@@ -359,7 +359,7 @@ export default async function authRoutes(app: FastifyInstance) {
           'SELECT password_hash FROM users WHERE id = $1',
           [userId]
         );
-        
+
         if (passwordHash.rows[0]?.password_hash) {
           const bcrypt = (await import('bcrypt')).default;
           const isValid = await bcrypt.compare(currentPassword, passwordHash.rows[0].password_hash);

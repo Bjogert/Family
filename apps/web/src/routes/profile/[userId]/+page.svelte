@@ -68,7 +68,34 @@
     { value: 'stone', label: 'Grå', class: 'bg-stone-400' },
   ];
 
-  const emojiOptions = ['🐻', '🐱', '🐶', '🦊', '🐰', '🐼', '🐨', '🐷', '🐸', '🦁', '🐯', '🐮', '🐵', '🦄', '🐲', '👤', '👩', '👨', '👧', '👦', '👶', '🧑', '😊', '😎', '🤓', '🥳'];
+  const emojiOptions = [
+    '🐻',
+    '🐱',
+    '🐶',
+    '🦊',
+    '🐰',
+    '🐼',
+    '🐨',
+    '🐷',
+    '🐸',
+    '🦁',
+    '🐯',
+    '🐮',
+    '🐵',
+    '🦄',
+    '🐲',
+    '👤',
+    '👩',
+    '👨',
+    '👧',
+    '👦',
+    '👶',
+    '🧑',
+    '😊',
+    '😎',
+    '🤓',
+    '🥳',
+  ];
 
   const roleOptions = [
     { value: 'pappa', label: 'Pappa' },
@@ -139,11 +166,11 @@
     { id: 'profile', label: 'Profil', icon: '👤', show: true },
     { id: 'settings', label: 'Inställningar', icon: '⚙️', show: isOwnProfile },
     { id: 'account', label: 'Konto', icon: '🔐', show: isOwnProfile },
-  ].filter(item => item.show);
+  ].filter((item) => item.show);
 
   onMount(async () => {
-    userId = parseInt($page.params.userId);
-    
+    userId = parseInt($page.params.userId || '');
+
     if (isNaN(userId)) {
       error = 'Ogiltigt användar-ID';
       loading = false;
@@ -159,7 +186,9 @@
 
     try {
       // Load user profile
-      const profileRes = await get<{ success: boolean; user: UserProfile }>(`/auth/users/${userId}`);
+      const profileRes = await get<{ success: boolean; user: UserProfile }>(
+        `/auth/users/${userId}`
+      );
       profile = profileRes.user;
 
       // Initialize edit form
@@ -175,7 +204,9 @@
       // Load preferences if own profile
       if (isOwnProfile) {
         try {
-          const prefsRes = await get<{ success: boolean; preferences: UserPreferences }>(`/auth/users/${userId}/preferences`);
+          const prefsRes = await get<{ success: boolean; preferences: UserPreferences }>(
+            `/auth/users/${userId}/preferences`
+          );
           if (prefsRes.preferences) {
             preferences = prefsRes.preferences;
           }
@@ -187,14 +218,18 @@
       // Load assigned groceries
       try {
         const groceriesRes = await get<{ success: boolean; items: GroceryItem[] }>('/groceries');
-        assignedGroceries = groceriesRes.items.filter(item => item.assignedTo === userId && !item.isBought);
+        assignedGroceries = groceriesRes.items.filter(
+          (item) => item.assignedTo === userId && !item.isBought
+        );
       } catch {
         // Ignore
       }
 
       // Load upcoming events for this user
       try {
-        const eventsRes = await get<{ success: boolean; events: CalendarEvent[] }>(`/calendar/events?userId=${userId}&upcoming=true`);
+        const eventsRes = await get<{ success: boolean; events: CalendarEvent[] }>(
+          `/calendar/events?userId=${userId}&upcoming=true`
+        );
         upcomingEvents = eventsRes.events?.slice(0, 5) || [];
       } catch {
         // Ignore
@@ -217,7 +252,7 @@
       profile = { ...profile, ...editForm };
       editMode = false;
       successMessage = 'Profilen har sparats!';
-      setTimeout(() => successMessage = null, 3000);
+      setTimeout(() => (successMessage = null), 3000);
     } catch (err) {
       error = 'Kunde inte spara profilen';
     } finally {
@@ -233,7 +268,7 @@
     try {
       await put(`/auth/users/${userId}/preferences`, preferences);
       successMessage = 'Inställningarna har sparats!';
-      setTimeout(() => successMessage = null, 3000);
+      setTimeout(() => (successMessage = null), 3000);
     } catch (err) {
       error = 'Kunde inte spara inställningarna';
     } finally {
@@ -264,7 +299,7 @@
       });
       passwordSuccess = true;
       passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
-      setTimeout(() => passwordSuccess = false, 3000);
+      setTimeout(() => (passwordSuccess = false), 3000);
     } catch (err: any) {
       passwordError = err.message || 'Kunde inte ändra lösenordet';
     } finally {
@@ -294,16 +329,16 @@
 
   function applyTheme(theme: 'light' | 'dark' | 'system') {
     if (!browser) return;
-    
+
     const root = document.documentElement;
-    
+
     if (theme === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       root.classList.toggle('dark', prefersDark);
     } else {
       root.classList.toggle('dark', theme === 'dark');
     }
-    
+
     localStorage.setItem('theme', theme);
   }
 
@@ -318,11 +353,15 @@
   <title>{profile?.displayName || profile?.username || 'Profil'} - Family Hub</title>
 </svelte:head>
 
-<main class="flex-1 bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900">
+<main
+  class="flex-1 bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900"
+>
   <div class="h-full flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-7xl mx-auto">
     {#if loading}
       <div class="flex-1 flex items-center justify-center">
-        <div class="animate-spin w-8 h-8 border-4 border-orange-400 border-t-transparent rounded-full"></div>
+        <div
+          class="animate-spin w-8 h-8 border-4 border-orange-400 border-t-transparent rounded-full"
+        ></div>
       </div>
     {:else if error && !profile}
       <div class="flex-1 flex items-center justify-center">
@@ -339,10 +378,14 @@
     {:else if profile}
       <!-- Sidebar Navigation -->
       <aside class="lg:w-64 flex-shrink-0">
-        <div class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-6">
+        <div
+          class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-6"
+        >
           <!-- Profile Header -->
           <div class="text-center mb-6">
-            <div class="{bgColor} w-20 h-20 rounded-full flex items-center justify-center text-4xl shadow-lg mx-auto mb-3">
+            <div
+              class="{bgColor} w-20 h-20 rounded-full flex items-center justify-center text-4xl shadow-lg mx-auto mb-3"
+            >
               {profile.avatarEmoji || '👤'}
             </div>
             <h2 class="text-xl font-bold text-stone-800 dark:text-white">
@@ -350,7 +393,7 @@
             </h2>
             {#if profile.role}
               <p class="text-sm text-stone-500 dark:text-stone-400 capitalize">
-                {roleOptions.find(r => r.value === profile?.role)?.label || profile.role}
+                {roleOptions.find((r) => r.value === profile?.role)?.label || profile.role}
               </p>
             {/if}
             {#if !isOwnProfile}
@@ -366,9 +409,9 @@
               <button
                 on:click={() => setSection(item.id)}
                 class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left
-                  {activeSection === item.id 
-                    ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' 
-                    : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-600 dark:text-stone-300'}"
+                  {activeSection === item.id
+                  ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+                  : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-600 dark:text-stone-300'}"
               >
                 <span class="text-xl">{item.icon}</span>
                 <span class="font-medium">{item.label}</span>
@@ -391,16 +434,21 @@
 
       <!-- Main Content -->
       <div class="flex-1 min-w-0">
-        <div class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-6">
-          
+        <div
+          class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-6"
+        >
           <!-- Success/Error Messages -->
           {#if successMessage}
-            <div class="mb-4 p-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg">
+            <div
+              class="mb-4 p-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg"
+            >
               {successMessage}
             </div>
           {/if}
           {#if error && profile}
-            <div class="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg">
+            <div
+              class="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg"
+            >
               {error}
             </div>
           {/if}
@@ -408,13 +456,17 @@
           <!-- Overview Section -->
           {#if activeSection === 'overview'}
             <h2 class="text-xl font-bold text-stone-800 dark:text-white mb-6">
-              {isOwnProfile ? 'Min översikt' : `${profile.displayName || profile.username}s översikt`}
+              {isOwnProfile
+                ? 'Min översikt'
+                : `${profile.displayName || profile.username}s översikt`}
             </h2>
 
             <div class="grid gap-6 md:grid-cols-2">
               <!-- Assigned Groceries -->
               <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
-                <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-3 flex items-center gap-2">
+                <h3
+                  class="font-semibold text-stone-700 dark:text-stone-300 mb-3 flex items-center gap-2"
+                >
                   <span>🛒</span>
                   <span>Inköpslista</span>
                   {#if assignedGroceries.length > 0}
@@ -424,13 +476,13 @@
                   {/if}
                 </h3>
                 {#if assignedGroceries.length === 0}
-                  <p class="text-sm text-stone-500 dark:text-stone-400">
-                    Inga tilldelade varor
-                  </p>
+                  <p class="text-sm text-stone-500 dark:text-stone-400">Inga tilldelade varor</p>
                 {:else}
                   <ul class="space-y-2">
                     {#each assignedGroceries as item}
-                      <li class="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
+                      <li
+                        class="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300"
+                      >
                         <span class="w-2 h-2 bg-orange-400 rounded-full"></span>
                         <span>{item.name}</span>
                         {#if item.quantity}
@@ -439,7 +491,10 @@
                       </li>
                     {/each}
                   </ul>
-                  <a href="/groceries" class="inline-block mt-3 text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400">
+                  <a
+                    href="/groceries"
+                    class="inline-block mt-3 text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400"
+                  >
                     Visa hela listan →
                   </a>
                 {/if}
@@ -447,14 +502,14 @@
 
               <!-- Upcoming Events -->
               <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
-                <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-3 flex items-center gap-2">
+                <h3
+                  class="font-semibold text-stone-700 dark:text-stone-300 mb-3 flex items-center gap-2"
+                >
                   <span>📅</span>
                   <span>Kommande händelser</span>
                 </h3>
                 {#if upcomingEvents.length === 0}
-                  <p class="text-sm text-stone-500 dark:text-stone-400">
-                    Inga kommande händelser
-                  </p>
+                  <p class="text-sm text-stone-500 dark:text-stone-400">Inga kommande händelser</p>
                 {:else}
                   <ul class="space-y-2">
                     {#each upcomingEvents as event}
@@ -466,7 +521,10 @@
                       </li>
                     {/each}
                   </ul>
-                  <a href="/calendar" class="inline-block mt-3 text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400">
+                  <a
+                    href="/calendar"
+                    class="inline-block mt-3 text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400"
+                  >
                     Visa kalender →
                   </a>
                 {/if}
@@ -475,36 +533,45 @@
 
             <!-- Profile Quick Info -->
             <div class="mt-6 bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
-              <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-3">Profilinformation</h3>
+              <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-3">
+                Profilinformation
+              </h3>
               <div class="grid grid-cols-2 gap-4 text-sm">
                 {#if profile.birthday}
                   <div>
                     <span class="text-stone-500 dark:text-stone-400">Födelsedag:</span>
-                    <span class="ml-2 text-stone-700 dark:text-stone-300">{formatDate(profile.birthday)}</span>
+                    <span class="ml-2 text-stone-700 dark:text-stone-300"
+                      >{formatDate(profile.birthday)}</span
+                    >
                   </div>
                 {/if}
                 {#if profile.gender}
                   <div>
                     <span class="text-stone-500 dark:text-stone-400">Kön:</span>
                     <span class="ml-2 text-stone-700 dark:text-stone-300">
-                      {genderOptions.find(g => g.value === profile?.gender)?.label || profile.gender}
+                      {genderOptions.find((g) => g.value === profile?.gender)?.label ||
+                        profile.gender}
                     </span>
                   </div>
                 {/if}
                 <div>
                   <span class="text-stone-500 dark:text-stone-400">Medlem sedan:</span>
-                  <span class="ml-2 text-stone-700 dark:text-stone-300">{formatDate(profile.createdAt)}</span>
+                  <span class="ml-2 text-stone-700 dark:text-stone-300"
+                    >{formatDate(profile.createdAt)}</span
+                  >
                 </div>
                 {#if profile.lastLogin}
                   <div>
                     <span class="text-stone-500 dark:text-stone-400">Senast aktiv:</span>
-                    <span class="ml-2 text-stone-700 dark:text-stone-300">{formatDate(profile.lastLogin)}</span>
+                    <span class="ml-2 text-stone-700 dark:text-stone-300"
+                      >{formatDate(profile.lastLogin)}</span
+                    >
                   </div>
                 {/if}
               </div>
             </div>
 
-          <!-- Profile Section -->
+            <!-- Profile Section -->
           {:else if activeSection === 'profile'}
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-bold text-stone-800 dark:text-white">
@@ -512,7 +579,7 @@
               </h2>
               {#if isOwnProfile && !editMode}
                 <button
-                  on:click={() => editMode = true}
+                  on:click={() => (editMode = true)}
                   class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
                 >
                   Redigera
@@ -525,18 +592,18 @@
               <form on:submit|preventDefault={saveProfile} class="space-y-6">
                 <!-- Avatar Selection -->
                 <div>
-                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                  <span class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
                     Avatar
-                  </label>
+                  </span>
                   <div class="flex flex-wrap gap-2">
                     {#each emojiOptions as emoji}
                       <button
                         type="button"
-                        on:click={() => editForm.avatarEmoji = emoji}
+                        on:click={() => (editForm.avatarEmoji = emoji)}
                         class="w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all
-                          {editForm.avatarEmoji === emoji 
-                            ? 'ring-2 ring-orange-500 ring-offset-2 dark:ring-offset-stone-800' 
-                            : 'hover:bg-stone-100 dark:hover:bg-stone-700'}"
+                          {editForm.avatarEmoji === emoji
+                          ? 'ring-2 ring-orange-500 ring-offset-2 dark:ring-offset-stone-800'
+                          : 'hover:bg-stone-100 dark:hover:bg-stone-700'}"
                       >
                         {emoji}
                       </button>
@@ -546,18 +613,18 @@
 
                 <!-- Color Selection -->
                 <div>
-                  <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                  <span class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
                     Färg
-                  </label>
+                  </span>
                   <div class="flex flex-wrap gap-2">
                     {#each colorOptions as color}
                       <button
                         type="button"
-                        on:click={() => editForm.color = color.value}
+                        on:click={() => (editForm.color = color.value)}
                         class="{color.class} w-10 h-10 rounded-full transition-all
-                          {editForm.color === color.value 
-                            ? 'ring-2 ring-offset-2 ring-stone-600 dark:ring-offset-stone-800' 
-                            : 'hover:scale-110'}"
+                          {editForm.color === color.value
+                          ? 'ring-2 ring-offset-2 ring-stone-600 dark:ring-offset-stone-800'
+                          : 'hover:scale-110'}"
                         title={color.label}
                       ></button>
                     {/each}
@@ -566,7 +633,10 @@
 
                 <!-- Display Name -->
                 <div>
-                  <label for="displayName" class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                  <label
+                    for="displayName"
+                    class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2"
+                  >
                     Visningsnamn
                   </label>
                   <input
@@ -580,7 +650,10 @@
 
                 <!-- Role -->
                 <div>
-                  <label for="role" class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                  <label
+                    for="role"
+                    class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2"
+                  >
                     Roll i familjen
                   </label>
                   <select
@@ -597,7 +670,10 @@
 
                 <!-- Birthday -->
                 <div>
-                  <label for="birthday" class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                  <label
+                    for="birthday"
+                    class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2"
+                  >
                     Födelsedag
                   </label>
                   <input
@@ -610,7 +686,10 @@
 
                 <!-- Gender -->
                 <div>
-                  <label for="gender" class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
+                  <label
+                    for="gender"
+                    class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2"
+                  >
                     Kön
                   </label>
                   <select
@@ -657,7 +736,9 @@
               <!-- Read-only Profile View -->
               <div class="space-y-6">
                 <div class="flex items-center gap-6">
-                  <div class="{bgColor} w-24 h-24 rounded-full flex items-center justify-center text-5xl shadow-lg">
+                  <div
+                    class="{bgColor} w-24 h-24 rounded-full flex items-center justify-center text-5xl shadow-lg"
+                  >
                     {profile.avatarEmoji || '👤'}
                   </div>
                   <div>
@@ -667,7 +748,7 @@
                     <p class="text-stone-500 dark:text-stone-400">@{profile.username}</p>
                     {#if profile.role}
                       <p class="text-stone-600 dark:text-stone-300 capitalize mt-1">
-                        {roleOptions.find(r => r.value === profile?.role)?.label || profile.role}
+                        {roleOptions.find((r) => r.value === profile?.role)?.label || profile.role}
                       </p>
                     {/if}
                   </div>
@@ -677,44 +758,57 @@
                   {#if profile.birthday}
                     <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
                       <p class="text-sm text-stone-500 dark:text-stone-400">Födelsedag</p>
-                      <p class="text-lg font-medium text-stone-800 dark:text-white">{formatDate(profile.birthday)}</p>
+                      <p class="text-lg font-medium text-stone-800 dark:text-white">
+                        {formatDate(profile.birthday)}
+                      </p>
                     </div>
                   {/if}
                   {#if profile.gender}
                     <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
                       <p class="text-sm text-stone-500 dark:text-stone-400">Kön</p>
                       <p class="text-lg font-medium text-stone-800 dark:text-white">
-                        {genderOptions.find(g => g.value === profile?.gender)?.label || profile.gender}
+                        {genderOptions.find((g) => g.value === profile?.gender)?.label ||
+                          profile.gender}
                       </p>
                     </div>
                   {/if}
                   <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
                     <p class="text-sm text-stone-500 dark:text-stone-400">Medlem sedan</p>
-                    <p class="text-lg font-medium text-stone-800 dark:text-white">{formatDate(profile.createdAt)}</p>
+                    <p class="text-lg font-medium text-stone-800 dark:text-white">
+                      {formatDate(profile.createdAt)}
+                    </p>
                   </div>
                   {#if profile.lastLogin}
                     <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
                       <p class="text-sm text-stone-500 dark:text-stone-400">Senast aktiv</p>
-                      <p class="text-lg font-medium text-stone-800 dark:text-white">{formatDate(profile.lastLogin)}</p>
+                      <p class="text-lg font-medium text-stone-800 dark:text-white">
+                        {formatDate(profile.lastLogin)}
+                      </p>
                     </div>
                   {/if}
                 </div>
               </div>
             {/if}
 
-          <!-- Settings Section -->
+            <!-- Settings Section -->
           {:else if activeSection === 'settings' && isOwnProfile}
             <h2 class="text-xl font-bold text-stone-800 dark:text-white mb-6">Inställningar</h2>
 
             <!-- Notification Settings -->
             <div class="space-y-6">
               <div>
-                <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-4">Notifikationer</h3>
+                <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-4">
+                  Notifikationer
+                </h3>
                 <div class="space-y-3">
-                  <label class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl cursor-pointer">
+                  <label
+                    class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl cursor-pointer"
+                  >
                     <div>
                       <p class="font-medium text-stone-800 dark:text-white">Tilldelade varor</p>
-                      <p class="text-sm text-stone-500 dark:text-stone-400">När någon tilldelar dig en vara</p>
+                      <p class="text-sm text-stone-500 dark:text-stone-400">
+                        När någon tilldelar dig en vara
+                      </p>
                     </div>
                     <input
                       type="checkbox"
@@ -723,10 +817,16 @@
                     />
                   </label>
 
-                  <label class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl cursor-pointer">
+                  <label
+                    class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl cursor-pointer"
+                  >
                     <div>
-                      <p class="font-medium text-stone-800 dark:text-white">Inköpslistan uppdaterad</p>
-                      <p class="text-sm text-stone-500 dark:text-stone-400">När varor läggs till eller tas bort</p>
+                      <p class="font-medium text-stone-800 dark:text-white">
+                        Inköpslistan uppdaterad
+                      </p>
+                      <p class="text-sm text-stone-500 dark:text-stone-400">
+                        När varor läggs till eller tas bort
+                      </p>
                     </div>
                     <input
                       type="checkbox"
@@ -735,10 +835,16 @@
                     />
                   </label>
 
-                  <label class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl cursor-pointer">
+                  <label
+                    class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl cursor-pointer"
+                  >
                     <div>
-                      <p class="font-medium text-stone-800 dark:text-white">Nya kalenderhändelser</p>
-                      <p class="text-sm text-stone-500 dark:text-stone-400">När nya händelser skapas</p>
+                      <p class="font-medium text-stone-800 dark:text-white">
+                        Nya kalenderhändelser
+                      </p>
+                      <p class="text-sm text-stone-500 dark:text-stone-400">
+                        När nya händelser skapas
+                      </p>
                     </div>
                     <input
                       type="checkbox"
@@ -747,10 +853,14 @@
                     />
                   </label>
 
-                  <label class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl cursor-pointer">
+                  <label
+                    class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl cursor-pointer"
+                  >
                     <div>
                       <p class="font-medium text-stone-800 dark:text-white">Påminnelser</p>
-                      <p class="text-sm text-stone-500 dark:text-stone-400">Påminnelser för kommande händelser</p>
+                      <p class="text-sm text-stone-500 dark:text-stone-400">
+                        Påminnelser för kommande händelser
+                      </p>
                     </div>
                     <input
                       type="checkbox"
@@ -765,21 +875,19 @@
               <div>
                 <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-4">Utseende</h3>
                 <div class="flex gap-3">
-                  {#each [
-                    { value: 'light', label: 'Ljust', icon: '☀️' },
-                    { value: 'dark', label: 'Mörkt', icon: '🌙' },
-                    { value: 'system', label: 'System', icon: '💻' },
-                  ] as theme}
+                  {#each [{ value: 'light', label: 'Ljust', icon: '☀️' }, { value: 'dark', label: 'Mörkt', icon: '🌙' }, { value: 'system', label: 'System', icon: '💻' }] as theme}
                     <button
                       type="button"
                       on:click={() => setTheme(theme.value)}
                       class="flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-colors
-                        {preferences.theme === theme.value 
-                          ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' 
-                          : 'border-stone-200 dark:border-stone-700 hover:border-orange-300'}"
+                        {preferences.theme === theme.value
+                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                        : 'border-stone-200 dark:border-stone-700 hover:border-orange-300'}"
                     >
                       <span class="text-2xl">{theme.icon}</span>
-                      <span class="text-sm font-medium text-stone-700 dark:text-stone-300">{theme.label}</span>
+                      <span class="text-sm font-medium text-stone-700 dark:text-stone-300"
+                        >{theme.label}</span
+                      >
                     </button>
                   {/each}
                 </div>
@@ -794,7 +902,7 @@
               </button>
             </div>
 
-          <!-- Account Section -->
+            <!-- Account Section -->
           {:else if activeSection === 'account' && isOwnProfile}
             <h2 class="text-xl font-bold text-stone-800 dark:text-white mb-6">Konto</h2>
 
@@ -802,21 +910,28 @@
               <!-- Change Password -->
               <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-6">
                 <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-4">Byt lösenord</h3>
-                
+
                 {#if passwordError}
-                  <div class="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-sm">
+                  <div
+                    class="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-sm"
+                  >
                     {passwordError}
                   </div>
                 {/if}
                 {#if passwordSuccess}
-                  <div class="mb-4 p-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-sm">
+                  <div
+                    class="mb-4 p-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-sm"
+                  >
                     Lösenordet har ändrats!
                   </div>
                 {/if}
 
                 <form on:submit|preventDefault={changePassword} class="space-y-4">
                   <div>
-                    <label for="currentPassword" class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">
+                    <label
+                      for="currentPassword"
+                      class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"
+                    >
                       Nuvarande lösenord
                     </label>
                     <input
@@ -827,7 +942,10 @@
                     />
                   </div>
                   <div>
-                    <label for="newPassword" class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">
+                    <label
+                      for="newPassword"
+                      class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"
+                    >
                       Nytt lösenord
                     </label>
                     <input
@@ -838,7 +956,10 @@
                     />
                   </div>
                   <div>
-                    <label for="confirmPassword" class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">
+                    <label
+                      for="confirmPassword"
+                      class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"
+                    >
                       Bekräfta lösenord
                     </label>
                     <input
@@ -859,7 +980,9 @@
               </div>
 
               <!-- Delete Account -->
-              <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
+              <div
+                class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6"
+              >
                 <h3 class="font-semibold text-red-700 dark:text-red-400 mb-2">Radera konto</h3>
                 <p class="text-sm text-red-600 dark:text-red-400/80 mb-4">
                   Detta raderar ditt konto permanent. Denna åtgärd kan inte ångras.

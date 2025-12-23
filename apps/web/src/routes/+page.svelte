@@ -5,6 +5,7 @@
   import { groceryWs } from '$lib/stores/groceryWs';
   import { currentFamily } from '$lib/stores/auth';
   import type { GroceryItem } from '$lib/types/grocery';
+  import type { Task, TaskCategory, TaskStatus } from '@family-hub/shared/types';
 
   interface FamilyMember {
     id: number;
@@ -29,8 +30,26 @@
     stone: 'bg-stone-400',
   };
 
+  // Simplified task indicator colors:
+  // - Shopping (pink) for shopping tasks
+  // - Blue for activity-type (outdoor, pets)
+  // - Orange for regular tasks (cleaning, kitchen, laundry, other)
+  function getTaskBadgeColor(category: TaskCategory | null): string {
+    if (!category) return 'bg-orange-500';
+    if (category === 'shopping') return 'bg-pink-500';
+    if (category === 'outdoor' || category === 'pets') return 'bg-blue-500';
+    return 'bg-orange-500'; // cleaning, kitchen, laundry, other
+  }
+
   interface GroceryAssignment {
     userId: number;
+  }
+
+  interface MemberTaskInfo {
+    total: number;
+    overdue: number;
+    categories: TaskCategory[];
+    primaryCategory: TaskCategory | null;
   }
 
   let apiStatus = 'Checking...';
@@ -39,11 +58,46 @@
   let familyMembers: FamilyMember[] = [];
   let loadingMembers = true;
   let groceryAssignments: GroceryAssignment[] = [];
+  let tasks: Task[] = [];
 
-  // Notification counts per user based on actual assignments
-  $: memberNotifications = groceryAssignments.reduce(
+  // Calculate task info per member (only open/in_progress tasks)
+  $: memberTaskInfo = familyMembers.reduce((acc, member) => {
+    const memberTasks = tasks.filter(
+      (t) => t.assignedTo === member.id && (t.status === 'open' || t.status === 'in_progress')
+    );
+    
+    const now = new Date();
+    const overdueTasks = memberTasks.filter((t) => {
+      if (!t.dueDate) return false;
+      const dueDate = new Date(t.dueDate);
+      return dueDate < now;
+    });
+
+    // Get unique categories
+    const categories = [...new Set(memberTasks.map((t) => t.category))];
+    
+    // Primary category is the most common one
+    const categoryCount = memberTasks.reduce((counts, t) => {
+      counts[t.category] = (counts[t.category] || 0) + 1;
+      return counts;
+    }, {} as Record<TaskCategory, number>);
+    
+    const primaryCategory = categories.length > 0
+      ? categories.reduce((a, b) => (categoryCount[a] >= categoryCount[b] ? a : b))
+      : null;
+
+    acc[member.id] = {
+      total: memberTasks.length,
+      overdue: overdueTasks.length,
+      categories,
+      primaryCategory,
+    };
+    return acc;
+  }, {} as Record<number, MemberTaskInfo>);
+
+  // Notification counts per user based on actual grocery assignments
+  $: memberGroceryNotifications = groceryAssignments.reduce(
     (acc, assignment) => {
-      // Show the pending grocery count for assigned members
       acc[assignment.userId] = pendingCount;
       return acc;
     },
@@ -137,7 +191,7 @@
         loadingGroceries = false;
       }
 
-      // Fetch family members
+      // Fetch family members and tasks
       if ($currentFamily) {
         try {
           const membersRes = await get<{ users: FamilyMember[] }>(
@@ -150,6 +204,19 @@
             '/groceries/assignments'
           );
           groceryAssignments = assignmentsRes.assignments || [];
+
+          // Fetch tasks (requires x-family-id header)
+          try {
+            const tasksResponse = await fetch('/api/tasks', {
+              headers: { 'x-family-id': String($currentFamily.id) },
+              credentials: 'include',
+            });
+            if (tasksResponse.ok) {
+              tasks = await tasksResponse.json();
+            }
+          } catch {
+            // Tasks fetch failed, continue without
+          }
         } catch {
           // Ignore errors
         } finally {
@@ -205,23 +272,36 @@
           <div class="space-y-2">
             {#each familyMembers as member (member.id)}
               {@const bgColor = colorClasses[member.color || 'orange']}
-              {@const notificationCount = memberNotifications[member.id] || 0}
+              {@const groceryCount = memberGroceryNotifications[member.id] || 0}
+              {@const taskInfo = memberTaskInfo[member.id] || { total: 0, overdue: 0, categories: [], primaryCategory: null }}
+              {@const taskBadgeColor = taskInfo.overdue > 0 ? 'bg-red-500' : getTaskBadgeColor(taskInfo.primaryCategory)}
               <a
                 href="/profile/{member.id}"
                 class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 transition-colors text-left relative block"
               >
-                <!-- Avatar with notification badge -->
+                <!-- Avatar with task/grocery badges -->
                 <div class="relative">
                   <div
                     class="{bgColor} w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md"
                   >
                     {member.avatarEmoji || '👤'}
                   </div>
-                  {#if notificationCount > 0}
+                  <!-- Task indicator (top-right) -->
+                  {#if taskInfo.total > 0}
                     <div
-                      class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-md"
+                      class="absolute -top-1 -right-1 w-5 h-5 {taskBadgeColor} rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-md border-2 border-white dark:border-stone-800"
+                      title="{taskInfo.total} uppgift{taskInfo.total > 1 ? 'er' : ''}{taskInfo.overdue > 0 ? ` (${taskInfo.overdue} försenad${taskInfo.overdue > 1 ? 'e' : ''})` : ''}"
                     >
-                      {notificationCount > 9 ? '9+' : notificationCount}
+                      {taskInfo.total > 9 ? '9+' : taskInfo.total}
+                    </div>
+                  {/if}
+                  <!-- Grocery indicator (bottom-right) -->
+                  {#if groceryCount > 0}
+                    <div
+                      class="absolute -bottom-1 -right-1 w-4 h-4 bg-pink-500 rounded-full flex items-center justify-center text-[8px] font-bold text-white shadow-md border-2 border-white dark:border-stone-800"
+                      title="Tilldelad inköpslistan"
+                    >
+                      🛒
                     </div>
                   {/if}
                 </div>
