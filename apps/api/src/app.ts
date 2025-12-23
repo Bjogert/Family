@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import websocket from '@fastify/websocket';
 import rateLimit from '@fastify/rate-limit';
+import helmet from '@fastify/helmet';
 import { config } from './config.js';
 import { logger } from './utils/logger.js';
 import { initDatabase, pool } from './db/index.js';
@@ -42,6 +43,24 @@ export async function buildApp() {
   await app.register(cookie, {
     secret: config.sessionSecret,
     parseOptions: {},
+  });
+
+  // Security headers - Helmet adds CSP, XSS protection, etc.
+  await app.register(helmet, {
+    contentSecurityPolicy: config.isDev ? false : {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'", "wss:", "https://accounts.google.com", "https://www.googleapis.com"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false, // Required for some external resources
   });
 
   await app.register(websocket, {
