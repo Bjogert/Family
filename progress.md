@@ -577,6 +577,38 @@ ssh robert@192.168.68.127 "journalctl --user -u family-web -f"
 - Created progress.md
 - Discussed tech stack
 
+### Session - 2025-01-XX - Security & Code Quality Improvements
+Based on comprehensive project review, implemented following improvements:
+
+**Security Fixes:**
+- ✅ Added `client_secret*.json` to .gitignore and removed from tracking
+- ✅ Increased password requirements from 4 to 8 characters minimum
+- ✅ Restricted CORS to familjehubben.vip in production (was "*")
+- ✅ Added @fastify/rate-limit for API protection
+  - Global limit: 100 requests/minute
+  - Auth endpoints: 5 requests/minute (login, password reset)
+- ✅ Added @fastify/helmet for security headers
+  - Content Security Policy (CSP) in production
+  - XSS protection headers
+  - Various other security headers
+
+**Code Quality:**
+- ✅ Replaced all console.error with structured logger.error
+- ✅ Removed debug console.log statements from auth module
+- ✅ Added Fastify request type augmentation (types/fastify.d.ts)
+- ✅ Removed 'as any' casts, improved type safety
+- ✅ Added consistent index.ts exports to all API modules
+- ✅ Added ESLint config with no-console and no-any rules
+
+**Cleanup:**
+- ✅ Removed orphaned SQL files (create_tables.sql, schema.sql)
+- ✅ Updated README.md (PostgreSQL not SQLite)
+
+**Packages Added:**
+- @fastify/rate-limit
+- @fastify/helmet
+- @fastify/csrf-protection (installed, ready for future use)
+
 ---
 
 ## Blockers & Questions
@@ -608,4 +640,4 @@ ssh robert@192.168.68.127 "journalctl --user -u family-web -f"
 
 ---
 
-*Last updated: 2025-12-22*
+*Last updated: 2025-01-XX*
