@@ -37,9 +37,7 @@
     : new Date().toISOString().slice(0, 10);
   let startTime = activity ? new Date(activity.startTime).toTimeString().slice(0, 5) : '09:00';
   // Support multi-day activities
-  let endDate = activity?.endTime
-    ? new Date(activity.endTime).toISOString().slice(0, 10)
-    : '';
+  let endDate = activity?.endTime ? new Date(activity.endTime).toISOString().slice(0, 10) : '';
   let endTime = activity?.endTime ? new Date(activity.endTime).toTimeString().slice(0, 5) : '';
   let recurringPattern: RecurringPattern = activity?.recurringPattern || null;
   let transportUserId: number | null = activity?.transportUserId || null;
@@ -51,10 +49,9 @@
   // When participants change, auto-add them to notification recipients
   $: if (selectedParticipants.length > 0 && selectedNotificationRecipients.length === 0) {
     // Auto-select parents and participants for notifications
-    selectedNotificationRecipients = [
-      ...parents.map(p => p.id),
-      ...selectedParticipants
-    ].filter((v, i, a) => a.indexOf(v) === i); // unique
+    selectedNotificationRecipients = [...parents.map((p) => p.id), ...selectedParticipants].filter(
+      (v, i, a) => a.indexOf(v) === i
+    ); // unique
   }
 
   const recurringOptions: { value: RecurringPattern; labelKey: string }[] = [
@@ -288,7 +285,7 @@
         🔔 {$t('activities.sendNotification')}
       </span>
     </label>
-    
+
     <!-- Notification Recipients (show when sendNotification is checked) -->
     {#if sendNotification}
       <div class="ml-8">
