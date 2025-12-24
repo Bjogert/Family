@@ -21,11 +21,9 @@
 
   // Filter to only parents for transport
   $: parents = familyMembers.filter((m) => m.role === 'pappa' || m.role === 'mamma');
-  // Filter to only children for participants
-  $: children = familyMembers.filter((m) => m.role === 'barn' || m.role === 'bebis');
 
   const dispatch = createEventDispatcher<{
-    save: CreateActivityInput & { sendNotification?: boolean };
+    save: CreateActivityInput & { sendNotification?: boolean; notificationRecipientIds?: number[] };
     cancel: void;
   }>();
 
@@ -38,12 +36,26 @@
     ? new Date(activity.startTime).toISOString().slice(0, 10)
     : new Date().toISOString().slice(0, 10);
   let startTime = activity ? new Date(activity.startTime).toTimeString().slice(0, 5) : '09:00';
+  // Support multi-day activities
+  let endDate = activity?.endTime
+    ? new Date(activity.endTime).toISOString().slice(0, 10)
+    : '';
   let endTime = activity?.endTime ? new Date(activity.endTime).toTimeString().slice(0, 5) : '';
   let recurringPattern: RecurringPattern = activity?.recurringPattern || null;
   let transportUserId: number | null = activity?.transportUserId || null;
   let selectedParticipants: number[] = activity?.participants?.map((p) => p.userId) || [];
   let syncToCalendar = calendarConnected && !activity; // Default to true for new activities if calendar is connected
   let sendNotification = true; // Default to send notification
+  let selectedNotificationRecipients: number[] = []; // Who to notify
+
+  // When participants change, auto-add them to notification recipients
+  $: if (selectedParticipants.length > 0 && selectedNotificationRecipients.length === 0) {
+    // Auto-select parents and participants for notifications
+    selectedNotificationRecipients = [
+      ...parents.map(p => p.id),
+      ...selectedParticipants
+    ].filter((v, i, a) => a.indexOf(v) === i); // unique
+  }
 
   const recurringOptions: { value: RecurringPattern; labelKey: string }[] = [
     { value: null, labelKey: 'recurring.none' },
@@ -61,9 +73,19 @@
     }
   }
 
+  function toggleNotificationRecipient(userId: number) {
+    if (selectedNotificationRecipients.includes(userId)) {
+      selectedNotificationRecipients = selectedNotificationRecipients.filter((id) => id !== userId);
+    } else {
+      selectedNotificationRecipients = [...selectedNotificationRecipients, userId];
+    }
+  }
+
   function handleSubmit() {
     const startDateTime = new Date(`${startDate}T${startTime}`);
-    const endDateTime = endTime ? new Date(`${startDate}T${endTime}`) : null;
+    // Use endDate if specified, otherwise fall back to startDate
+    const actualEndDate = endDate || startDate;
+    const endDateTime = endTime ? new Date(`${actualEndDate}T${endTime}`) : null;
 
     dispatch('save', {
       title,
@@ -77,6 +99,7 @@
       participantIds: selectedParticipants,
       syncToCalendar: syncToCalendar && !activity, // Only sync new activities
       sendNotification,
+      notificationRecipientIds: sendNotification ? selectedNotificationRecipients : undefined,
     });
   }
 </script>
@@ -127,10 +150,10 @@
   </div>
 
   <!-- Date and Time -->
-  <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
     <label class="block">
       <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-1">
-        {$t('activities.dateLabel')}
+        {$t('activities.startDate')} *
       </span>
       <input
         type="date"
@@ -147,6 +170,18 @@
         type="time"
         bind:value={startTime}
         required
+        class="w-full px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700 text-stone-800 dark:text-stone-100"
+      />
+    </label>
+    <label class="block">
+      <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-1">
+        {$t('activities.endDate')}
+      </span>
+      <input
+        type="date"
+        bind:value={endDate}
+        min={startDate}
+        placeholder={startDate}
         class="w-full px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700 text-stone-800 dark:text-stone-100"
       />
     </label>
@@ -194,7 +229,7 @@
       👥 {$t('activities.participants')}
     </span>
     <div class="flex flex-wrap gap-2">
-      {#each children as member}
+      {#each familyMembers as member}
         <button
           type="button"
           on:click={() => toggleParticipant(member.id)}
@@ -241,8 +276,8 @@
     </select>
   </label>
 
-  <!-- Send Notification (only show when participants or transport user selected) -->
-  {#if selectedParticipants.length > 0 || transportUserId}
+  <!-- Send Notification -->
+  <div class="space-y-2">
     <label class="flex items-center gap-3 cursor-pointer">
       <input
         type="checkbox"
@@ -253,7 +288,31 @@
         🔔 {$t('activities.sendNotification')}
       </span>
     </label>
-  {/if}
+    
+    <!-- Notification Recipients (show when sendNotification is checked) -->
+    {#if sendNotification}
+      <div class="ml-8">
+        <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">
+          {$t('activities.notifyWho')}
+        </span>
+        <div class="flex flex-wrap gap-2">
+          {#each familyMembers as member}
+            <button
+              type="button"
+              on:click={() => toggleNotificationRecipient(member.id)}
+              class="flex items-center gap-2 px-3 py-2 rounded-xl transition-all
+                {selectedNotificationRecipients.includes(member.id)
+                ? 'bg-amber-100 dark:bg-amber-900/50 ring-2 ring-amber-400'
+                : 'bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600'}"
+            >
+              <span class="text-lg">{member.avatarEmoji || '👤'}</span>
+              <span class="text-sm text-stone-700 dark:text-stone-200">{member.displayName}</span>
+            </button>
+          {/each}
+        </div>
+      </div>
+    {/if}
+  </div>
 
   <!-- Sync to Google Calendar (only show for new activities when connected) -->
   {#if calendarConnected && !activity}
