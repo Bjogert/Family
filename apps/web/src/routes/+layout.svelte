@@ -177,7 +177,7 @@
 
   {#if $loading}
     <div class="flex-1 flex items-center justify-center">
-      <div class="text-gray-500 dark:text-gray-400">Loading...</div>
+      <div class="text-gray-500 dark:text-gray-400">{$t('layout.loading')}</div>
     </div>
   {:else if $authenticated && !publicPaths.some((p) => $page.url.pathname.startsWith(p))}
     <!-- Navigation header for authenticated users -->

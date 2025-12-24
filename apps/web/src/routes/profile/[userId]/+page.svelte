@@ -357,12 +357,12 @@
     passwordSuccess = false;
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      passwordError = 'Lösenorden matchar inte';
+      passwordError = $t('profile.passwordMismatchError');
       return;
     }
 
     if (passwordForm.newPassword.length < 4) {
-      passwordError = 'Lösenordet måste vara minst 4 tecken';
+      passwordError = $t('profile.passwordTooShortError');
       return;
     }
 
@@ -631,7 +631,7 @@
                   </div>
                 {/if}
                 <div>
-                  <span class="text-stone-500 dark:text-stone-400">Medlem sedan:</span>
+                  <span class="text-stone-500 dark:text-stone-400">{$t('profile.memberSinceLabel')}</span>
                   <span class="ml-2 text-stone-700 dark:text-stone-300"
                     >{formatDate(profile.createdAt)}</span
                   >
@@ -658,7 +658,7 @@
                   on:click={() => (editMode = true)}
                   class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
                 >
-                  Redigera
+                  {$t('common.edit')}
                 </button>
               {/if}
             </div>
@@ -787,7 +787,7 @@
                     disabled={saving}
                     class="flex-1 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
                   >
-                    {saving ? 'Sparar...' : 'Spara'}
+                    {saving ? $t('common.saving') : $t('common.save')}
                   </button>
                   <button
                     type="button"
@@ -804,7 +804,7 @@
                     }}
                     class="px-6 py-2 border border-stone-300 dark:border-stone-600 text-stone-600 dark:text-stone-300 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors"
                   >
-                    Avbryt
+                    {$t('common.cancel')}
                   </button>
                 </div>
               </form>
@@ -1039,7 +1039,7 @@
                 disabled={saving}
                 class="w-full py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
               >
-                {saving ? 'Sparar...' : 'Spara inställningar'}
+                {saving ? $t('common.saving') : $t('profile.save')}
               </button>
             </div>
 
@@ -1063,7 +1063,7 @@
                   <div
                     class="mb-4 p-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-sm"
                   >
-                    Lösenordet har ändrats!
+                    {$t('profile.passwordChanged')}
                   </div>
                 {/if}
 
@@ -1101,7 +1101,7 @@
                       for="confirmPassword"
                       class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"
                     >
-                      Bekräfta lösenord
+                      {$t('profile.confirmPasswordLabel')}
                     </label>
                     <input
                       type="password"
@@ -1115,7 +1115,7 @@
                     disabled={saving}
                     class="w-full py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
                   >
-                    {saving ? 'Sparar...' : 'Byt lösenord'}
+                    {saving ? $t('common.saving') : $t('profile.changePassword')}
                   </button>
                 </form>
               </div>
@@ -1124,15 +1124,15 @@
               <div
                 class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6"
               >
-                <h3 class="font-semibold text-red-700 dark:text-red-400 mb-2">Radera konto</h3>
+                <h3 class="font-semibold text-red-700 dark:text-red-400 mb-2">{$t('profile.deleteAccountTitle')}</h3>
                 <p class="text-sm text-red-600 dark:text-red-400/80 mb-4">
-                  Detta raderar ditt konto permanent. Denna åtgärd kan inte ångras.
+                  {$t('profile.deleteAccountDescription')}
                 </p>
                 <a
                   href="/settings"
                   class="inline-block px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
-                  Gå till kontoinställningar
+                  {$t('profile.goToAccountSettings')}
                 </a>
               </div>
             </div>

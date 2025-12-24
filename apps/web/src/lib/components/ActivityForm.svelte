@@ -130,7 +130,7 @@
   <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
     <label class="block">
       <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-1">
-        📅 Datum *
+        {$t('activities.dateLabel')}
       </span>
       <input
         type="date"
@@ -264,7 +264,7 @@
         class="w-5 h-5 rounded border-stone-300 dark:border-stone-600 text-amber-500 focus:ring-amber-400"
       />
       <span class="text-sm text-stone-700 dark:text-stone-200">
-        📅 Lägg till i Google Kalender
+        {$t('activities.syncToCalendar')}
       </span>
     </label>
   {/if}

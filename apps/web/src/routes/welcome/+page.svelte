@@ -294,12 +294,12 @@
 
     {#if loadingFamilies}
       <div class="py-8">
-        <LoadingSpinner size="lg" text="Loading families..." />
+        <LoadingSpinner size="lg" text={$t('common.loading')} />
       </div>
     {:else if families.length > 0 && !showCreateForm}
       <form on:submit|preventDefault={verifyAndProceed} class="mb-8">
         <h2 class="text-lg font-semibold text-stone-700 dark:text-stone-300 mb-4">
-          Select your family:
+          {$t('welcome.selectFamily')}:
         </h2>
         <div class="space-y-3">
           <!-- Autocomplete family input -->
@@ -416,7 +416,7 @@
           }}
           class="w-full bg-gradient-to-br from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-3 rounded-lg transition shadow-md"
         >
-          + Create New Family
+          {$t('welcome.createNewFamily')}
         </button>
       {:else}
         <div class="space-y-4">
@@ -443,14 +443,14 @@
               for="familyPassword"
               class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
             >
-              Familjens Lösenord
+              {$t('welcome.familyPasswordLabel')}
             </label>
             <div class="relative">
               <input
                 id="familyPassword"
                 name="familyPassword"
                 type={showNewFamilyPassword ? 'text' : 'password'}
-                placeholder="Lösenord för familjen"
+                placeholder={$t('welcome.familyPasswordPlaceholder')}
                 value={newFamilyPassword}
                 on:input={(e) => (newFamilyPassword = e.currentTarget.value)}
                 class="w-full px-4 py-2 pr-12 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
@@ -507,7 +507,7 @@
               for="familyPasswordConfirm"
               class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1"
             >
-              Bekräfta Lösenord
+              {$t('welcome.confirmPasswordLabel')}
             </label>
             <div class="relative">
               <input
@@ -568,15 +568,15 @@
               </button>
             </div>
             {#if newFamilyPassword && newFamilyPasswordConfirm && newFamilyPassword !== newFamilyPasswordConfirm}
-              <p class="text-red-500 text-sm mt-1">Lösenorden matchar inte</p>
+              <p class="text-red-500 text-sm mt-1">{$t('welcome.passwordMismatchError')}</p>
             {/if}
           </div>
 
           <div class="border-t border-orange-200 dark:border-stone-600 pt-4">
             <!-- svelte-ignore a11y-label-has-associated-control -->
             <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-3"
-              >Familjemedlemmar {#if savedMembers.length > 0}<span class="text-orange-500"
-                  >({savedMembers.length} sparad{savedMembers.length > 1 ? 'e' : ''})</span
+              >{$t('welcome.familyMembers')} {#if savedMembers.length > 0}<span class="text-orange-500"
+                  >({savedMembers.length} {savedMembers.length > 1 ? $t('welcome.savedMembers').replace('{count}', String(savedMembers.length)).replace('{plural}', 'e') : $t('welcome.savedMembers').replace('{count}', String(savedMembers.length)).replace('{plural}', '')})</span
                 >{/if}</label
             >
 
@@ -827,7 +827,7 @@
                       disabled={loading}
                     />
                     <p class="text-xs text-stone-400 dark:text-stone-500 mt-1">
-                      Valfritt - behövs om du glömmer lösenordet
+                      {$t('welcome.emailOptional')}
                     </p>
                   </div>
                 {/if}
@@ -838,7 +838,7 @@
                     <div class="relative">
                       <input
                         type={currentMember.showPassword ? 'text' : 'password'}
-                        placeholder="Lösenord"
+                        placeholder={$t('welcome.passwordPlaceholder')}
                         value={currentMember.password}
                         on:input={(e) => (currentMember.password = e.currentTarget.value)}
                         class="w-full px-4 py-3 pr-12 border border-orange-200 dark:border-stone-600 bg-white dark:bg-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-amber-500 text-stone-900 dark:text-white"
@@ -889,7 +889,7 @@
                     </div>
                     <input
                       type={currentMember.showPassword ? 'text' : 'password'}
-                      placeholder="Bekräfta lösenord"
+                      placeholder={$t('welcome.confirmPasswordPlaceholder')}
                       value={currentMember.passwordConfirm}
                       on:input={(e) => (currentMember.passwordConfirm = e.currentTarget.value)}
                       class="w-full px-4 py-3 border {currentMember.password &&
@@ -900,7 +900,7 @@
                       disabled={loading}
                     />
                     {#if currentMember.password && currentMember.passwordConfirm && currentMember.password !== currentMember.passwordConfirm}
-                      <p class="text-red-500 text-sm">Lösenorden matchar inte</p>
+                      <p class="text-red-500 text-sm">{$t('welcome.passwordMismatchError')}</p>
                     {/if}
                     <button
                       type="button"
@@ -908,7 +908,7 @@
                       class="text-sm text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300"
                       disabled={loading}
                     >
-                      🔓 Ta bort lösenord
+                      {$t('welcome.removePassword')}
                     </button>
                   </div>
                 {:else}
@@ -918,7 +918,7 @@
                     class="text-sm text-orange-500 hover:text-orange-600 dark:text-amber-400 dark:hover:text-amber-500 font-medium pt-3"
                     disabled={loading}
                   >
-                    🔒 Lägg till lösenord (valfritt)
+                    {$t('welcome.addPassword')}
                   </button>
                 {/if}
 
@@ -929,7 +929,7 @@
                   disabled={loading || !currentMember.name.trim()}
                   class="w-full mt-2 bg-gradient-to-r from-orange-400 to-amber-400 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                 >
-                  ➕ Lägg till medlem
+                  {$t('welcome.addMember')}
                 </button>
               </div>
             </div>
@@ -945,8 +945,10 @@
               class="flex-1 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
             >
               {loading
-                ? 'Skapar...'
-                : `Skapa familj (${savedMembers.length} medlem${savedMembers.length !== 1 ? 'mar' : ''})`}
+                ? $t('welcome.creating')
+                : $t('welcome.createFamilyWithCount')
+                  .replace('{count}', String(savedMembers.length))
+                  .replace('{plural}', savedMembers.length !== 1 ? $t('welcome.memberPlural') : $t('welcome.memberSingle'))}
             </button>
             <button
               on:click={() => {
@@ -961,7 +963,7 @@
               disabled={loading}
               class="flex-1 bg-stone-200 hover:bg-stone-300 dark:bg-stone-600 dark:hover:bg-stone-500 text-stone-800 dark:text-white font-bold py-2 rounded-lg transition disabled:opacity-50"
             >
-              Avbryt
+              {$t('common.cancel')}
             </button>
           </div>
         </div>

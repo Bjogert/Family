@@ -493,13 +493,13 @@
         <!-- Connection status indicator -->
         <div class="flex items-center gap-1.5">
           {#if $groceryWs.status === 'connected'}
-            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Ansluten"></div>
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" title={$t('calendar.connectionStatus')}></div>
           {:else if $groceryWs.status === 'connecting'}
-            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title="Ansluter..."></div>
+            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title={$t('groceries.connecting')}></div>
           {:else if $groceryWs.status === 'error'}
-            <div class="w-2 h-2 bg-red-500 rounded-full" title="Anslutningsfel"></div>
+            <div class="w-2 h-2 bg-red-500 rounded-full" title={$t('groceries.connectionError')}></div>
           {:else}
-            <div class="w-2 h-2 bg-gray-400 rounded-full" title="Frånkopplad"></div>
+            <div class="w-2 h-2 bg-gray-400 rounded-full" title={$t('groceries.disconnected')}></div>
           {/if}
         </div>
       </div>
@@ -561,13 +561,13 @@
     <!-- Show assigned members summary if any -->
     {#if assignments.length > 0 && !showAssignmentPanel}
       <div class="flex items-center gap-2 mb-4 p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-        <span class="text-sm text-stone-600 dark:text-stone-300">Tilldelad:</span>
+        <span class="text-sm text-stone-600 dark:text-stone-300">{$t('groceries.assigned')}</span>
         <div class="flex -space-x-2">
           {#each assignments as assignment}
             <div
               class="w-7 h-7 rounded-full flex items-center justify-center text-sm ring-2 ring-white dark:ring-stone-900"
               style="background-color: {assignment.userColor || '#9CA3AF'}"
-              title={assignment.userDisplayName || 'Anonym'}
+              title={assignment.userDisplayName || $t('groceries.anonymous')}
             >
               {assignment.userAvatarEmoji || '👤'}
             </div>
@@ -577,7 +577,7 @@
           on:click={() => (showAssignmentPanel = true)}
           class="ml-auto text-xs text-primary-600 dark:text-primary-400 hover:underline"
         >
-          Ändra
+          {$t('groceries.change')}
         </button>
       </div>
     {/if}
@@ -585,7 +585,7 @@
     {#if error}
       <div class="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-3 rounded-lg mb-4">
         {error}
-        <button class="ml-2 underline" on:click={() => (error = '')}>Stäng</button>
+        <button class="ml-2 underline" on:click={() => (error = '')}>{$t('common.close')}</button>
       </div>
     {/if}
 
@@ -594,7 +594,7 @@
         <div
           class="animate-spin w-8 h-8 border-4 border-orange-400 border-t-transparent dark:border-amber-400 dark:border-t-transparent rounded-full mx-auto"
         ></div>
-        <p class="mt-4 text-stone-500 dark:text-stone-400">Laddar...</p>
+        <p class="mt-4 text-stone-500 dark:text-stone-400">{$t('common.loading')}</p>
       </div>
     {:else}
       <!-- Add item form -->

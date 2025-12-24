@@ -2,6 +2,7 @@
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { post } from '$lib/api/client';
+  import { t } from '$lib/i18n';
 
   let loading = true;
   let success = false;
@@ -11,7 +12,7 @@
 
   onMount(async () => {
     if (!token) {
-      error = 'Verifieringslänken saknas';
+      error = $t('verifyEmail.errorMissing');
       loading = false;
       return;
     }
@@ -24,10 +25,10 @@
       if (response.success) {
         success = true;
       } else {
-        error = response.message || 'Kunde inte verifiera e-postadressen';
+        error = response.message || $t('verifyEmail.errorVerify');
       }
     } catch (err) {
-      error = 'Något gick fel. Länken kan ha gått ut.';
+      error = $t('verifyEmail.errorGeneric');
     } finally {
       loading = false;
     }
@@ -35,7 +36,7 @@
 </script>
 
 <svelte:head>
-  <title>Bekräfta e-post - Familjehubben</title>
+  <title>{$t('verifyEmail.title')} - {$t('nav.familyHub')}</title>
 </svelte:head>
 
 <div
@@ -45,7 +46,7 @@
     {#if loading}
       <div class="py-8">
         <div class="text-5xl mb-4 animate-bounce">📧</div>
-        <h1 class="text-xl font-semibold text-gray-700">Bekräftar din e-postadress...</h1>
+        <h1 class="text-xl font-semibold text-gray-700">{$t('verifyEmail.verifying')}</h1>
         <div class="mt-6 flex justify-center">
           <svg class="animate-spin h-8 w-8 text-violet-600" viewBox="0 0 24 24">
             <circle
@@ -68,27 +69,27 @@
     {:else if success}
       <div class="py-8">
         <div class="text-6xl mb-4">🎉</div>
-        <h1 class="text-2xl font-bold text-green-700 mb-3">E-postadressen bekräftad!</h1>
-        <p class="text-gray-600 mb-6">Tack! Din e-postadress har nu bekräftats.</p>
+        <h1 class="text-2xl font-bold text-green-700 mb-3">{$t('verifyEmail.successTitle')}</h1>
+        <p class="text-gray-600 mb-6">{$t('verifyEmail.successMessage')}</p>
         <a
           href="/"
           class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 px-6 rounded-xl inline-block transition-colors"
         >
-          Gå till Familjehubben
+          {$t('verifyEmail.goToApp')}
         </a>
       </div>
     {:else}
       <div class="py-8">
         <div class="text-6xl mb-4">😔</div>
-        <h1 class="text-2xl font-bold text-red-700 mb-3">Något gick fel</h1>
+        <h1 class="text-2xl font-bold text-red-700 mb-3">{$t('verifyEmail.errorTitle')}</h1>
         <p class="text-gray-600 mb-2">{error}</p>
-        <p class="text-sm text-gray-500 mb-6">Länken kan ha gått ut eller redan använts.</p>
+        <p class="text-sm text-gray-500 mb-6">{$t('verifyEmail.errorExpired')}</p>
         <div class="space-y-3">
           <a
             href="/"
             class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 px-6 rounded-xl inline-block transition-colors"
           >
-            Gå till startsidan
+            {$t('verifyEmail.goToHome')}
           </a>
         </div>
       </div>

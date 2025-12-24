@@ -152,7 +152,7 @@
             </p>
             <p class="text-stone-600 dark:text-stone-400 mt-4">Välj din profil för att fortsätta</p>
           {:else}
-            <p class="text-xl text-stone-600 dark:text-stone-400">Laddar...</p>
+            <p class="text-xl text-stone-600 dark:text-stone-400">{$t('common.loading')}</p>
           {/if}
         </div>
 
@@ -184,7 +184,7 @@
           {#if loadingFamily}
             <!-- Loading spinner while fetching family data -->
             <div class="py-8">
-              <LoadingSpinner size="lg" text="Laddar familjemedlemmar..." />
+              <LoadingSpinner size="lg" text={$t('login.loadingMembers')} />
             </div>
           {:else if familyMembers.length === 0 && familyName}
             <div class="text-center text-stone-600 dark:text-stone-400 py-8">
@@ -210,7 +210,7 @@
                   for="password"
                   class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2"
                 >
-                  Lösenord
+                  {$t('login.passwordLabel')}
                 </label>
                 <div class="relative">
                   <input
@@ -287,7 +287,7 @@
                   on:click={cancelPasswordPrompt}
                   class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                 >
-                  ← Avbryt
+                  {$t('login.cancelButton')}
                 </button>
                 <a
                   href="/forgot-password"
@@ -351,7 +351,7 @@
                             clip-rule="evenodd"
                           />
                         </svg>
-                        Lösenord
+                        {$t('login.passwordLabel')}
                       </button>
                     {/if}
                   </div>

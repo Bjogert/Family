@@ -19,6 +19,7 @@
         'common.edit': 'Redigera',
         'common.deleting': 'Tar bort',
         'common.all': 'Alla',
+        'common.create': 'Skapa',
 
         // Settings
         'settings.title': 'Inställningar',
@@ -273,6 +274,148 @@
         // Date formatting
         'date.today': 'Idag',
         'date.tomorrow': 'Imorgon',
+
+        // Bulletin / Notes
+        'bulletin.addNote': 'Lägg till notis...',
+        'bulletin.deleteConfirm': 'Ta bort denna notis?',
+        'bulletin.editNote': 'Redigera notis',
+        'bulletin.newNote': 'Ny notis',
+        'bulletin.title': 'Titel',
+        'bulletin.titleRequired': 'Titel *',
+        'bulletin.titlePlaceholder': 'T.ex. Middag kl 17',
+        'bulletin.type': 'Typ',
+        'bulletin.typeText': '📝 Text',
+        'bulletin.typeList': '☑️ Lista',
+        'bulletin.message': 'Meddelande',
+        'bulletin.messagePlaceholder': 'Skriv ditt meddelande...',
+        'bulletin.listItems': 'Listpunkter',
+        'bulletin.newItem': 'Ny punkt...',
+        'bulletin.color': 'Färg',
+        'bulletin.notifyPush': 'Notifiera (push)',
+        'bulletin.allMembers': 'Alla',
+        'bulletin.anonymous': 'Anonym',
+        'bulletin.pinTop': '📌 Fäst högst upp',
+        'bulletin.expires': '⏰ Förfaller',
+        'bulletin.someone': 'Någon',
+
+        // Install prompt
+        'install.title': 'Installera Family Hub',
+        'install.description': 'Lägg till på din hemskärm för snabb åtkomst',
+        'install.button': 'Installera',
+        'install.notNow': 'Inte nu',
+
+        // Forgot password
+        'forgotPassword.title': 'Glömt lösenord?',
+        'forgotPassword.familyTitle': 'Glömt familjens lösenord?',
+        'forgotPassword.description': 'Ange din e-postadress så skickar vi en länk för att återställa ditt lösenord.',
+        'forgotPassword.familyDescription': 'Ange e-postadressen för en förälder i familjen så skickar vi en länk för att återställa familjens lösenord.',
+        'forgotPassword.emailLabel': 'E-postadress',
+        'forgotPassword.parentEmailLabel': 'Förälderns e-postadress',
+        'forgotPassword.emailPlaceholder': 'din.email@example.com',
+        'forgotPassword.submitButton': 'Skicka återställningslänk',
+        'forgotPassword.successTitle': 'Kolla din inbox!',
+        'forgotPassword.successMessage': 'Om e-postadressen finns i vårt system har vi skickat ett mail med instruktioner för att återställa {type} lösenord.',
+        'forgotPassword.yourPassword': 'ditt',
+        'forgotPassword.familyPassword': 'familjens',
+        'forgotPassword.checkSpam': 'Glöm inte att kolla skräpposten!',
+        'forgotPassword.backToHome': '← Tillbaka till startsidan',
+        'forgotPassword.errorEmail': 'Ange din e-postadress',
+        'forgotPassword.errorGeneric': 'Något gick fel',
+        'forgotPassword.errorSend': 'Kunde inte skicka återställningsmail',
+
+        // Verify email
+        'verifyEmail.title': 'Bekräfta e-post',
+        'verifyEmail.verifying': 'Bekräftar din e-postadress...',
+        'verifyEmail.successTitle': 'E-postadressen bekräftad!',
+        'verifyEmail.successMessage': 'Tack! Din e-postadress har nu bekräftats.',
+        'verifyEmail.goToApp': 'Gå till Familjehubben',
+        'verifyEmail.errorTitle': 'Något gick fel',
+        'verifyEmail.errorExpired': 'Länken kan ha gått ut eller redan använts.',
+        'verifyEmail.goToHome': 'Gå till startsidan',
+        'verifyEmail.errorMissing': 'Verifieringslänken saknas',
+        'verifyEmail.errorVerify': 'Kunde inte verifiera e-postadressen',
+        'verifyEmail.errorGeneric': 'Något gick fel. Länken kan ha gått ut.',
+
+        // Welcome page - additional
+        'welcome.createNewFamily': '+ Create New Family',
+        'welcome.familyPasswordLabel': 'Familjens Lösenord',
+        'welcome.familyPasswordPlaceholder': 'Lösenord för familjen',
+        'welcome.confirmPasswordLabel': 'Bekräfta Lösenord',
+        'welcome.passwordMismatchError': 'Lösenorden matchar inte',
+        'welcome.familyMembers': 'Familjemedlemmar',
+        'welcome.savedMembers': '{count} sparad{plural}',
+        'welcome.savedMembersSingle': 'e',
+        'welcome.savedMembersPlural': '',
+        'welcome.firstNamePlaceholder': '{label} *',
+        'welcome.emailOptional': 'Valfritt - behövs om du glömmer lösenordet',
+        'welcome.passwordPlaceholder': 'Lösenord',
+        'welcome.confirmPasswordPlaceholder': 'Bekräfta lösenord',
+        'welcome.removePassword': '🔓 Ta bort lösenord',
+        'welcome.addPassword': '🔒 Lägg till lösenord (valfritt)',
+        'welcome.addMember': '➕ Lägg till medlem',
+        'welcome.creating': 'Skapar...',
+        'welcome.createFamilyWithCount': 'Skapa familj ({count} medlem{plural})',
+        'welcome.memberSingle': '',
+        'welcome.memberPlural': 'mar',
+
+        // Login page - additional
+        'login.passwordLabel': 'Lösenord',
+        'login.cancelButton': '← Avbryt',
+        'login.loadingMembers': 'Laddar familjemedlemmar...',
+
+        // Nickname dropdown
+        'nickname.selectNickname': 'Välj smeknamn...',
+        'nickname.writeNickname': 'Skriv smeknamn...',
+        'nickname.back': 'Tillbaka',
+        'nickname.nicknameOptional': 'Smeknamn (valfritt)',
+        'nickname.other': 'Annan...',
+        'nickname.pappa.far': 'Far',
+        'nickname.pappa.pappa': 'Pappa',
+        'nickname.pappa.farsan': 'Farsan',
+        'nickname.pappa.papa': 'Papa',
+        'nickname.pappa.paps': 'Paps',
+        'nickname.mamma.mor': 'Mor',
+        'nickname.mamma.mamma': 'Mamma',
+        'nickname.mamma.morsan': 'Morsan',
+        'nickname.mamma.mama': 'Mama',
+        'nickname.mamma.mams': 'Mams',
+
+        // Calendar page
+        'calendar.connectTitle': 'Anslut Google Calendar',
+        'calendar.connectDescription': 'Koppla ditt Google-konto för att se alla dina kalendrar och aktiviteter på ett ställe.',
+        'calendar.connectedAs': 'Ansluten som: {email}',
+        'calendar.disconnect': 'Koppla bort Google Calendar',
+        'calendar.connectionStatus': 'Ansluten',
+
+        // Activity form
+        'activities.syncToCalendar': '📅 Lägg till i Google Kalender',
+        'activities.dateLabel': '📅 Datum *',
+
+        // Profile page - additional
+        'profile.memberSinceLabel': 'Medlem sedan:',
+        'profile.passwordChanged': 'Lösenordet har ändrats!',
+        'profile.confirmPasswordLabel': 'Bekräfta lösenord',
+        'profile.passwordMismatchError': 'Lösenorden matchar inte',
+        'profile.passwordTooShortError': 'Lösenordet måste vara minst 4 tecken',
+        'profile.deleteAccountTitle': 'Radera konto',
+        'profile.deleteAccountDescription': 'Detta raderar ditt konto permanent. Denna åtgärd kan inte ångras.',
+        'profile.goToAccountSettings': 'Gå till kontoinställningar',
+
+        // Groceries page - additional
+        'groceries.connectionStatus': 'Ansluten',
+        'groceries.assignedToList': 'Tilldelad inköpslistan',
+        'groceries.assigned': 'Tilldelad:',
+        'groceries.change': 'Ändra',
+        'groceries.connecting': 'Ansluter...',
+        'groceries.connectionError': 'Anslutningsfel',
+        'groceries.disconnected': 'Frånkopplad',
+        'groceries.anonymous': 'Anonym',
+
+        // Home page
+        'home.allDone': 'Allt klart! Inget att göra just nu.',
+
+        // Layout
+        'layout.loading': 'Loading...',
     },
 
     en: {
@@ -295,6 +438,7 @@
         'common.edit': 'Edit',
         'common.deleting': 'Deleting',
         'common.all': 'All',
+        'common.create': 'Create',
 
         // Settings
         'settings.title': 'Settings',
@@ -549,6 +693,148 @@
         // Date formatting
         'date.today': 'Today',
         'date.tomorrow': 'Tomorrow',
+
+        // Bulletin / Notes
+        'bulletin.addNote': 'Add note...',
+        'bulletin.deleteConfirm': 'Delete this note?',
+        'bulletin.editNote': 'Edit note',
+        'bulletin.newNote': 'New note',
+        'bulletin.title': 'Title',
+        'bulletin.titleRequired': 'Title *',
+        'bulletin.titlePlaceholder': 'E.g. Dinner at 5pm',
+        'bulletin.type': 'Type',
+        'bulletin.typeText': '📝 Text',
+        'bulletin.typeList': '☑️ List',
+        'bulletin.message': 'Message',
+        'bulletin.messagePlaceholder': 'Write your message...',
+        'bulletin.listItems': 'List items',
+        'bulletin.newItem': 'New item...',
+        'bulletin.color': 'Color',
+        'bulletin.notifyPush': 'Notify (push)',
+        'bulletin.allMembers': 'All',
+        'bulletin.anonymous': 'Anonymous',
+        'bulletin.pinTop': '📌 Pin to top',
+        'bulletin.expires': '⏰ Expires',
+        'bulletin.someone': 'Someone',
+
+        // Install prompt
+        'install.title': 'Install Family Hub',
+        'install.description': 'Add to your home screen for quick access',
+        'install.button': 'Install',
+        'install.notNow': 'Not now',
+
+        // Forgot password
+        'forgotPassword.title': 'Forgot password?',
+        'forgotPassword.familyTitle': "Forgot family's password?",
+        'forgotPassword.description': "Enter your email address and we'll send you a link to reset your password.",
+        'forgotPassword.familyDescription': "Enter a parent's email address and we'll send a link to reset the family password.",
+        'forgotPassword.emailLabel': 'Email address',
+        'forgotPassword.parentEmailLabel': "Parent's email address",
+        'forgotPassword.emailPlaceholder': 'your.email@example.com',
+        'forgotPassword.submitButton': 'Send reset link',
+        'forgotPassword.successTitle': 'Check your inbox!',
+        'forgotPassword.successMessage': 'If the email exists in our system, we have sent an email with instructions to reset {type} password.',
+        'forgotPassword.yourPassword': 'your',
+        'forgotPassword.familyPassword': "the family's",
+        'forgotPassword.checkSpam': "Don't forget to check spam!",
+        'forgotPassword.backToHome': '← Back to home',
+        'forgotPassword.errorEmail': 'Enter your email address',
+        'forgotPassword.errorGeneric': 'Something went wrong',
+        'forgotPassword.errorSend': 'Could not send reset email',
+
+        // Verify email
+        'verifyEmail.title': 'Verify email',
+        'verifyEmail.verifying': 'Verifying your email address...',
+        'verifyEmail.successTitle': 'Email verified!',
+        'verifyEmail.successMessage': 'Thank you! Your email address has been verified.',
+        'verifyEmail.goToApp': 'Go to Family Hub',
+        'verifyEmail.errorTitle': 'Something went wrong',
+        'verifyEmail.errorExpired': 'The link may have expired or already been used.',
+        'verifyEmail.goToHome': 'Go to home',
+        'verifyEmail.errorMissing': 'Verification link is missing',
+        'verifyEmail.errorVerify': 'Could not verify email address',
+        'verifyEmail.errorGeneric': 'Something went wrong. The link may have expired.',
+
+        // Welcome page - additional
+        'welcome.createNewFamily': '+ Create New Family',
+        'welcome.familyPasswordLabel': 'Family Password',
+        'welcome.familyPasswordPlaceholder': 'Password for the family',
+        'welcome.confirmPasswordLabel': 'Confirm Password',
+        'welcome.passwordMismatchError': 'Passwords do not match',
+        'welcome.familyMembers': 'Family Members',
+        'welcome.savedMembers': '{count} saved',
+        'welcome.savedMembersSingle': '',
+        'welcome.savedMembersPlural': '',
+        'welcome.firstNamePlaceholder': '{label} *',
+        'welcome.emailOptional': 'Optional - needed if you forget your password',
+        'welcome.passwordPlaceholder': 'Password',
+        'welcome.confirmPasswordPlaceholder': 'Confirm password',
+        'welcome.removePassword': '🔓 Remove password',
+        'welcome.addPassword': '🔒 Add password (optional)',
+        'welcome.addMember': '➕ Add member',
+        'welcome.creating': 'Creating...',
+        'welcome.createFamilyWithCount': 'Create family ({count} member{plural})',
+        'welcome.memberSingle': '',
+        'welcome.memberPlural': 's',
+
+        // Login page - additional
+        'login.passwordLabel': 'Password',
+        'login.cancelButton': '← Cancel',
+        'login.loadingMembers': 'Loading family members...',
+
+        // Nickname dropdown
+        'nickname.selectNickname': 'Select nickname...',
+        'nickname.writeNickname': 'Write nickname...',
+        'nickname.back': 'Back',
+        'nickname.nicknameOptional': 'Nickname (optional)',
+        'nickname.other': 'Other...',
+        'nickname.pappa.far': 'Father',
+        'nickname.pappa.pappa': 'Dad',
+        'nickname.pappa.farsan': 'Daddy',
+        'nickname.pappa.papa': 'Papa',
+        'nickname.pappa.paps': 'Pops',
+        'nickname.mamma.mor': 'Mother',
+        'nickname.mamma.mamma': 'Mom',
+        'nickname.mamma.morsan': 'Mommy',
+        'nickname.mamma.mama': 'Mama',
+        'nickname.mamma.mams': 'Mum',
+
+        // Calendar page
+        'calendar.connectTitle': 'Connect Google Calendar',
+        'calendar.connectDescription': 'Link your Google account to see all your calendars and activities in one place.',
+        'calendar.connectedAs': 'Connected as: {email}',
+        'calendar.disconnect': 'Disconnect Google Calendar',
+        'calendar.connectionStatus': 'Connected',
+
+        // Activity form
+        'activities.syncToCalendar': '📅 Add to Google Calendar',
+        'activities.dateLabel': '📅 Date *',
+
+        // Profile page - additional
+        'profile.memberSinceLabel': 'Member Since:',
+        'profile.passwordChanged': 'Password changed!',
+        'profile.confirmPasswordLabel': 'Confirm password',
+        'profile.passwordMismatchError': 'Passwords do not match',
+        'profile.passwordTooShortError': 'Password must be at least 4 characters',
+        'profile.deleteAccountTitle': 'Delete Account',
+        'profile.deleteAccountDescription': 'This will permanently delete your account. This action cannot be undone.',
+        'profile.goToAccountSettings': 'Go to account settings',
+
+        // Groceries page - additional
+        'groceries.connectionStatus': 'Connected',
+        'groceries.assignedToList': 'Assigned to grocery list',
+        'groceries.assigned': 'Assigned:',
+        'groceries.change': 'Change',
+        'groceries.connecting': 'Connecting...',
+        'groceries.connectionError': 'Connection error',
+        'groceries.disconnected': 'Disconnected',
+        'groceries.anonymous': 'Anonymous',
+
+        // Home page
+        'home.allDone': 'All done! Nothing to do right now.',
+
+        // Layout
+        'layout.loading': 'Loading...',
     },
 
     pt: {
@@ -571,6 +857,7 @@
         'common.edit': 'Editar',
         'common.deleting': 'Excluindo',
         'common.all': 'Todos',
+        'common.create': 'Criar',
 
         // Settings
         'settings.title': 'Configurações',
@@ -823,6 +1110,148 @@
         // Date formatting
         'date.today': 'Hoje',
         'date.tomorrow': 'Amanhã',
+
+        // Bulletin / Notes
+        'bulletin.addNote': 'Adicionar nota...',
+        'bulletin.deleteConfirm': 'Excluir esta nota?',
+        'bulletin.editNote': 'Editar nota',
+        'bulletin.newNote': 'Nova nota',
+        'bulletin.title': 'Título',
+        'bulletin.titleRequired': 'Título *',
+        'bulletin.titlePlaceholder': 'Ex. Jantar às 17h',
+        'bulletin.type': 'Tipo',
+        'bulletin.typeText': '📝 Texto',
+        'bulletin.typeList': '☑️ Lista',
+        'bulletin.message': 'Mensagem',
+        'bulletin.messagePlaceholder': 'Escreva sua mensagem...',
+        'bulletin.listItems': 'Itens da lista',
+        'bulletin.newItem': 'Novo item...',
+        'bulletin.color': 'Cor',
+        'bulletin.notifyPush': 'Notificar (push)',
+        'bulletin.allMembers': 'Todos',
+        'bulletin.anonymous': 'Anônimo',
+        'bulletin.pinTop': '📌 Fixar no topo',
+        'bulletin.expires': '⏰ Expira',
+        'bulletin.someone': 'Alguém',
+
+        // Install prompt
+        'install.title': 'Instalar Family Hub',
+        'install.description': 'Adicione à tela inicial para acesso rápido',
+        'install.button': 'Instalar',
+        'install.notNow': 'Agora não',
+
+        // Forgot password
+        'forgotPassword.title': 'Esqueceu a senha?',
+        'forgotPassword.familyTitle': 'Esqueceu a senha da família?',
+        'forgotPassword.description': 'Digite seu endereço de e-mail e enviaremos um link para redefinir sua senha.',
+        'forgotPassword.familyDescription': 'Digite o e-mail de um dos pais da família e enviaremos um link para redefinir a senha da família.',
+        'forgotPassword.emailLabel': 'Endereço de e-mail',
+        'forgotPassword.parentEmailLabel': 'E-mail dos pais',
+        'forgotPassword.emailPlaceholder': 'seu.email@example.com',
+        'forgotPassword.submitButton': 'Enviar link de redefinição',
+        'forgotPassword.successTitle': 'Verifique sua caixa de entrada!',
+        'forgotPassword.successMessage': 'Se o e-mail existir em nosso sistema, enviamos um e-mail com instruções para redefinir {type} senha.',
+        'forgotPassword.yourPassword': 'sua',
+        'forgotPassword.familyPassword': 'a senha da família',
+        'forgotPassword.checkSpam': 'Não esqueça de verificar o spam!',
+        'forgotPassword.backToHome': '← Voltar para página inicial',
+        'forgotPassword.errorEmail': 'Digite seu endereço de e-mail',
+        'forgotPassword.errorGeneric': 'Algo deu errado',
+        'forgotPassword.errorSend': 'Não foi possível enviar e-mail de redefinição',
+
+        // Verify email
+        'verifyEmail.title': 'Verificar e-mail',
+        'verifyEmail.verifying': 'Verificando seu endereço de e-mail...',
+        'verifyEmail.successTitle': 'E-mail verificado!',
+        'verifyEmail.successMessage': 'Obrigado! Seu endereço de e-mail foi verificado.',
+        'verifyEmail.goToApp': 'Ir para Family Hub',
+        'verifyEmail.errorTitle': 'Algo deu errado',
+        'verifyEmail.errorExpired': 'O link pode ter expirado ou já foi usado.',
+        'verifyEmail.goToHome': 'Ir para página inicial',
+        'verifyEmail.errorMissing': 'Link de verificação ausente',
+        'verifyEmail.errorVerify': 'Não foi possível verificar o endereço de e-mail',
+        'verifyEmail.errorGeneric': 'Algo deu errado. O link pode ter expirado.',
+
+        // Welcome page - additional
+        'welcome.createNewFamily': '+ Criar Nova Família',
+        'welcome.familyPasswordLabel': 'Senha da Família',
+        'welcome.familyPasswordPlaceholder': 'Senha para a família',
+        'welcome.confirmPasswordLabel': 'Confirmar Senha',
+        'welcome.passwordMismatchError': 'As senhas não correspondem',
+        'welcome.familyMembers': 'Membros da Família',
+        'welcome.savedMembers': '{count} salvo{plural}',
+        'welcome.savedMembersSingle': '',
+        'welcome.savedMembersPlural': 's',
+        'welcome.firstNamePlaceholder': '{label} *',
+        'welcome.emailOptional': 'Opcional - necessário se você esquecer sua senha',
+        'welcome.passwordPlaceholder': 'Senha',
+        'welcome.confirmPasswordPlaceholder': 'Confirmar senha',
+        'welcome.removePassword': '🔓 Remover senha',
+        'welcome.addPassword': '🔒 Adicionar senha (opcional)',
+        'welcome.addMember': '➕ Adicionar membro',
+        'welcome.creating': 'Criando...',
+        'welcome.createFamilyWithCount': 'Criar família ({count} membro{plural})',
+        'welcome.memberSingle': '',
+        'welcome.memberPlural': 's',
+
+        // Login page - additional
+        'login.passwordLabel': 'Senha',
+        'login.cancelButton': '← Cancelar',
+        'login.loadingMembers': 'Carregando membros da família...',
+
+        // Nickname dropdown
+        'nickname.selectNickname': 'Selecionar apelido...',
+        'nickname.writeNickname': 'Escrever apelido...',
+        'nickname.back': 'Voltar',
+        'nickname.nicknameOptional': 'Apelido (opcional)',
+        'nickname.other': 'Outro...',
+        'nickname.pappa.far': 'Pai',
+        'nickname.pappa.pappa': 'Papai',
+        'nickname.pappa.farsan': 'Paizinho',
+        'nickname.pappa.papa': 'Papa',
+        'nickname.pappa.paps': 'Papi',
+        'nickname.mamma.mor': 'Mãe',
+        'nickname.mamma.mamma': 'Mamãe',
+        'nickname.mamma.morsan': 'Mãezinha',
+        'nickname.mamma.mama': 'Mama',
+        'nickname.mamma.mams': 'Mami',
+
+        // Calendar page
+        'calendar.connectTitle': 'Conectar Google Agenda',
+        'calendar.connectDescription': 'Conecte sua conta do Google para ver todos os seus calendários e atividades em um só lugar.',
+        'calendar.connectedAs': 'Conectado como: {email}',
+        'calendar.disconnect': 'Desconectar Google Agenda',
+        'calendar.connectionStatus': 'Conectado',
+
+        // Activity form
+        'activities.syncToCalendar': '📅 Adicionar ao Google Agenda',
+        'activities.dateLabel': '📅 Data *',
+
+        // Profile page - additional
+        'profile.memberSinceLabel': 'Membro Desde:',
+        'profile.passwordChanged': 'Senha alterada!',
+        'profile.confirmPasswordLabel': 'Confirmar senha',
+        'profile.passwordMismatchError': 'As senhas não correspondem',
+        'profile.passwordTooShortError': 'A senha deve ter pelo menos 4 caracteres',
+        'profile.deleteAccountTitle': 'Excluir Conta',
+        'profile.deleteAccountDescription': 'Isso excluirá permanentemente sua conta. Esta ação não pode ser desfeita.',
+        'profile.goToAccountSettings': 'Ir para configurações da conta',
+
+        // Groceries page - additional
+        'groceries.connectionStatus': 'Conectado',
+        'groceries.assignedToList': 'Atribuído à lista de compras',
+        'groceries.assigned': 'Atribuído:',
+        'groceries.change': 'Alterar',
+        'groceries.connecting': 'Conectando...',
+        'groceries.connectionError': 'Erro de conexão',
+        'groceries.disconnected': 'Desconectado',
+        'groceries.anonymous': 'Anônimo',
+
+        // Home page
+        'home.allDone': 'Tudo pronto! Nada a fazer agora.',
+
+        // Layout
+        'layout.loading': 'Carregando...',
     },
 };
 
