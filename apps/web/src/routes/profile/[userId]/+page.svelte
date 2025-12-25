@@ -629,11 +629,15 @@
                 ? 'bg-orange-100 dark:bg-orange-900/30'
                 : 'hover:bg-stone-100 dark:hover:bg-stone-700/50'}"
             >
-              <div class="{bgColor} w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md flex-shrink-0">
+              <div
+                class="{bgColor} w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md flex-shrink-0"
+              >
                 {profile.avatarEmoji || '👤'}
               </div>
               <div class="min-w-0">
-                <span class="font-semibold text-sm lg:text-base text-stone-800 dark:text-white truncate block">
+                <span
+                  class="font-semibold text-sm lg:text-base text-stone-800 dark:text-white truncate block"
+                >
                   {profile.displayName || profile.username}
                 </span>
                 <span class="text-xs text-stone-400 dark:text-stone-500 truncate block">
