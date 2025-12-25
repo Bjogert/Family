@@ -17,7 +17,7 @@
 
   // Calendar view state
   let currentDate = new Date();
-  let viewMode: 'week' | 'month' = 'week';
+  let viewMode: 'week' | 'month' = 'month';
 
   $: currentMonth = currentDate.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' });
   $: weekDays = getWeekDays(currentDate);
@@ -343,7 +343,7 @@
   {:else}
     <!-- Calendar Navigation -->
     <div class="bg-white dark:bg-stone-800 rounded-2xl shadow-md p-4 mb-4">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <button
             on:click={prevPeriod}
@@ -363,12 +363,12 @@
           >
             →
           </button>
-          <span class="ml-4 text-lg font-semibold text-stone-800 dark:text-stone-100 capitalize">
+          <span class="ml-2 text-lg font-semibold text-stone-800 dark:text-stone-100 capitalize">
             {currentMonth}
           </span>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1">
           <button
             on:click={() => {
               viewMode = 'week';

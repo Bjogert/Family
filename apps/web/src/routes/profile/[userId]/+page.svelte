@@ -618,56 +618,49 @@
       <!-- Sidebar Navigation -->
       <aside class="lg:w-64 flex-shrink-0">
         <div
-          class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4 lg:p-6"
+          class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-3 lg:p-4"
         >
-          <!-- Profile Header -->
-          <div class="text-center mb-4 lg:mb-6">
-            <div
-              class="{bgColor} w-16 h-16 lg:w-20 lg:h-20 rounded-full flex items-center justify-center text-3xl lg:text-4xl shadow-lg mx-auto mb-2 lg:mb-3"
-            >
-              {profile.avatarEmoji || '👤'}
-            </div>
-            <h2 class="text-lg lg:text-xl font-bold text-stone-800 dark:text-white">
-              {profile.displayName || profile.username}
-            </h2>
-            {#if profile.role}
-              <p class="text-sm text-stone-500 dark:text-stone-400 capitalize">
-                {roleOptions.find((r) => r.value === profile?.role)?.label || profile.role}
-              </p>
-            {/if}
-            {#if !isOwnProfile}
-              <p class="text-xs text-stone-400 dark:text-stone-500 mt-1">
-                @{profile.username}
-              </p>
-            {/if}
-          </div>
-
-          <!-- Navigation -->
-          <nav class="space-y-1">
-            {#each navItems as item}
-              <button
-                on:click={() => setSection(item.id)}
-                class="w-full flex items-center gap-3 px-3 py-2 lg:px-4 lg:py-3 rounded-xl transition-colors text-left
-                  {activeSection === item.id
-                  ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
-                  : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-600 dark:text-stone-300'}"
-              >
-                <span class="text-lg lg:text-xl">{item.icon}</span>
-                <span class="font-medium text-sm lg:text-base">{item.label}</span>
-              </button>
-            {/each}
-          </nav>
-
-          <!-- Back button -->
-          <div class="mt-4 pt-4 lg:mt-6 lg:pt-6 border-t border-stone-200 dark:border-stone-700">
+          <!-- Profile header row: Emoji + Name as Overview button, Profile button on right -->
+          <div class="flex items-center gap-2 mb-2">
             <button
-              on:click={() => goto('/')}
-              class="w-full flex items-center gap-3 px-3 py-2 lg:px-4 lg:py-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400 transition-colors"
+              on:click={() => setSection('overview')}
+              class="flex-[2] flex items-center gap-3 px-2 py-2 rounded-xl transition-colors text-left min-w-0
+                {activeSection === 'overview'
+                ? 'bg-orange-100 dark:bg-orange-900/30'
+                : 'hover:bg-stone-100 dark:hover:bg-stone-700/50'}"
             >
-              <span class="text-lg lg:text-xl">←</span>
-              <span class="font-medium text-sm lg:text-base">Tillbaka</span>
+              <div class="{bgColor} w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md flex-shrink-0">
+                {profile.avatarEmoji || '👤'}
+              </div>
+              <div class="min-w-0">
+                <span class="font-semibold text-sm lg:text-base text-stone-800 dark:text-white truncate block">
+                  {profile.displayName || profile.username}
+                </span>
+                <span class="text-xs text-stone-400 dark:text-stone-500 truncate block">
+                  @{profile.username}
+                </span>
+              </div>
+            </button>
+            <button
+              on:click={() => setSection('profile')}
+              class="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl transition-colors
+                {activeSection === 'profile'
+                ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+                : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400'}"
+            >
+              <span>👤</span>
+              <span class="font-medium text-sm">Profil</span>
             </button>
           </div>
+
+          <!-- Back button -->
+          <button
+            on:click={() => goto('/')}
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400 transition-colors text-left"
+          >
+            <span class="text-lg">←</span>
+            <span class="font-medium text-sm lg:text-base">Tillbaka</span>
+          </button>
         </div>
       </aside>
 
