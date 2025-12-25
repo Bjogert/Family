@@ -385,9 +385,12 @@ CREATE INDEX idx_tempus_children_family ON tempus_children(family_id);
 CREATE INDEX idx_tempus_absences_family ON tempus_absences(family_id);
 CREATE INDEX idx_tempus_absences_child ON tempus_absences(child_id);
 CREATE INDEX idx_tempus_absences_dates ON tempus_absences(from_date, to_date);
+CREATE INDEX idx_tempus_absences_family_child ON tempus_absences(family_id, child_id);
 CREATE INDEX idx_tempus_attendance_family ON tempus_attendance(family_id);
 CREATE INDEX idx_tempus_attendance_child ON tempus_attendance(child_id);
 CREATE INDEX idx_tempus_attendance_date ON tempus_attendance(date);
+CREATE INDEX idx_tempus_attendance_family_child ON tempus_attendance(family_id, child_id);
+CREATE INDEX idx_tempus_attendance_child_date ON tempus_attendance(child_id, date);
 CREATE INDEX idx_tempus_sync_log_family ON tempus_sync_log(family_id);
 ```
 
@@ -719,7 +722,7 @@ Add to `.env.example` and `.env`:
 TEMPUS_ENCRYPTION_KEY=
 
 # Tempus API rate limiting (requests per minute)
-TEMPUS_RATE_LIMIT=60
+TEMPUS_RATE_LIMIT_PER_MINUTE=60
 
 # Cache refresh interval (hours)
 TEMPUS_CACHE_REFRESH_HOURS=6
@@ -940,8 +943,14 @@ import crypto from 'crypto';
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
+const KEY_LENGTH = 64; // 64 hex characters = 32 bytes
 
 export function encrypt(text: string, key: string): string {
+  // Validate encryption key
+  if (!key || key.length !== KEY_LENGTH || !/^[0-9a-f]{64}$/i.test(key)) {
+    throw new Error('Invalid encryption key: must be 64 hex characters (32 bytes)');
+  }
+  
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(
     ALGORITHM, 
@@ -959,7 +968,23 @@ export function encrypt(text: string, key: string): string {
 }
 
 export function decrypt(text: string, key: string): string {
-  const [ivHex, authTagHex, encrypted] = text.split(':');
+  // Validate encryption key
+  if (!key || key.length !== KEY_LENGTH || !/^[0-9a-f]{64}$/i.test(key)) {
+    throw new Error('Invalid encryption key: must be 64 hex characters (32 bytes)');
+  }
+  
+  // Validate encrypted text format
+  const parts = text.split(':');
+  if (parts.length !== 3) {
+    throw new Error('Invalid encrypted text format: expected "iv:authTag:encrypted"');
+  }
+  
+  const [ivHex, authTagHex, encrypted] = parts;
+  
+  // Validate hex lengths
+  if (ivHex.length !== IV_LENGTH * 2 || authTagHex.length !== AUTH_TAG_LENGTH * 2) {
+    throw new Error('Invalid encrypted text: incorrect IV or auth tag length');
+  }
   
   const decipher = crypto.createDecipheriv(
     ALGORITHM,

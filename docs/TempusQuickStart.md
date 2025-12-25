@@ -61,7 +61,7 @@ packages/shared/src/schemas/tempus.ts
 ### Environment Variables (.env)
 ```bash
 TEMPUS_ENCRYPTION_KEY=<64-char-hex-string>
-TEMPUS_RATE_LIMIT=60
+TEMPUS_RATE_LIMIT_PER_MINUTE=60
 TEMPUS_CACHE_REFRESH_HOURS=6
 TEMPUS_BACKGROUND_SYNC=true
 TEMPUS_SYNC_INTERVAL_MINUTES=360
@@ -262,7 +262,7 @@ CREATE TABLE tempus_sync_log (
 // apps/api/src/modules/tempus/scheduler.ts
 import cron from 'node-cron';
 
-// Sync every 6 hours
+// Sync every 6 hours at minute 0 (runs at 00:00, 06:00, 12:00, 18:00)
 cron.schedule('0 */6 * * *', async () => {
   // Sync attendance for all families with Tempus enabled
 });
