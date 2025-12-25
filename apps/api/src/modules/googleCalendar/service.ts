@@ -8,9 +8,9 @@ import type {
 import { config } from '../../config.js';
 import { logger } from '../../utils/logger.js';
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CALENDAR_CLIENT_ID || config.google.clientId;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CALENDAR_CLIENT_SECRET || config.google.clientSecret;
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_CALENDAR_REDIRECT_URI || config.google.redirectUri;
+const GOOGLE_CLIENT_ID = config.google.clientId;
+const GOOGLE_CLIENT_SECRET = config.google.clientSecret;
+const GOOGLE_REDIRECT_URI = config.google.redirectUri;
 
 const SCOPES = [
     'https://www.googleapis.com/auth/calendar.readonly',

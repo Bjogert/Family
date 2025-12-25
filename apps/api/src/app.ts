@@ -74,9 +74,66 @@ export async function buildApp() {
     // Stricter limits for auth endpoints (applied via route config)
   });
 
-  // Health check endpoint
+  // Health check endpoint (simple)
   app.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() };
+  });
+
+  // Comprehensive health check endpoint
+  app.get('/health/full', async () => {
+    const checks: Record<string, { status: string; message?: string; latency?: number }> = {};
+    
+    // Check database
+    const dbStart = Date.now();
+    try {
+      await pool.query('SELECT 1');
+      checks.database = { status: 'ok', latency: Date.now() - dbStart };
+    } catch (err) {
+      checks.database = { status: 'error', message: (err as Error).message };
+    }
+
+    // Check Google Calendar config
+    const hasGoogleConfig = !!(
+      process.env.GOOGLE_CLIENT_ID &&
+      process.env.GOOGLE_CLIENT_SECRET &&
+      process.env.GOOGLE_REDIRECT_URI
+    );
+    checks.googleCalendar = {
+      status: hasGoogleConfig ? 'ok' : 'warning',
+      message: hasGoogleConfig ? 'Configured' : 'Missing credentials',
+    };
+
+    // Check email config
+    const hasEmailConfig = !!(
+      process.env.EMAIL_HOST &&
+      process.env.EMAIL_USER &&
+      process.env.EMAIL_PASSWORD
+    );
+    checks.email = {
+      status: hasEmailConfig ? 'ok' : 'warning',
+      message: hasEmailConfig ? 'Configured' : 'Missing credentials',
+    };
+
+    // Check push notifications config
+    const hasPushConfig = !!(
+      process.env.VAPID_PUBLIC_KEY &&
+      process.env.VAPID_PRIVATE_KEY
+    );
+    checks.pushNotifications = {
+      status: hasPushConfig ? 'ok' : 'warning',
+      message: hasPushConfig ? 'Configured' : 'Missing VAPID keys',
+    };
+
+    // Overall status
+    const hasErrors = Object.values(checks).some(c => c.status === 'error');
+    const hasWarnings = Object.values(checks).some(c => c.status === 'warning');
+
+    return {
+      status: hasErrors ? 'error' : hasWarnings ? 'degraded' : 'ok',
+      timestamp: new Date().toISOString(),
+      version: '0.1.0',
+      checks,
+    };
   });
 
   // API info endpoint

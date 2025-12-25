@@ -48,6 +48,21 @@
     assignedTo: number | null;
   }
 
+  interface AssignedTask {
+    id: number;
+    title: string;
+    category: string;
+    difficulty: string;
+    points: number;
+    status: 'open' | 'in_progress' | 'done' | 'verified';
+    dueDate: string | null;
+    dueTime: string | null;
+    requiresValidation: boolean;
+    createdBy: number | null;
+    assignedTo: number | null;
+    creator?: { displayName: string | null };
+  }
+
   interface CalendarEvent {
     id: number;
     title: string;
@@ -143,9 +158,12 @@
     },
   };
   let assignedGroceries: GroceryItem[] = [];
+  let assignedTasks: AssignedTask[] = [];
+  let earnedPoints = 0; // Total points from verified tasks
   let upcomingEvents: CalendarEvent[] = [];
   let loading = true;
   let saving = false;
+  let taskUpdating = false;
   let error: string | null = null;
   let successMessage: string | null = null;
 
@@ -257,6 +275,29 @@
         // Ignore
       }
 
+      // Load assigned tasks and calculate earned points
+      if ($currentFamily) {
+        try {
+          const tasksResponse = await fetch('/api/tasks', {
+            headers: { 'x-family-id': String($currentFamily.id) },
+            credentials: 'include',
+          });
+          if (tasksResponse.ok) {
+            const tasksRes: AssignedTask[] = await tasksResponse.json();
+            // Active tasks (not yet verified)
+            assignedTasks = tasksRes.filter(
+              (task) => task.assignedTo === userId && task.status !== 'verified'
+            );
+            // Calculate earned points from verified tasks
+            earnedPoints = tasksRes
+              .filter((task) => task.assignedTo === userId && task.status === 'verified')
+              .reduce((sum, task) => sum + (task.points || 0), 0);
+          }
+        } catch {
+          // Ignore
+        }
+      }
+
       // Load upcoming events for this user
       try {
         const eventsRes = await get<{ success: boolean; events: CalendarEvent[] }>(
@@ -305,6 +346,46 @@
       error = 'Kunde inte spara inställningarna';
     } finally {
       saving = false;
+    }
+  }
+
+  // Mark a task as done
+  async function markTaskDone(taskId: number) {
+    taskUpdating = true;
+    try {
+      await put(`/tasks/${taskId}`, { status: 'done' });
+      // Refresh the tasks list
+      const tasksRes = await get<{ success: boolean; tasks: AssignedTask[] }>('/tasks');
+      assignedTasks = tasksRes.tasks.filter(
+        (task) => task.assignedTo === userId && task.status !== 'verified'
+      );
+      successMessage = $t('tasks.markedAsDone');
+      setTimeout(() => (successMessage = null), 3000);
+    } catch (err) {
+      error = $t('tasks.errorUpdating');
+      setTimeout(() => (error = null), 3000);
+    } finally {
+      taskUpdating = false;
+    }
+  }
+
+  // Verify/approve a task (for parents/creator)
+  async function verifyTask(taskId: number) {
+    taskUpdating = true;
+    try {
+      await put(`/tasks/${taskId}/verify`, {});
+      // Refresh the tasks list
+      const tasksRes = await get<{ success: boolean; tasks: AssignedTask[] }>('/tasks');
+      assignedTasks = tasksRes.tasks.filter(
+        (task) => task.assignedTo === userId && task.status !== 'verified'
+      );
+      successMessage = $t('tasks.verified');
+      setTimeout(() => (successMessage = null), 3000);
+    } catch (err) {
+      error = $t('tasks.errorUpdating');
+      setTimeout(() => (error = null), 3000);
+    } finally {
+      taskUpdating = false;
     }
   }
 
@@ -531,10 +612,21 @@
 
           <!-- Overview Section -->
           {#if activeSection === 'overview'}
-            <h2 class="text-xl font-bold text-stone-800 dark:text-white mb-6">
-              {isOwnProfile
-                ? 'Min översikt'
-                : `${profile.displayName || profile.username}s översikt`}
+            <h2 class="text-xl font-bold text-stone-800 dark:text-white mb-6 flex items-center justify-between">
+              <span>
+                {isOwnProfile
+                  ? 'Min översikt'
+                  : `${profile.displayName || profile.username}s översikt`}
+              </span>
+              <!-- Points Badge (small circle) -->
+              {#if earnedPoints > 0}
+                <div class="flex items-center gap-2" title="{$t('profile.earnedPoints')}">
+                  <span class="text-sm text-stone-500 dark:text-stone-400">🏆</span>
+                  <span class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                    {earnedPoints}
+                  </span>
+                </div>
+              {/if}
             </h2>
 
             <div class="grid gap-6 md:grid-cols-2">
@@ -572,6 +664,83 @@
                     class="inline-block mt-3 text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400"
                   >
                     Visa hela listan →
+                  </a>
+                {/if}
+              </div>
+
+              <!-- Assigned Tasks -->
+              <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
+                <h3
+                  class="font-semibold text-stone-700 dark:text-stone-300 mb-3 flex items-center gap-2"
+                >
+                  <span>📋</span>
+                  <span>{$t('profile.myTasks')}</span>
+                  {#if assignedTasks.length > 0}
+                    <span class="bg-teal-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      {assignedTasks.length}
+                    </span>
+                  {/if}
+                </h3>
+                {#if assignedTasks.length === 0}
+                  <p class="text-sm text-stone-500 dark:text-stone-400">{$t('profile.noTasks')}</p>
+                {:else}
+                  <ul class="space-y-3">
+                    {#each assignedTasks as task}
+                      <li class="bg-white dark:bg-stone-600/50 rounded-lg p-3">
+                        <div class="flex items-start justify-between gap-2">
+                          <div class="flex-1 min-w-0">
+                            <span class="text-sm font-medium text-stone-700 dark:text-stone-200 block truncate">
+                              {task.title}
+                            </span>
+                            <div class="flex items-center gap-2 mt-1 flex-wrap">
+                              <span class="text-xs text-stone-500 dark:text-stone-400">
+                                🏆 {task.points} {$t('tasks.points')}
+                              </span>
+                              {#if task.dueDate}
+                                <span class="text-xs text-stone-500 dark:text-stone-400">
+                                  📅 {formatDate(task.dueDate)}
+                                </span>
+                              {/if}
+                              {#if task.status === 'done'}
+                                <span class="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full">
+                                  {task.requiresValidation ? $t('tasks.awaitingApproval') : $t('tasks.statusDone')}
+                                </span>
+                              {:else if task.status === 'in_progress'}
+                                <span class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                                  {$t('tasks.statusInProgress')}
+                                </span>
+                              {/if}
+                            </div>
+                          </div>
+                          
+                          <!-- Actions -->
+                          {#if task.status !== 'done'}
+                            <button
+                              on:click={() => markTaskDone(task.id)}
+                              disabled={taskUpdating}
+                              class="shrink-0 px-3 py-1.5 bg-teal-500 hover:bg-teal-600 text-white text-xs rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              ✓ {$t('tasks.markDone')}
+                            </button>
+                          {:else if task.requiresValidation && task.createdBy === $currentUser?.id}
+                            <!-- Show verify button if current user is the creator -->
+                            <button
+                              on:click={() => verifyTask(task.id)}
+                              disabled={taskUpdating}
+                              class="shrink-0 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              ✅ {$t('tasks.approve')}
+                            </button>
+                          {/if}
+                        </div>
+                      </li>
+                    {/each}
+                  </ul>
+                  <a
+                    href="/tasks"
+                    class="inline-block mt-3 text-sm text-teal-500 hover:text-teal-600 dark:text-teal-400"
+                  >
+                    {$t('tasks.viewAll')} →
                   </a>
                 {/if}
               </div>

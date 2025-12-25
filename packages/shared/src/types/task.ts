@@ -35,6 +35,7 @@ export interface Task {
     dueTime: string | null; // Time (HH:MM)
     recurringPattern: TaskRecurringPattern;
     status: TaskStatus;
+    requiresValidation: boolean; // If true, parent must approve before points awarded
     completedAt: string | null;
     verifiedBy: number | null;
     verifiedAt: string | null;
@@ -70,6 +71,7 @@ export interface CreateTaskInput {
     dueTime?: string;
     recurringPattern?: TaskRecurringPattern;
     reminderMinutes?: number;
+    requiresValidation?: boolean;
 }
 
 export interface UpdateTaskInput extends Partial<CreateTaskInput> {

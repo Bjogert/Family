@@ -18,6 +18,7 @@ function mapRowToTask(row: taskRepo.TaskRow): Task {
         dueTime: row.due_time,
         recurringPattern: row.recurring_pattern as Task['recurringPattern'],
         status: row.status as Task['status'],
+        requiresValidation: row.requires_validation ?? false,
         completedAt: row.completed_at?.toISOString() || null,
         verifiedBy: row.verified_by,
         verifiedAt: row.verified_at?.toISOString() || null,
@@ -60,7 +61,7 @@ export async function getTasksByAssignee(familyId: number, userId: number): Prom
 
 export async function createTask(
     familyId: number,
-    input: CreateTaskInput & { sendNotification?: boolean; reminderMinutes?: number },
+    input: CreateTaskInput & { sendNotification?: boolean; reminderMinutes?: number; requiresValidation?: boolean },
     createdBy?: number
 ): Promise<Task> {
     const row = await taskRepo.create({
@@ -75,6 +76,7 @@ export async function createTask(
         dueTime: input.dueTime,
         recurringPattern: input.recurringPattern || undefined,
         reminderMinutes: input.reminderMinutes,
+        requiresValidation: input.requiresValidation,
         createdBy,
     });
 
@@ -100,9 +102,10 @@ export async function updateTask(
     input: UpdateTaskInput,
     updatedBy?: number
 ): Promise<Task | null> {
-    // Get the current task to check if assignment changed
+    // Get the current task to check if assignment changed or status changed
     const currentTask = await getTaskById(id, familyId);
     const previousAssignedTo = currentTask?.assignedTo;
+    const previousStatus = currentTask?.status;
 
     const row = await taskRepo.update(id, familyId, {
         title: input.title,
@@ -129,6 +132,22 @@ export async function updateTask(
             await pushService.notifyTaskAssigned(input.assignedTo, taskTitle, updaterName);
         } catch (error) {
             logger.error('Failed to send task assignment notification', { error });
+        }
+    }
+
+    // Send notification to creator when task is marked as done (requires validation)
+    if (input.status === 'done' && previousStatus !== 'done' && currentTask?.requiresValidation) {
+        const creatorId = currentTask?.createdBy;
+        // Only notify if there's a creator, task was done by someone else, and there's an updater
+        if (creatorId && updatedBy && creatorId !== updatedBy) {
+            try {
+                const completer = await authRepo.findUserById(updatedBy);
+                const completerName = completer?.displayName || completer?.username || 'Någon';
+                const taskTitle = currentTask?.title || 'En uppgift';
+                await pushService.notifyTaskCompleted(creatorId, taskTitle, completerName);
+            } catch (error) {
+                logger.error('Failed to send task completion notification', { error });
+            }
         }
     }
 

@@ -19,7 +19,7 @@
   }> = [];
 
   const dispatch = createEventDispatcher<{
-    save: Partial<Task> & { sendNotification?: boolean };
+    save: Partial<Task> & { sendNotification?: boolean; requiresValidation?: boolean };
     cancel: void;
   }>();
 
@@ -34,6 +34,7 @@
   let dueTime = task?.dueTime || '';
   let recurringPattern: RecurringPattern = task?.recurringPattern || null;
   let sendNotification = true; // Default to send notification
+  let requiresValidation = task?.requiresValidation ?? false; // Require parent approval
   let enableReminder = (task as any)?.reminderMinutes != null;
   let reminderMinutes: number = (task as any)?.reminderMinutes || 60;
 
@@ -73,6 +74,7 @@
       dueTime: dueTime || undefined,
       recurringPattern,
       sendNotification,
+      requiresValidation: assignedTo ? requiresValidation : false, // Only if assigned
       reminderMinutes: enableReminder && dueDate ? reminderMinutes : undefined,
     });
   }
@@ -270,16 +272,35 @@
 
   <!-- Send Notification (only show when someone is assigned) -->
   {#if assignedTo}
-    <label class="flex items-center gap-3 cursor-pointer">
-      <input
-        type="checkbox"
-        bind:checked={sendNotification}
-        class="w-5 h-5 rounded border-stone-300 dark:border-stone-600 text-teal-500 focus:ring-teal-400"
-      />
-      <span class="text-sm text-stone-700 dark:text-stone-200">
-        🔔 {$t('tasks.sendNotification')}
-      </span>
-    </label>
+    <div class="space-y-3">
+      <label class="flex items-center gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          bind:checked={sendNotification}
+          class="w-5 h-5 rounded border-stone-300 dark:border-stone-600 text-teal-500 focus:ring-teal-400"
+        />
+        <span class="text-sm text-stone-700 dark:text-stone-200">
+          🔔 {$t('tasks.sendNotification')}
+        </span>
+      </label>
+      
+      <!-- Requires Validation checkbox -->
+      <label class="flex items-center gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          bind:checked={requiresValidation}
+          class="w-5 h-5 rounded border-stone-300 dark:border-stone-600 text-teal-500 focus:ring-teal-400"
+        />
+        <span class="text-sm text-stone-700 dark:text-stone-200">
+          ✅ {$t('tasks.requiresValidation')}
+        </span>
+      </label>
+      {#if requiresValidation}
+        <p class="text-xs text-stone-500 dark:text-stone-400 ml-8">
+          {$t('tasks.requiresValidationHint')}
+        </p>
+      {/if}
+    </div>
   {/if}
 
   <!-- Actions -->

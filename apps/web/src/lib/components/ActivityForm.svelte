@@ -23,7 +23,11 @@
   $: parents = familyMembers.filter((m) => m.role === 'pappa' || m.role === 'mamma');
 
   const dispatch = createEventDispatcher<{
-    save: CreateActivityInput & { sendNotification?: boolean; notificationRecipientIds?: number[] };
+    save: CreateActivityInput & {
+      sendNotification?: boolean;
+      notificationRecipientIds?: number[];
+      reminderMinutes?: number;
+    };
     cancel: void;
   }>();
 
@@ -45,6 +49,19 @@
   let syncToCalendar = calendarConnected && !activity; // Default to true for new activities if calendar is connected
   let sendNotification = true; // Default to send notification
   let selectedNotificationRecipients: number[] = []; // Who to notify
+  let enableReminder = (activity as any)?.reminderMinutes != null;
+  let reminderMinutes: number = (activity as any)?.reminderMinutes || 60;
+
+  // Reminder time options (same as TaskForm)
+  const reminderOptions = [
+    { value: 0, labelKey: 'reminder.atTime' },
+    { value: 5, labelKey: 'reminder.5min' },
+    { value: 15, labelKey: 'reminder.15min' },
+    { value: 30, labelKey: 'reminder.30min' },
+    { value: 60, labelKey: 'reminder.1hour' },
+    { value: 120, labelKey: 'reminder.2hours' },
+    { value: 1440, labelKey: 'reminder.1day' },
+  ];
 
   // When participants change, auto-add them to notification recipients
   $: if (selectedParticipants.length > 0 && selectedNotificationRecipients.length === 0) {
@@ -97,6 +114,7 @@
       syncToCalendar: syncToCalendar && !activity, // Only sync new activities
       sendNotification,
       notificationRecipientIds: sendNotification ? selectedNotificationRecipients : undefined,
+      reminderMinutes: enableReminder ? reminderMinutes : undefined,
     });
   }
 </script>
@@ -288,24 +306,50 @@
 
     <!-- Notification Recipients (show when sendNotification is checked) -->
     {#if sendNotification}
-      <div class="ml-8">
-        <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">
-          {$t('activities.notifyWho')}
-        </span>
-        <div class="flex flex-wrap gap-2">
-          {#each familyMembers as member}
-            <button
-              type="button"
-              on:click={() => toggleNotificationRecipient(member.id)}
-              class="flex items-center gap-2 px-3 py-2 rounded-xl transition-all
-                {selectedNotificationRecipients.includes(member.id)
-                ? 'bg-amber-100 dark:bg-amber-900/50 ring-2 ring-amber-400'
-                : 'bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600'}"
+      <div class="ml-8 space-y-3">
+        <div>
+          <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">
+            {$t('activities.notifyWho')}
+          </span>
+          <div class="flex flex-wrap gap-2">
+            {#each familyMembers as member}
+              <button
+                type="button"
+                on:click={() => toggleNotificationRecipient(member.id)}
+                class="flex items-center gap-2 px-3 py-2 rounded-xl transition-all
+                  {selectedNotificationRecipients.includes(member.id)
+                  ? 'bg-amber-100 dark:bg-amber-900/50 ring-2 ring-amber-400'
+                  : 'bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600'}"
+              >
+                <span class="text-lg">{member.avatarEmoji || '👤'}</span>
+                <span class="text-sm text-stone-700 dark:text-stone-200">{member.displayName}</span>
+              </button>
+            {/each}
+          </div>
+        </div>
+
+        <!-- Reminder Time -->
+        <div class="flex items-center gap-4">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              bind:checked={enableReminder}
+              class="w-5 h-5 rounded border-stone-300 dark:border-stone-600 text-amber-500 focus:ring-amber-400"
+            />
+            <span class="text-sm text-stone-700 dark:text-stone-200">
+              ⏰ {$t('activities.remindMe')}
+            </span>
+          </label>
+          {#if enableReminder}
+            <select
+              bind:value={reminderMinutes}
+              class="flex-1 px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700 text-stone-800 dark:text-stone-100 text-sm"
             >
-              <span class="text-lg">{member.avatarEmoji || '👤'}</span>
-              <span class="text-sm text-stone-700 dark:text-stone-200">{member.displayName}</span>
-            </button>
-          {/each}
+              {#each reminderOptions as opt}
+                <option value={opt.value}>{$t(opt.labelKey)}</option>
+              {/each}
+            </select>
+          {/if}
         </div>
       </div>
     {/if}

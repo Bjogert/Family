@@ -14,6 +14,7 @@ export interface TaskRow {
     recurring_pattern: string | null;
     reminder_minutes: number | null;
     reminder_sent: boolean;
+    requires_validation: boolean;
     status: string;
     completed_at: Date | null;
     verified_by: number | null;
@@ -41,6 +42,7 @@ export interface CreateTaskData {
     dueTime?: string;
     recurringPattern?: string;
     reminderMinutes?: number;
+    requiresValidation?: boolean;
     createdBy?: number;
 }
 
@@ -55,13 +57,14 @@ export interface UpdateTaskData {
     dueTime?: string | null;
     recurringPattern?: string | null;
     reminderMinutes?: number | null;
+    requiresValidation?: boolean;
     status?: string;
 }
 
 const SELECT_TASK = `
   SELECT t.id, t.family_id, t.title, t.description, t.category, t.difficulty,
          t.points, t.assigned_to, t.due_date, t.due_time, t.recurring_pattern,
-         t.reminder_minutes, t.reminder_sent,
+         t.reminder_minutes, t.reminder_sent, t.requires_validation,
          t.status, t.completed_at, t.verified_by, t.verified_at, t.created_by,
          t.created_at, t.updated_at,
          ua.display_name as assignee_name, ua.avatar_emoji as assignee_emoji, ua.color as assignee_color,
@@ -103,8 +106,8 @@ export async function findById(id: number, familyId: number): Promise<TaskRow | 
 export async function create(data: CreateTaskData): Promise<TaskRow> {
     const result = await pool.query<TaskRow>(
         `INSERT INTO tasks (family_id, title, description, category, difficulty, points,
-                        assigned_to, due_date, due_time, recurring_pattern, reminder_minutes, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                        assigned_to, due_date, due_time, recurring_pattern, reminder_minutes, requires_validation, created_by)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      RETURNING *`,
         [
             data.familyId,
@@ -118,6 +121,7 @@ export async function create(data: CreateTaskData): Promise<TaskRow> {
             data.dueTime || null,
             data.recurringPattern || null,
             data.reminderMinutes ?? null,
+            data.requiresValidation ?? false,
             data.createdBy || null
         ]
     );
@@ -170,6 +174,10 @@ export async function update(id: number, familyId: number, data: UpdateTaskData)
         values.push(data.reminderMinutes);
         // Reset reminder_sent when reminder time changes
         fields.push(`reminder_sent = false`);
+    }
+    if (data.requiresValidation !== undefined) {
+        fields.push(`requires_validation = $${paramCount++}`);
+        values.push(data.requiresValidation);
     }
     if (data.status !== undefined) {
         fields.push(`status = $${paramCount++}`);

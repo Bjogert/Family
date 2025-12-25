@@ -248,6 +248,22 @@ export async function notifyTaskAssigned(
 }
 
 /**
+ * Notify creator that a task has been marked as done (needs verification)
+ */
+export async function notifyTaskCompleted(
+    creatorUserId: number,
+    taskTitle: string,
+    completedByName: string
+): Promise<void> {
+    await sendToUser(creatorUserId, {
+        title: '✅ Uppgift klar',
+        body: `${completedByName} har markerat "${taskTitle}" som klar`,
+        url: '/tasks',
+        tag: 'task-completed',
+    });
+}
+
+/**
  * Notify user about task reminder (upcoming due time)
  */
 export async function notifyTaskReminder(

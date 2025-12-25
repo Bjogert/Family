@@ -79,7 +79,8 @@ export function registerGoogleCalendarRoutes(
                 // Redirect to calendar page with success
                 return reply.redirect('/calendar?connected=true');
             } catch (err) {
-                logger.error('OAuth callback error', { error: err });
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                logger.error('OAuth callback error', { error: errorMessage, stack: err instanceof Error ? err.stack : undefined });
                 return reply.redirect('/?calendar_error=auth_failed');
             }
         }
