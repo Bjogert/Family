@@ -351,15 +351,77 @@
 
   // Mark a task as done
   async function markTaskDone(taskId: number) {
+    if (!$currentFamily) return;
     taskUpdating = true;
     try {
-      await put(`/tasks/${taskId}`, { status: 'done' });
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-family-id': String($currentFamily.id),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status: 'done' }),
+      });
+      if (!response.ok) throw new Error('Failed to update task');
+      
       // Refresh the tasks list
-      const tasksRes = await get<{ success: boolean; tasks: AssignedTask[] }>('/tasks');
-      assignedTasks = tasksRes.tasks.filter(
-        (task) => task.assignedTo === userId && task.status !== 'verified'
-      );
+      const tasksResponse = await fetch('/api/tasks', {
+        headers: { 'x-family-id': String($currentFamily.id) },
+        credentials: 'include',
+      });
+      if (tasksResponse.ok) {
+        const tasks: AssignedTask[] = await tasksResponse.json();
+        assignedTasks = tasks.filter(
+          (task) => task.assignedTo === userId && task.status !== 'verified'
+        );
+        // Recalculate earned points
+        earnedPoints = tasks
+          .filter((task) => task.assignedTo === userId && task.status === 'verified')
+          .reduce((sum, task) => sum + (task.points || 0), 0);
+      }
       successMessage = $t('tasks.markedAsDone');
+      setTimeout(() => (successMessage = null), 3000);
+    } catch (err) {
+      error = $t('tasks.errorUpdating');
+      setTimeout(() => (error = null), 3000);
+    } finally {
+      taskUpdating = false;
+    }
+  }
+
+  // Reopen a task (change status back to 'open')
+  async function reopenTask(taskId: number) {
+    if (!$currentFamily) return;
+    taskUpdating = true;
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-family-id': String($currentFamily.id),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status: 'open' }),
+      });
+      if (!response.ok) throw new Error('Failed to update task');
+      
+      // Refresh the tasks list
+      const tasksResponse = await fetch('/api/tasks', {
+        headers: { 'x-family-id': String($currentFamily.id) },
+        credentials: 'include',
+      });
+      if (tasksResponse.ok) {
+        const tasks: AssignedTask[] = await tasksResponse.json();
+        assignedTasks = tasks.filter(
+          (task) => task.assignedTo === userId && task.status !== 'verified'
+        );
+        // Recalculate earned points
+        earnedPoints = tasks
+          .filter((task) => task.assignedTo === userId && task.status === 'verified')
+          .reduce((sum, task) => sum + (task.points || 0), 0);
+      }
+      successMessage = $t('tasks.reopened');
       setTimeout(() => (successMessage = null), 3000);
     } catch (err) {
       error = $t('tasks.errorUpdating');
@@ -371,14 +433,34 @@
 
   // Verify/approve a task (for parents/creator)
   async function verifyTask(taskId: number) {
+    if (!$currentFamily) return;
     taskUpdating = true;
     try {
-      await put(`/tasks/${taskId}/verify`, {});
+      const response = await fetch(`/api/tasks/${taskId}/verify`, {
+        method: 'POST',
+        headers: {
+          'x-family-id': String($currentFamily.id),
+          'x-user-id': String($currentUser?.id),
+        },
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to verify task');
+      
       // Refresh the tasks list
-      const tasksRes = await get<{ success: boolean; tasks: AssignedTask[] }>('/tasks');
-      assignedTasks = tasksRes.tasks.filter(
-        (task) => task.assignedTo === userId && task.status !== 'verified'
-      );
+      const tasksResponse = await fetch('/api/tasks', {
+        headers: { 'x-family-id': String($currentFamily.id) },
+        credentials: 'include',
+      });
+      if (tasksResponse.ok) {
+        const tasks: AssignedTask[] = await tasksResponse.json();
+        assignedTasks = tasks.filter(
+          (task) => task.assignedTo === userId && task.status !== 'verified'
+        );
+        // Recalculate earned points
+        earnedPoints = tasks
+          .filter((task) => task.assignedTo === userId && task.status === 'verified')
+          .reduce((sum, task) => sum + (task.points || 0), 0);
+      }
       successMessage = $t('tasks.verified');
       setTimeout(() => (successMessage = null), 3000);
     } catch (err) {
@@ -513,7 +595,7 @@
 <main
   class="flex-1 bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900"
 >
-  <div class="h-full flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-7xl mx-auto">
+  <div class="h-full flex flex-col lg:flex-row gap-4 lg:gap-6 p-3 lg:p-6 max-w-7xl mx-auto">
     {#if loading}
       <div class="flex-1 flex items-center justify-center">
         <div
@@ -536,16 +618,16 @@
       <!-- Sidebar Navigation -->
       <aside class="lg:w-64 flex-shrink-0">
         <div
-          class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-6"
+          class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4 lg:p-6"
         >
           <!-- Profile Header -->
-          <div class="text-center mb-6">
+          <div class="text-center mb-4 lg:mb-6">
             <div
-              class="{bgColor} w-20 h-20 rounded-full flex items-center justify-center text-4xl shadow-lg mx-auto mb-3"
+              class="{bgColor} w-16 h-16 lg:w-20 lg:h-20 rounded-full flex items-center justify-center text-3xl lg:text-4xl shadow-lg mx-auto mb-2 lg:mb-3"
             >
               {profile.avatarEmoji || '👤'}
             </div>
-            <h2 class="text-xl font-bold text-stone-800 dark:text-white">
+            <h2 class="text-lg lg:text-xl font-bold text-stone-800 dark:text-white">
               {profile.displayName || profile.username}
             </h2>
             {#if profile.role}
@@ -565,25 +647,25 @@
             {#each navItems as item}
               <button
                 on:click={() => setSection(item.id)}
-                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left
+                class="w-full flex items-center gap-3 px-3 py-2 lg:px-4 lg:py-3 rounded-xl transition-colors text-left
                   {activeSection === item.id
                   ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
                   : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-600 dark:text-stone-300'}"
               >
-                <span class="text-xl">{item.icon}</span>
-                <span class="font-medium">{item.label}</span>
+                <span class="text-lg lg:text-xl">{item.icon}</span>
+                <span class="font-medium text-sm lg:text-base">{item.label}</span>
               </button>
             {/each}
           </nav>
 
           <!-- Back button -->
-          <div class="mt-6 pt-6 border-t border-stone-200 dark:border-stone-700">
+          <div class="mt-4 pt-4 lg:mt-6 lg:pt-6 border-t border-stone-200 dark:border-stone-700">
             <button
               on:click={() => goto('/')}
-              class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400 transition-colors"
+              class="w-full flex items-center gap-3 px-3 py-2 lg:px-4 lg:py-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400 transition-colors"
             >
-              <span class="text-xl">←</span>
-              <span class="font-medium">Tillbaka</span>
+              <span class="text-lg lg:text-xl">←</span>
+              <span class="font-medium text-sm lg:text-base">Tillbaka</span>
             </button>
           </div>
         </div>
@@ -592,7 +674,7 @@
       <!-- Main Content -->
       <div class="flex-1 min-w-0">
         <div
-          class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-6"
+          class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4 lg:p-6"
         >
           <!-- Success/Error Messages -->
           {#if successMessage}
@@ -612,50 +694,37 @@
 
           <!-- Overview Section -->
           {#if activeSection === 'overview'}
-            <h2
-              class="text-xl font-bold text-stone-800 dark:text-white mb-6 flex items-center justify-between"
-            >
-              <span>
-                {isOwnProfile
-                  ? 'Min översikt'
-                  : `${profile.displayName || profile.username}s översikt`}
-              </span>
-              <!-- Points Badge (small circle) -->
-              {#if earnedPoints > 0}
-                <div class="flex items-center gap-2" title={$t('profile.earnedPoints')}>
-                  <span class="text-sm text-stone-500 dark:text-stone-400">🏆</span>
-                  <span
-                    class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg"
-                  >
-                    {earnedPoints}
-                  </span>
-                </div>
-              {/if}
-            </h2>
-
-            <div class="grid gap-6 md:grid-cols-2">
-              <!-- Assigned Groceries -->
-              <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
-                <h3
-                  class="font-semibold text-stone-700 dark:text-stone-300 mb-3 flex items-center gap-2"
+            <!-- Points Badge - only show if has points -->
+            {#if earnedPoints > 0}
+              <div class="flex items-center justify-end gap-2 mb-4" title={$t('profile.earnedPoints')}>
+                <span class="text-sm text-stone-500 dark:text-stone-400">🏆</span>
+                <span
+                  class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg"
                 >
-                  <span>🛒</span>
-                  <span>Inköpslista</span>
-                  {#if assignedGroceries.length > 0}
+                  {earnedPoints}
+                </span>
+              </div>
+            {/if}
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <!-- Assigned Groceries - only show if has items -->
+              {#if assignedGroceries.length > 0}
+                <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-3">
+                  <h3
+                    class="font-semibold text-stone-700 dark:text-stone-300 mb-2 flex items-center gap-2 text-sm"
+                  >
+                    <span>🛒</span>
+                    <span>Inköpslista</span>
                     <span class="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">
                       {assignedGroceries.length}
                     </span>
-                  {/if}
-                </h3>
-                {#if assignedGroceries.length === 0}
-                  <p class="text-sm text-stone-500 dark:text-stone-400">Inga tilldelade varor</p>
-                {:else}
-                  <ul class="space-y-2">
+                  </h3>
+                  <ul class="space-y-1">
                     {#each assignedGroceries as item}
                       <li
                         class="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300"
                       >
-                        <span class="w-2 h-2 bg-orange-400 rounded-full"></span>
+                        <span class="w-1.5 h-1.5 bg-orange-400 rounded-full"></span>
                         <span>{item.name}</span>
                         {#if item.quantity}
                           <span class="text-stone-400">({item.quantity}{item.unit || ''})</span>
@@ -665,17 +734,17 @@
                   </ul>
                   <a
                     href="/groceries"
-                    class="inline-block mt-3 text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400"
+                    class="inline-block mt-2 text-xs text-orange-500 hover:text-orange-600 dark:text-orange-400"
                   >
                     Visa hela listan →
                   </a>
-                {/if}
-              </div>
+                </div>
+              {/if}
 
               <!-- Assigned Tasks -->
-              <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
+              <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-3">
                 <h3
-                  class="font-semibold text-stone-700 dark:text-stone-300 mb-3 flex items-center gap-2"
+                  class="font-semibold text-stone-700 dark:text-stone-300 mb-2 flex items-center gap-2 text-sm"
                 >
                   <span>📋</span>
                   <span>{$t('profile.myTasks')}</span>
@@ -688,9 +757,9 @@
                 {#if assignedTasks.length === 0}
                   <p class="text-sm text-stone-500 dark:text-stone-400">{$t('profile.noTasks')}</p>
                 {:else}
-                  <ul class="space-y-3">
+                  <ul class="space-y-2">
                     {#each assignedTasks as task}
-                      <li class="bg-white dark:bg-stone-600/50 rounded-lg p-3">
+                      <li class="bg-white dark:bg-stone-600/50 rounded-lg p-2">
                         <div class="flex items-start justify-between gap-2">
                           <div class="flex-1 min-w-0">
                             <span
@@ -716,6 +785,14 @@
                                     ? $t('tasks.awaitingApproval')
                                     : $t('tasks.statusDone')}
                                 </span>
+                                <button
+                                  on:click={() => reopenTask(task.id)}
+                                  disabled={taskUpdating}
+                                  class="text-xs text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 transition-colors disabled:opacity-50"
+                                  title={$t('tasks.reopen')}
+                                >
+                                  ↩️
+                                </button>
                               {:else if task.status === 'in_progress'}
                                 <span
                                   class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full"
@@ -751,25 +828,23 @@
                   </ul>
                   <a
                     href="/tasks"
-                    class="inline-block mt-3 text-sm text-teal-500 hover:text-teal-600 dark:text-teal-400"
+                    class="inline-block mt-2 text-xs text-teal-500 hover:text-teal-600 dark:text-teal-400"
                   >
                     {$t('tasks.viewAll')} →
                   </a>
                 {/if}
               </div>
 
-              <!-- Upcoming Events -->
-              <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
-                <h3
-                  class="font-semibold text-stone-700 dark:text-stone-300 mb-3 flex items-center gap-2"
-                >
-                  <span>📅</span>
-                  <span>Kommande händelser</span>
-                </h3>
-                {#if upcomingEvents.length === 0}
-                  <p class="text-sm text-stone-500 dark:text-stone-400">Inga kommande händelser</p>
-                {:else}
-                  <ul class="space-y-2">
+              <!-- Upcoming Events - only show if has events -->
+              {#if upcomingEvents.length > 0}
+                <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-3">
+                  <h3
+                    class="font-semibold text-stone-700 dark:text-stone-300 mb-2 flex items-center gap-2 text-sm"
+                  >
+                    <span>📅</span>
+                    <span>Kommande händelser</span>
+                  </h3>
+                  <ul class="space-y-1">
                     {#each upcomingEvents as event}
                       <li class="text-sm">
                         <span class="text-stone-600 dark:text-stone-300">{event.title}</span>
@@ -781,54 +856,12 @@
                   </ul>
                   <a
                     href="/calendar"
-                    class="inline-block mt-3 text-sm text-orange-500 hover:text-orange-600 dark:text-orange-400"
+                    class="inline-block mt-2 text-xs text-orange-500 hover:text-orange-600 dark:text-orange-400"
                   >
                     Visa kalender →
                   </a>
-                {/if}
-              </div>
-            </div>
-
-            <!-- Profile Quick Info -->
-            <div class="mt-6 bg-stone-50 dark:bg-stone-700/50 rounded-xl p-4">
-              <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-3">
-                Profilinformation
-              </h3>
-              <div class="grid grid-cols-2 gap-4 text-sm">
-                {#if profile.birthday}
-                  <div>
-                    <span class="text-stone-500 dark:text-stone-400">Födelsedag:</span>
-                    <span class="ml-2 text-stone-700 dark:text-stone-300"
-                      >{formatDate(profile.birthday)}</span
-                    >
-                  </div>
-                {/if}
-                {#if profile.gender}
-                  <div>
-                    <span class="text-stone-500 dark:text-stone-400">Kön:</span>
-                    <span class="ml-2 text-stone-700 dark:text-stone-300">
-                      {genderOptions.find((g) => g.value === profile?.gender)?.label ||
-                        profile.gender}
-                    </span>
-                  </div>
-                {/if}
-                <div>
-                  <span class="text-stone-500 dark:text-stone-400"
-                    >{$t('profile.memberSinceLabel')}</span
-                  >
-                  <span class="ml-2 text-stone-700 dark:text-stone-300"
-                    >{formatDate(profile.createdAt)}</span
-                  >
                 </div>
-                {#if profile.lastLogin}
-                  <div>
-                    <span class="text-stone-500 dark:text-stone-400">Senast aktiv:</span>
-                    <span class="ml-2 text-stone-700 dark:text-stone-300"
-                      >{formatDate(profile.lastLogin)}</span
-                    >
-                  </div>
-                {/if}
-              </div>
+              {/if}
             </div>
 
             <!-- Profile Section -->
