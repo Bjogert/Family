@@ -364,7 +364,7 @@
         body: JSON.stringify({ status: 'done' }),
       });
       if (!response.ok) throw new Error('Failed to update task');
-      
+
       // Refresh the tasks list
       const tasksResponse = await fetch('/api/tasks', {
         headers: { 'x-family-id': String($currentFamily.id) },
@@ -405,7 +405,7 @@
         body: JSON.stringify({ status: 'open' }),
       });
       if (!response.ok) throw new Error('Failed to update task');
-      
+
       // Refresh the tasks list
       const tasksResponse = await fetch('/api/tasks', {
         headers: { 'x-family-id': String($currentFamily.id) },
@@ -445,7 +445,7 @@
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to verify task');
-      
+
       // Refresh the tasks list
       const tasksResponse = await fetch('/api/tasks', {
         headers: { 'x-family-id': String($currentFamily.id) },
@@ -696,7 +696,10 @@
           {#if activeSection === 'overview'}
             <!-- Points Badge - only show if has points -->
             {#if earnedPoints > 0}
-              <div class="flex items-center justify-end gap-2 mb-4" title={$t('profile.earnedPoints')}>
+              <div
+                class="flex items-center justify-end gap-2 mb-4"
+                title={$t('profile.earnedPoints')}
+              >
                 <span class="text-sm text-stone-500 dark:text-stone-400">🏆</span>
                 <span
                   class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg"

@@ -195,7 +195,11 @@
                 >{$t('nav.familyHub')}</a
               >
               <!-- User indicator -->
-              <a href="/profile/{$currentUser?.id}" class="text-base hover:scale-110 transition-transform">{$currentUser?.avatarEmoji || '👤'}</a>
+              <a
+                href="/profile/{$currentUser?.id}"
+                class="text-base hover:scale-110 transition-transform"
+                >{$currentUser?.avatarEmoji || '👤'}</a
+              >
               <span class="{userColor} w-2 h-2 rounded-full"></span>
             </div>
             <div class="flex items-center gap-2">
@@ -302,7 +306,10 @@
               ✅ {$t('nav.tasks')}
             </a>
 
-            <a href="/profile/{$currentUser?.id}" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <a
+              href="/profile/{$currentUser?.id}"
+              class="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
               <span class="text-xl">{$currentUser?.avatarEmoji || '👤'}</span>
               <span class="text-sm text-gray-600 dark:text-gray-400">
                 {$currentUser?.displayName || $currentUser?.username || 'User'}
