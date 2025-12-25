@@ -529,7 +529,7 @@ Get attendance history for a child.
 ## Implementation Phases
 
 ### Phase 0: Prerequisites
-**Duration:** 1-2 hours  
+**Duration:** 2 hours  
 **Goal:** Prepare infrastructure
 
 **Tasks:**
@@ -546,7 +546,7 @@ Get attendance history for a child.
 ---
 
 ### Phase 1: Setup & Authentication
-**Duration:** 4-6 hours  
+**Duration:** 5 hours  
 **Goal:** Enable families to connect their Tempus account
 
 **Tasks:**
@@ -573,7 +573,7 @@ Get attendance history for a child.
 ---
 
 ### Phase 2: Children & Departments
-**Duration:** 4-6 hours  
+**Duration:** 5 hours  
 **Goal:** Display family's enrolled children
 
 **Tasks:**
@@ -600,7 +600,7 @@ Get attendance history for a child.
 ---
 
 ### Phase 3: Absences
-**Duration:** 6-8 hours  
+**Duration:** 7 hours  
 **Goal:** View and register child absences
 
 **Tasks:**
@@ -630,7 +630,7 @@ Get attendance history for a child.
 ---
 
 ### Phase 4: Attendance Tracking
-**Duration:** 4-6 hours  
+**Duration:** 5 hours  
 **Goal:** View attendance history and statistics
 
 **Tasks:**
@@ -656,7 +656,7 @@ Get attendance history for a child.
 ---
 
 ### Phase 5: Schedules & Polish
-**Duration:** 4-6 hours  
+**Duration:** 6 hours  
 **Goal:** Complete the integration with schedules and UX polish
 
 **Tasks:**
@@ -713,8 +713,9 @@ Add to `.env.example` and `.env`:
 # Set these if your family uses Tempus for childcare management
 # Leave empty to disable Tempus features
 
-# Encryption key for storing Tempus credentials
+# Encryption key for storing Tempus credentials (64-character hex string)
 # Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# Example format: a1b2c3d4e5f6... (64 hex characters total)
 TEMPUS_ENCRYPTION_KEY=
 
 # Tempus API rate limiting (requests per minute)
@@ -982,10 +983,17 @@ import axios from 'axios';
 
 const TEMPUS_BASE_URL = 'https://rest.tempusinfo.se/tempusRest/admin/v1';
 
+/**
+ * Tempus API credentials for authentication
+ */
 export interface TempusCredentials {
+  /** API key provided by Tempus */
   apiKey: string;
+  /** Username for Basic Auth */
   username: string;
+  /** Password for Basic Auth */
   password: string;
+  /** Municipality/customer code (e.g., 'landvetter', 'gothenburg') */
   county: string;
 }
 
@@ -1043,8 +1051,8 @@ export class TempusClient {
 
 ```bash
 # In apps/api/
-pnpm add axios           # HTTP client for Tempus API
-pnpm add node-cron       # Background sync jobs (optional)
+pnpm add axios@^1.6.0           # HTTP client for Tempus API
+pnpm add node-cron@^3.0.0       # Background sync jobs
 
 # Already have:
 # - crypto (Node.js built-in) for encryption
@@ -1081,8 +1089,9 @@ If API access is not available:
 ## Next Steps
 
 1. **Get Tempus Test Credentials** (if available)
-   - Contact Landvetter municipality
-   - Or use Tempus demo/sandbox account
+   - Contact your municipality's Tempus administrator
+   - Request demo/sandbox account credentials from Tempus
+   - Or use production credentials if available
 
 2. **Start with Phase 0**: Infrastructure setup
    - Add environment variables
@@ -1100,4 +1109,4 @@ If API access is not available:
 
 *Last updated: 2024-12-25*  
 *Next step: Phase 0 - Prerequisites*  
-*Estimated total implementation: 20-30 hours*
+*Estimated total implementation: 30 hours (2+5+5+7+5+6 hours across 6 phases)*
