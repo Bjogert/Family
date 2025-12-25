@@ -596,9 +596,14 @@
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
               <span class="text-lg">{$currentUser?.avatarEmoji || '👤'}</span>
-              <span class="text-sm font-semibold text-amber-700 dark:text-amber-400">{$t('profile.myTasks')}</span>
+              <span class="text-sm font-semibold text-amber-700 dark:text-amber-400"
+                >{$t('profile.myTasks')}</span
+              >
             </div>
-            <a href="/profile/{$currentUser?.id}" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">
+            <a
+              href="/profile/{$currentUser?.id}"
+              class="text-xs text-teal-600 dark:text-teal-400 hover:underline"
+            >
               {$t('profile.title')} →
             </a>
           </div>
@@ -606,7 +611,9 @@
           <!-- Tasks awaiting my approval (priority) -->
           {#if tasksAwaitingMyApproval.length > 0}
             <div class="mb-3">
-              <p class="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">🔔 {$t('tasks.awaitingApproval')}</p>
+              <p class="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">
+                🔔 {$t('tasks.awaitingApproval')}
+              </p>
               <div class="space-y-1">
                 {#each tasksAwaitingMyApproval.slice(0, 3) as task (task.id)}
                   {@const assignee = familyMembers.find((m) => m.id === task.assignedTo)}
@@ -615,8 +622,12 @@
                     class="flex items-center gap-2 py-1.5 px-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg hover:bg-orange-200 dark:hover:bg-orange-800/40 transition-colors"
                   >
                     <span class="text-sm">{assignee?.avatarEmoji || '✅'}</span>
-                    <span class="text-sm text-stone-700 dark:text-stone-300 truncate flex-1">{task.title}</span>
-                    <span class="text-xs text-orange-600 dark:text-orange-400 font-medium">{$t('tasks.approve')}</span>
+                    <span class="text-sm text-stone-700 dark:text-stone-300 truncate flex-1"
+                      >{task.title}</span
+                    >
+                    <span class="text-xs text-orange-600 dark:text-orange-400 font-medium"
+                      >{$t('tasks.approve')}</span
+                    >
                   </a>
                 {/each}
               </div>
@@ -632,7 +643,11 @@
                   href="/tasks"
                   class="flex items-center gap-2 py-1 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded px-1 -mx-1 transition-colors"
                 >
-                  <span class="w-4 h-4 rounded-full border-2 {isOverdue ? 'border-red-400' : 'border-amber-400'}"></span>
+                  <span
+                    class="w-4 h-4 rounded-full border-2 {isOverdue
+                      ? 'border-red-400'
+                      : 'border-amber-400'}"
+                  ></span>
                   <span
                     class="text-sm text-stone-700 dark:text-stone-300 truncate flex-1 {isOverdue
                       ? 'text-red-600 dark:text-red-400'
@@ -650,7 +665,8 @@
               {/each}
               {#if myAssignedTasks.length > 4}
                 <p class="text-[10px] text-stone-400 dark:text-stone-500 pt-1">
-                  +{myAssignedTasks.length - 4} {$t('common.more')}...
+                  +{myAssignedTasks.length - 4}
+                  {$t('common.more')}...
                 </p>
               {/if}
             </div>

@@ -612,7 +612,9 @@
 
           <!-- Overview Section -->
           {#if activeSection === 'overview'}
-            <h2 class="text-xl font-bold text-stone-800 dark:text-white mb-6 flex items-center justify-between">
+            <h2
+              class="text-xl font-bold text-stone-800 dark:text-white mb-6 flex items-center justify-between"
+            >
               <span>
                 {isOwnProfile
                   ? 'Min översikt'
@@ -620,9 +622,11 @@
               </span>
               <!-- Points Badge (small circle) -->
               {#if earnedPoints > 0}
-                <div class="flex items-center gap-2" title="{$t('profile.earnedPoints')}">
+                <div class="flex items-center gap-2" title={$t('profile.earnedPoints')}>
                   <span class="text-sm text-stone-500 dark:text-stone-400">🏆</span>
-                  <span class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                  <span
+                    class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg"
+                  >
                     {earnedPoints}
                   </span>
                 </div>
@@ -689,12 +693,15 @@
                       <li class="bg-white dark:bg-stone-600/50 rounded-lg p-3">
                         <div class="flex items-start justify-between gap-2">
                           <div class="flex-1 min-w-0">
-                            <span class="text-sm font-medium text-stone-700 dark:text-stone-200 block truncate">
+                            <span
+                              class="text-sm font-medium text-stone-700 dark:text-stone-200 block truncate"
+                            >
                               {task.title}
                             </span>
                             <div class="flex items-center gap-2 mt-1 flex-wrap">
                               <span class="text-xs text-stone-500 dark:text-stone-400">
-                                🏆 {task.points} {$t('tasks.points')}
+                                🏆 {task.points}
+                                {$t('tasks.points')}
                               </span>
                               {#if task.dueDate}
                                 <span class="text-xs text-stone-500 dark:text-stone-400">
@@ -702,17 +709,23 @@
                                 </span>
                               {/if}
                               {#if task.status === 'done'}
-                                <span class="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full">
-                                  {task.requiresValidation ? $t('tasks.awaitingApproval') : $t('tasks.statusDone')}
+                                <span
+                                  class="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full"
+                                >
+                                  {task.requiresValidation
+                                    ? $t('tasks.awaitingApproval')
+                                    : $t('tasks.statusDone')}
                                 </span>
                               {:else if task.status === 'in_progress'}
-                                <span class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                                <span
+                                  class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full"
+                                >
                                   {$t('tasks.statusInProgress')}
                                 </span>
                               {/if}
                             </div>
                           </div>
-                          
+
                           <!-- Actions -->
                           {#if task.status !== 'done'}
                             <button
@@ -800,7 +813,9 @@
                   </div>
                 {/if}
                 <div>
-                  <span class="text-stone-500 dark:text-stone-400">{$t('profile.memberSinceLabel')}</span>
+                  <span class="text-stone-500 dark:text-stone-400"
+                    >{$t('profile.memberSinceLabel')}</span
+                  >
                   <span class="ml-2 text-stone-700 dark:text-stone-300"
                     >{formatDate(profile.createdAt)}</span
                   >
@@ -1293,7 +1308,9 @@
               <div
                 class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6"
               >
-                <h3 class="font-semibold text-red-700 dark:text-red-400 mb-2">{$t('profile.deleteAccountTitle')}</h3>
+                <h3 class="font-semibold text-red-700 dark:text-red-400 mb-2">
+                  {$t('profile.deleteAccountTitle')}
+                </h3>
                 <p class="text-sm text-red-600 dark:text-red-400/80 mb-4">
                   {$t('profile.deleteAccountDescription')}
                 </p>

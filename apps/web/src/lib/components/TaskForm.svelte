@@ -283,7 +283,7 @@
           🔔 {$t('tasks.sendNotification')}
         </span>
       </label>
-      
+
       <!-- Requires Validation checkbox -->
       <label class="flex items-center gap-3 cursor-pointer">
         <input

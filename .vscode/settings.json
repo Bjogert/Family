@@ -1,12 +1,12 @@
 {
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "search.exclude": {
-    "**/node_modules": true,
-    "**/dist": true,
-    "**/build": true
-  },
-  "files.exclude": {
-    "**/node_modules/.pnpm/**/tsconfig.json": true
-  },
-  "typescript.preferences.importModuleSpecifier": "relative"
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/build": true
+    },
+    "files.exclude": {
+        "**/node_modules/.pnpm/**/tsconfig.json": true
+    },
+    "typescript.preferences.importModuleSpecifier": "relative"
 }

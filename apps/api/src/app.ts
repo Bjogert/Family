@@ -82,7 +82,7 @@ export async function buildApp() {
   // Comprehensive health check endpoint
   app.get('/health/full', async () => {
     const checks: Record<string, { status: string; message?: string; latency?: number }> = {};
-    
+
     // Check database
     const dbStart = Date.now();
     try {

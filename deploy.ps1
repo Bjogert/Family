@@ -62,7 +62,8 @@ try {
     scp "$LOCAL_PATH\.env" "${PI_HOST}:${PI_PATH}/.env" 2>$null
     if ($LASTEXITCODE -ne 0) { throw "SCP failed" }
     Write-Success "Environment variables synced"
-} catch {
+}
+catch {
     Write-Fail "Failed to sync .env: $_"
     exit 1
 }
@@ -102,7 +103,8 @@ if ($deployApi) {
         scp -r "$LOCAL_PATH\apps\api\dist" "${PI_HOST}:${PI_PATH}/apps/api/" 2>$null
         if ($LASTEXITCODE -ne 0) { throw "SCP failed" }
         Write-Success "API deployed"
-    } catch {
+    }
+    catch {
         Write-Fail "API deploy failed: $_"
         exit 1
     }
@@ -115,7 +117,8 @@ if ($deployWeb) {
         scp -r "$LOCAL_PATH\apps\web\build" "${PI_HOST}:${PI_PATH}/apps/web/" 2>$null
         if ($LASTEXITCODE -ne 0) { throw "SCP failed" }
         Write-Success "Web app deployed"
-    } catch {
+    }
+    catch {
         Write-Fail "Web deploy failed: $_"
         exit 1
     }
@@ -135,7 +138,8 @@ if (-not $NoRestart) {
         }
         # Give services time to start
         Start-Sleep -Seconds 3
-    } catch {
+    }
+    catch {
         Write-Fail "Failed to restart services: $_"
         exit 1
     }
@@ -149,7 +153,8 @@ $healthOk = $true
 $apiHealthJson = ssh $PI_HOST "curl -s http://localhost:3001/health" 2>$null
 if ($apiHealthJson -match '"status"\s*:\s*"ok"') {
     Write-Success "API is healthy"
-} else {
+}
+else {
     Write-Fail "API health check failed"
     $healthOk = $false
 }
@@ -158,7 +163,8 @@ if ($apiHealthJson -match '"status"\s*:\s*"ok"') {
 $webStatus = ssh $PI_HOST "curl -s -o /dev/null -w '%{http_code}' http://localhost:3000" 2>$null
 if ($webStatus -eq "200") {
     Write-Success "Web app is healthy"
-} else {
+}
+else {
     Write-Fail "Web health check failed (HTTP $webStatus)"
     $healthOk = $false
 }
@@ -169,7 +175,8 @@ try {
     if ($extResponse.StatusCode -eq 200) {
         Write-Success "External access (familjehubben.vip) is working"
     }
-} catch {
+}
+catch {
     Write-Fail "External access check failed - Cloudflare tunnel may need attention"
     $healthOk = $false
 }
@@ -179,7 +186,8 @@ $elapsed = (Get-Date) - $startTime
 Write-Host "`n========================================" -ForegroundColor Yellow
 if ($healthOk) {
     Write-Host "  ✓ Deployment completed successfully!" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "  ⚠ Deployment completed with warnings" -ForegroundColor Yellow
 }
 Write-Host "  Time: $($elapsed.TotalSeconds.ToString('0.0'))s" -ForegroundColor Gray
