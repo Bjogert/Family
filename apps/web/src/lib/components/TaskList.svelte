@@ -16,6 +16,7 @@
     delete: number;
     statusChange: { id: number; status: TaskStatus };
     verify: number;
+    reopen: number;
   }>();
 
   function getMemberById(id: number | null) {
@@ -177,6 +178,15 @@
           >
             {getActionButtonText(task.status)}
           </button>
+          {#if task.status === 'done' || task.status === 'in_progress'}
+            <button
+              on:click={() => dispatch('reopen', task.id)}
+              class="px-2 py-1.5 text-sm text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 transition-colors"
+              title={$t('tasks.reopen')}
+            >
+              ↩️
+            </button>
+          {/if}
         {/if}
         <div class="flex-1"></div>
         {#if task.status !== 'verified'}

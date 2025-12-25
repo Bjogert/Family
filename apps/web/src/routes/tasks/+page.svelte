@@ -138,6 +138,28 @@
     }
   }
 
+  async function handleReopen(event: CustomEvent<number>) {
+    const id = event.detail;
+    if (!$currentFamily) return;
+
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-family-id': String($currentFamily.id),
+        },
+        body: JSON.stringify({ status: 'open' }),
+      });
+
+      if (res.ok) {
+        await loadTasks();
+      }
+    } catch (err) {
+      console.error('Failed to reopen task:', err);
+    }
+  }
+
   async function handleVerify(event: CustomEvent<number>) {
     const id = event.detail;
     if (!$currentFamily || !$currentUser) return;
@@ -272,6 +294,7 @@
       on:delete={handleDelete}
       on:statusChange={handleStatusChange}
       on:verify={handleVerify}
+      on:reopen={handleReopen}
     />
   {/if}
 </div>
