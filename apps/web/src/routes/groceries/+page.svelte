@@ -9,6 +9,8 @@
     groupItemsByCategory,
     loadCategoryOrder,
     saveCategoryOrder,
+    loadCollapsedCategories,
+    saveCollapsedCategories,
     initializeCategoryOrder,
   } from '$lib/utils/groceryHelpers';
   import AutocompleteDropdown from '$lib/components/AutocompleteDropdown.svelte';
@@ -45,6 +47,7 @@
   let newItemName = '';
   let newItemCategory = 'other';
   let newItemQuantity = 1;
+  let newItemUnit = 'st';
   let showBought = false;
   let showFavoritesOnly = false;
   let filterCategory: string | null = null;
@@ -62,6 +65,17 @@
   // Category order customization
   let categoryOrder: string[] = [];
   let draggingCategoryIndex: number | null = null;
+  let collapsedCategories: Set<string> = new Set();
+
+  function toggleCategoryCollapse(categoryName: string) {
+    if (collapsedCategories.has(categoryName)) {
+      collapsedCategories.delete(categoryName);
+    } else {
+      collapsedCategories.add(categoryName);
+    }
+    collapsedCategories = collapsedCategories; // trigger reactivity
+    saveCollapsedCategories(collapsedCategories);
+  }
 
   // Reactive suggestions
   $: {
@@ -145,9 +159,11 @@
         name: newItemName.trim(),
         category: newItemCategory,
         quantity: newItemQuantity,
+        unit: newItemUnit,
       });
       newItemName = '';
       newItemQuantity = 1;
+      newItemUnit = 'st';
     } catch (e) {
       if (e instanceof ApiError) {
         error = e.message;
@@ -315,6 +331,11 @@
     if (suggestion.defaultQuantity) {
       newItemQuantity = suggestion.defaultQuantity;
     }
+    if (suggestion.unit) {
+      newItemUnit = suggestion.unit;
+    } else {
+      newItemUnit = 'st';
+    }
     showSuggestions = false;
     selectedSuggestionIndex = -1;
   }
@@ -365,6 +386,58 @@
     }
   }
 
+  // Smart quantity stepping based on unit
+  function getQuantityStep(currentValue: number, unit: string, increasing: boolean): number {
+    // For weight units (kg), use smart stepping
+    if (unit === 'kg') {
+      if (increasing) {
+        if (currentValue < 2) return 0.2;
+        if (currentValue < 3) return 0.5;
+        return 1;
+      } else {
+        if (currentValue <= 2) return 0.2;
+        if (currentValue <= 3) return 0.5;
+        return 1;
+      }
+    }
+    // For volume units (l, dl), similar smart stepping
+    if (unit === 'l') {
+      if (increasing) {
+        if (currentValue < 2) return 0.5;
+        return 1;
+      } else {
+        if (currentValue <= 2) return 0.5;
+        return 1;
+      }
+    }
+    if (unit === 'dl') {
+      return 1; // 1 dl steps
+    }
+    // For grams, step by 50 up to 500, then 100
+    if (unit === 'g') {
+      if (increasing) {
+        if (currentValue < 500) return 50;
+        return 100;
+      } else {
+        if (currentValue <= 500) return 50;
+        return 100;
+      }
+    }
+    // For all other units (st, burk, förp, etc.), step by 1
+    return 1;
+  }
+
+  function incrementQuantity() {
+    const step = getQuantityStep(newItemQuantity, newItemUnit, true);
+    newItemQuantity = Math.round((newItemQuantity + step) * 10) / 10; // Round to 1 decimal
+  }
+
+  function decrementQuantity() {
+    const step = getQuantityStep(newItemQuantity, newItemUnit, false);
+    const minValue = newItemUnit === 'kg' || newItemUnit === 'l' ? 0.2 : 1;
+    newItemQuantity = Math.max(minValue, Math.round((newItemQuantity - step) * 10) / 10);
+  }
+
   // Category drag and drop
   function handleCategoryDragStart(e: DragEvent, index: number) {
     draggingCategoryIndex = index;
@@ -399,6 +472,7 @@
 
   onMount(() => {
     categoryOrder = loadCategoryOrder();
+    collapsedCategories = loadCollapsedCategories();
     loadData();
 
     // Connect to WebSocket
@@ -691,13 +765,26 @@
               <option value={cat.name}>{cat.icon} {getCategoryTranslation(cat.name)}</option>
             {/each}
           </select>
-          <input
-            type="number"
-            bind:value={newItemQuantity}
-            min="1"
-            max="99"
-            class="input w-16 text-center"
-          />
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              on:click={decrementQuantity}
+              class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-bold"
+            >
+              −
+            </button>
+            <span class="w-14 text-center font-medium">
+              {newItemQuantity % 1 === 0 ? newItemQuantity : newItemQuantity.toFixed(1)}
+              {newItemUnit}
+            </span>
+            <button
+              type="button"
+              on:click={incrementQuantity}
+              class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-bold"
+            >
+              +
+            </button>
+          </div>
         </div>
       </form>
 
@@ -761,6 +848,7 @@
             draggingIndex={draggingCategoryIndex}
             {editingQuantityId}
             bind:editQuantityValue
+            isCollapsed={collapsedCategories.has(group.category.name)}
             {getCategoryIcon}
             {getCategoryTranslation}
             onDragStart={(e) => handleCategoryDragStart(e, index)}
@@ -772,6 +860,7 @@
             onStartEdit={startEditingQuantity}
             onUpdateQuantity={updateQuantity}
             onCancelEdit={cancelEditingQuantity}
+            onToggleCollapse={() => toggleCategoryCollapse(group.category.name)}
           />
         {/each}
       {/if}

@@ -4,7 +4,9 @@
       "Bash(dir:*)",
       "Bash(cat:*)",
       "Bash(copy:*)",
-      "Bash(if not exist \"apps\\\\web\\\\static\\\\icons\" mkdir \"apps\\\\web\\\\static\\\\icons\")"
+      "Bash(if not exist \"apps\\\\web\\\\static\\\\icons\" mkdir \"apps\\\\web\\\\static\\\\icons\")",
+      "Bash(find:*)",
+      "Bash(wc:*)"
     ]
   }
 }

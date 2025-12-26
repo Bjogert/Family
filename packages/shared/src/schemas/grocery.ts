@@ -23,7 +23,6 @@ export const CreateGrocerySchema = z.object({
   category: GroceryCategorySchema.default('other'),
   quantity: z
     .number()
-    .int()
     .positive()
     .default(1),
   unit: z
@@ -46,7 +45,6 @@ export const UpdateGrocerySchema = z.object({
   category: GroceryCategorySchema.optional(),
   quantity: z
     .number()
-    .int()
     .positive()
     .optional(),
   unit: z

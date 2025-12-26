@@ -916,6 +916,69 @@ Based on comprehensive project review, implemented following improvements:
 
 ---
 
+### Session 15 - 2025-12-26 (Grocery AI Phase 2 & Unit Fixes)
+**What we did:**
+
+**1. AI Menu Generation (Phase 2):**
+- Implemented OpenAI integration for weekly dinner menu generation
+- Created menu API module with repository, service, routes
+- AI generates 7 dinners based on family preferences + restrictions
+- Features: regenerate full menu, regenerate specific days, edit individual meals
+- Shows cooking time, difficulty, servings, ingredients per meal
+- Ingredient reuse analysis shows what's used across multiple days
+
+**2. Fixed AI-Generated Grocery Units:**
+- **Problem:** When AI menu ingredients were added to grocery list, everything defaulted to "st" (pieces) instead of proper units (kg, g, dl, etc.)
+- **Root Cause 1:** `parseIngredient()` in menu page defaulted to "st" when AI didn't specify unit
+- **Root Cause 2:** `addItem()` in grocery page wasn't sending the `unit` field from suggestions
+
+**3. Smart Unit Defaults for ~100+ Swedish Ingredients:**
+- Created `defaultUnitMap` in menu page with proper units:
+  - Produce: potatis → kg, spenat → g, champinjoner → g
+  - Meat: köttfärs → 500g, kyckling → 500g, bacon → 200g
+  - Fish: lax → 400g, räkor → 300g
+  - Dairy: mjölk → l, grädde → 2dl, ost → 200g, ägg → 6st
+  - Pantry: pasta → 400g, ris → 300g, krossade tomater → burk
+  - Spices: salt → krm, curry → tsk, basilika → kruka
+- Updated `parseIngredient()` to use `getDefaultUnit()` lookup
+
+**4. Fixed Grocery Page Suggestion Units:**
+- Added `newItemUnit` state variable
+- Updated `selectSuggestion()` to set unit from suggestion data
+- Updated `addItem()` to send unit to API
+- Now "Potatis" suggestion correctly adds as "1 kg" not "1 st"
+
+**5. Smart Quantity Stepping UI:**
+- Replaced number input with +/- buttons showing quantity and unit
+- Intelligent step sizes based on unit type:
+  - **kg:** 0.2 steps up to 2kg, 0.5 steps to 3kg, then 1kg
+  - **liters:** 0.5 steps up to 2L, then 1L
+  - **grams:** 50g steps up to 500g, then 100g
+  - **st/burk/förp:** 1 step increments
+- Minimum values: 0.2 for kg/l, 1 for everything else
+- Display shows "0.8 kg" format with smart decimal handling
+
+**Files Modified:**
+- `apps/web/src/routes/groceries/menu/+page.svelte`:
+  - Added `defaultUnitMap` with ~100 Swedish ingredients
+  - Added `getDefaultUnit()` function for smart lookups
+  - Updated `parseIngredient()` to use smart unit defaults
+- `apps/web/src/routes/groceries/+page.svelte`:
+  - Added `newItemUnit` variable
+  - Updated `selectSuggestion()` to set unit from suggestion
+  - Updated `addItem()` to send unit to API
+  - Added `getQuantityStep()`, `incrementQuantity()`, `decrementQuantity()` functions
+  - Replaced quantity number input with +/- button UI
+
+**UI Changes:**
+- Grocery add form now shows: `[Category dropdown] [−] 0.8 kg [+]`
+- Unit displayed between quantity buttons
+- Decimal quantities shown with 1 decimal place when needed
+
+**Deployed:** ✅ Successfully deployed to Pi
+
+---
+
 ## Blockers & Questions
 
 | Issue | Status | Resolution |
@@ -946,4 +1009,4 @@ Based on comprehensive project review, implemented following improvements:
 
 ---
 
-*Last updated: 2025-01-11*
+*Last updated: 2025-12-26*

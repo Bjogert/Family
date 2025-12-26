@@ -52,6 +52,24 @@ export function saveCategoryOrder(order: string[]): void {
     localStorage.setItem('categoryOrder', JSON.stringify(order));
 }
 
+export function loadCollapsedCategories(): Set<string> {
+    if (typeof localStorage === 'undefined') return new Set();
+    const saved = localStorage.getItem('collapsedCategories');
+    if (saved) {
+        try {
+            return new Set(JSON.parse(saved));
+        } catch (e) {
+            return new Set();
+        }
+    }
+    return new Set();
+}
+
+export function saveCollapsedCategories(collapsed: Set<string>): void {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem('collapsedCategories', JSON.stringify([...collapsed]));
+}
+
 export function initializeCategoryOrder(
     currentOrder: string[],
     groupedItems: GroupedCategory[]

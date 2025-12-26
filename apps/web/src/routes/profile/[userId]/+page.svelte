@@ -888,7 +888,11 @@
                         <span class="w-1.5 h-1.5 bg-orange-400 rounded-full"></span>
                         <span>{item.name}</span>
                         {#if item.quantity}
-                          <span class="text-stone-400">({item.quantity}{item.unit || ''})</span>
+                          <span class="text-stone-400"
+                            >({item.quantity % 1 === 0
+                              ? item.quantity
+                              : item.quantity.toFixed(1)}{item.unit || ''})</span
+                          >
                         {/if}
                       </li>
                     {/each}

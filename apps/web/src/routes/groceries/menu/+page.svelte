@@ -71,7 +71,7 @@
     grädde: 'dairy',
     ost: 'dairy',
     smör: 'dairy',
-    'créme fraiche': 'dairy',
+    cremefraiche: 'dairy',
     yoghurt: 'dairy',
     ägg: 'dairy',
     parmesan: 'dairy',
@@ -129,6 +129,140 @@
     tortillas: 'bakery',
     bröd: 'bakery',
   };
+
+  // Default units for common ingredients (when AI doesn't specify)
+  // Items sold by weight should use kg/g, liquids use l/dl/ml
+  const defaultUnitMap: Record<string, { unit: string; quantity: number }> = {
+    // Produce - sold by weight
+    potatis: { unit: 'kg', quantity: 1 },
+    lök: { unit: 'st', quantity: 2 },
+    vitlök: { unit: 'st', quantity: 1 },
+    morot: { unit: 'st', quantity: 3 },
+    morötter: { unit: 'st', quantity: 3 },
+    tomat: { unit: 'st', quantity: 2 },
+    tomater: { unit: 'st', quantity: 4 },
+    paprika: { unit: 'st', quantity: 1 },
+    gurka: { unit: 'st', quantity: 1 },
+    broccoli: { unit: 'st', quantity: 1 },
+    blomkål: { unit: 'st', quantity: 1 },
+    vitkål: { unit: 'st', quantity: 1 },
+    spenat: { unit: 'g', quantity: 200 },
+    sallad: { unit: 'st', quantity: 1 },
+    champinjoner: { unit: 'g', quantity: 250 },
+    svamp: { unit: 'g', quantity: 200 },
+    zucchini: { unit: 'st', quantity: 1 },
+    aubergine: { unit: 'st', quantity: 1 },
+    purjolök: { unit: 'st', quantity: 1 },
+    selleri: { unit: 'st', quantity: 1 },
+    // Fruits
+    citron: { unit: 'st', quantity: 2 },
+    lime: { unit: 'st', quantity: 2 },
+    äpple: { unit: 'st', quantity: 4 },
+    banan: { unit: 'st', quantity: 6 },
+    apelsin: { unit: 'st', quantity: 3 },
+    avokado: { unit: 'st', quantity: 2 },
+    // Meat - sold by weight
+    köttfärs: { unit: 'g', quantity: 500 },
+    nötfärs: { unit: 'g', quantity: 500 },
+    fläskfärs: { unit: 'g', quantity: 500 },
+    blandfärs: { unit: 'g', quantity: 500 },
+    kyckling: { unit: 'g', quantity: 500 },
+    kycklingfilé: { unit: 'g', quantity: 400 },
+    kycklingbröst: { unit: 'g', quantity: 400 },
+    kycklinglårfilé: { unit: 'g', quantity: 500 },
+    fläskkotlett: { unit: 'g', quantity: 400 },
+    fläskfilé: { unit: 'g', quantity: 400 },
+    karré: { unit: 'g', quantity: 500 },
+    bacon: { unit: 'g', quantity: 200 },
+    skinka: { unit: 'g', quantity: 200 },
+    korv: { unit: 'st', quantity: 4 },
+    falukorv: { unit: 'st', quantity: 1 },
+    prinskorv: { unit: 'förp', quantity: 1 },
+    // Fish - sold by weight
+    lax: { unit: 'g', quantity: 400 },
+    laxfilé: { unit: 'g', quantity: 400 },
+    torsk: { unit: 'g', quantity: 400 },
+    torskfilé: { unit: 'g', quantity: 400 },
+    fisk: { unit: 'g', quantity: 400 },
+    räkor: { unit: 'g', quantity: 300 },
+    // Dairy - liquids in volume, cheese by weight
+    mjölk: { unit: 'l', quantity: 1 },
+    grädde: { unit: 'dl', quantity: 2 },
+    vispgrädde: { unit: 'dl', quantity: 2 },
+    matlagningsgrädde: { unit: 'dl', quantity: 2 },
+    cremefraiche: { unit: 'dl', quantity: 2 },
+    gräddfil: { unit: 'dl', quantity: 2 },
+    yoghurt: { unit: 'dl', quantity: 5 },
+    filmjölk: { unit: 'l', quantity: 1 },
+    ost: { unit: 'g', quantity: 200 },
+    'riven ost': { unit: 'g', quantity: 150 },
+    parmesan: { unit: 'g', quantity: 100 },
+    mozzarella: { unit: 'st', quantity: 1 },
+    fetaost: { unit: 'g', quantity: 150 },
+    halloumi: { unit: 'st', quantity: 1 },
+    smör: { unit: 'g', quantity: 250 },
+    ägg: { unit: 'st', quantity: 6 },
+    // Pantry - by weight or package
+    ris: { unit: 'g', quantity: 300 },
+    pasta: { unit: 'g', quantity: 400 },
+    spaghetti: { unit: 'g', quantity: 400 },
+    penne: { unit: 'g', quantity: 400 },
+    nudlar: { unit: 'st', quantity: 2 },
+    'krossade tomater': { unit: 'burk', quantity: 1 },
+    'passerade tomater': { unit: 'burk', quantity: 1 },
+    tomatpuré: { unit: 'st', quantity: 1 },
+    kokosmjölk: { unit: 'burk', quantity: 1 },
+    bönor: { unit: 'burk', quantity: 1 },
+    kikärtor: { unit: 'burk', quantity: 1 },
+    linser: { unit: 'g', quantity: 200 },
+    mjöl: { unit: 'g', quantity: 400 },
+    socker: { unit: 'g', quantity: 200 },
+    // Liquids and sauces
+    olja: { unit: 'msk', quantity: 2 },
+    olivolja: { unit: 'msk', quantity: 2 },
+    sojasås: { unit: 'msk', quantity: 2 },
+    soja: { unit: 'msk', quantity: 2 },
+    vinäger: { unit: 'msk', quantity: 1 },
+    buljong: { unit: 'st', quantity: 1 },
+    // Spices - small amounts
+    salt: { unit: 'krm', quantity: 1 },
+    peppar: { unit: 'krm', quantity: 1 },
+    vitpeppar: { unit: 'krm', quantity: 1 },
+    paprikapulver: { unit: 'tsk', quantity: 1 },
+    curry: { unit: 'tsk', quantity: 1 },
+    spiskummin: { unit: 'tsk', quantity: 1 },
+    kanel: { unit: 'tsk', quantity: 1 },
+    ingefära: { unit: 'tsk', quantity: 1 },
+    chili: { unit: 'st', quantity: 1 },
+    basilika: { unit: 'kruka', quantity: 1 },
+    persilja: { unit: 'kruka', quantity: 1 },
+    dill: { unit: 'kruka', quantity: 1 },
+    koriander: { unit: 'kruka', quantity: 1 },
+    rosmarin: { unit: 'kvist', quantity: 2 },
+    timjan: { unit: 'kvist', quantity: 2 },
+    // Bakery
+    bröd: { unit: 'st', quantity: 1 },
+    tortillas: { unit: 'förp', quantity: 1 },
+    tortillabröd: { unit: 'förp', quantity: 1 },
+    pitabröd: { unit: 'förp', quantity: 1 },
+  };
+
+  // Get default unit for an ingredient
+  function getDefaultUnit(name: string): { unit: string; quantity: number } {
+    const lower = name.toLowerCase();
+    // Check exact match first
+    if (defaultUnitMap[lower]) {
+      return defaultUnitMap[lower];
+    }
+    // Check if name contains any key
+    for (const [key, value] of Object.entries(defaultUnitMap)) {
+      if (lower.includes(key) || key.includes(lower)) {
+        return value;
+      }
+    }
+    // Default fallback
+    return { unit: 'st', quantity: 1 };
+  }
 
   function getCategoryForIngredient(name: string): string {
     const lower = name.toLowerCase();
@@ -241,15 +375,28 @@
 
   function parseIngredient(ingredient: string): { quantity: number; unit: string; name: string } {
     // Try to match patterns like "2 st Citron", "500 g Kyckling", "1 Gurka"
-    const match = ingredient.match(/^(\d+(?:[.,]\d+)?)\s*(st|g|kg|ml|l|dl|msk|tsk|krm)?\s*(.+)$/i);
+    const match = ingredient.match(
+      /^(\d+(?:[.,]\d+)?)\s*(st|g|kg|ml|l|dl|msk|tsk|krm|burk|förp|kruka|kvist)?\s*(.+)$/i
+    );
     if (match) {
       const qty = parseFloat(match[1].replace(',', '.'));
-      const unit = match[2]?.toLowerCase() || 'st';
+      const unitFromMatch = match[2]?.toLowerCase();
       const name = match[3].trim();
-      return { quantity: qty, unit, name };
+
+      // If AI provided a unit, use it; otherwise look up the default
+      if (unitFromMatch) {
+        return { quantity: qty, unit: unitFromMatch, name };
+      }
+
+      // No unit specified, use smart defaults based on ingredient
+      const defaults = getDefaultUnit(name);
+      return { quantity: qty, unit: defaults.unit, name };
     }
-    // No quantity found, assume 1
-    return { quantity: 1, unit: 'st', name: ingredient.trim() };
+
+    // No quantity found - use smart defaults for both quantity and unit
+    const name = ingredient.trim();
+    const defaults = getDefaultUnit(name);
+    return { quantity: defaults.quantity, unit: defaults.unit, name };
   }
 
   async function addToGroceries() {

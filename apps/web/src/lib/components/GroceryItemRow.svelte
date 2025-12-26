@@ -2,6 +2,11 @@
   import type { GroceryItem } from '$lib/types/grocery';
   import { t } from '$lib/i18n';
 
+  // Format quantity: show decimals only when needed (1 -> "1", 1.5 -> "1.5", 0.3 -> "0.3")
+  function formatQuantity(qty: number): string {
+    return qty % 1 === 0 ? qty.toString() : qty.toFixed(1);
+  }
+
   export let item: GroceryItem;
   export let editingQuantityId: number | null;
   export let editQuantityValue: number;
@@ -79,7 +84,7 @@
         <span
           class="text-sm font-medium text-gray-900 dark:text-gray-100 min-w-[2.5rem] text-center"
         >
-          {editQuantityValue}
+          {formatQuantity(editQuantityValue)}
           {item.unit || 'st'}
         </span>
         <button
@@ -106,13 +111,13 @@
         on:click={onStartEdit}
         class="text-sm font-medium text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors"
       >
-        {item.quantity}
+        {formatQuantity(item.quantity)}
         {item.unit || 'st'}
       </button>
     {/if}
   {:else}
     <span class="text-sm text-stone-500 bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded">
-      {item.quantity}
+      {formatQuantity(item.quantity)}
       {item.unit || 'st'}
     </span>
   {/if}
