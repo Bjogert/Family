@@ -160,6 +160,8 @@ export default async function groceryRoutes(app: FastifyInstance) {
         ) => {
             const { userId, familyId } = (request as AuthenticatedRequest).session;
             const id = parseInt(request.params.id, 10);
+            
+            console.log('PATCH /api/groceries/:id - request.body:', request.body);
 
             if (isNaN(id)) {
                 return reply.status(400).send({
@@ -169,7 +171,9 @@ export default async function groceryRoutes(app: FastifyInstance) {
             }
 
             // Validate request body
+            console.log('PATCH validation input:', request.body);
             const validation = UpdateGrocerySchema.safeParse(request.body);
+            console.log('PATCH validation result:', validation);
             if (!validation.success) {
                 return reply.status(400).send({
                     success: false,

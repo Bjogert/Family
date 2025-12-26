@@ -163,12 +163,15 @@ export async function update(
     fields.push('updated_at = NOW()');
     values.push(id, familyId);
 
-    const result = await pool.query(
-        `UPDATE groceries SET ${fields.join(', ')}
+    const query = `UPDATE groceries SET ${fields.join(', ')}
     WHERE id = $${paramIndex++} AND family_id = $${paramIndex}
-    RETURNING id`,
-        values
-    );
+    RETURNING id`;
+    
+    console.log('UPDATE query:', query);
+    console.log('UPDATE values:', values);
+    console.log('UPDATE paramIndex after:', paramIndex);
+
+    const result = await pool.query(query, values);
 
     if (result.rows.length === 0) {
         return null;

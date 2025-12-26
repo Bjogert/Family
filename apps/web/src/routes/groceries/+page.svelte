@@ -213,22 +213,34 @@
   }
 
   async function toggleFavorite(itemId: number) {
+    console.log('toggleFavorite called with itemId:', itemId);
     // Prevent multiple clicks while request is in flight
-    if (toggleInFlight.has(itemId)) return;
+    if (toggleInFlight.has(itemId)) {
+      console.log('toggleFavorite: request already in flight, skipping');
+      return;
+    }
 
     const item = items.find((i) => i.id === itemId);
-    if (!item) return;
+    if (!item) {
+      console.log('toggleFavorite: item not found');
+      return;
+    }
 
+    console.log('toggleFavorite: item found', item.name, 'current favorite:', item.isFavorite);
     toggleInFlight.add(itemId);
     const newFavoriteState = !item.isFavorite;
+    console.log('toggleFavorite: setting to', newFavoriteState);
     // Optimistic update
     items = items.map((i) => (i.id === item.id ? { ...i, isFavorite: newFavoriteState } : i));
 
     try {
-      await patch<{ success: boolean; item: GroceryItem }>(`/groceries/${item.id}`, {
+      console.log('toggleFavorite: sending PATCH request');
+      const result = await patch<{ success: boolean; item: GroceryItem }>(`/groceries/${item.id}`, {
         isFavorite: newFavoriteState,
       });
+      console.log('toggleFavorite: PATCH result', result);
     } catch (e) {
+      console.error('toggleFavorite: error', e);
       // Revert on error
       items = items.map((i) => (i.id === item.id ? { ...i, isFavorite: !newFavoriteState } : i));
       if (e instanceof ApiError) {
