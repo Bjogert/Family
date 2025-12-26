@@ -191,13 +191,13 @@ export async function clearBought(familyId: number): Promise<number> {
         'DELETE FROM groceries WHERE family_id = $1 AND is_bought = true AND is_favorite = false',
         [familyId]
     );
-    
+
     // Reset bought status for favorites (keep them in DB as "staples")
     await pool.query(
         'UPDATE groceries SET is_bought = false, bought_by = NULL, bought_at = NULL WHERE family_id = $1 AND is_bought = true AND is_favorite = true',
         [familyId]
     );
-    
+
     return deleteResult.rowCount ?? 0;
 }
 

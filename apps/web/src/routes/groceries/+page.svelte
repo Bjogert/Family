@@ -265,9 +265,11 @@
       await post<{ success: boolean; count: number }>('/groceries/clear-bought');
       // Filter out bought items that are NOT favorites
       // Favorites will be reset to not-bought state by the API
-      items = items.filter((i) => !i.isBought || i.isFavorite).map((i) => 
-        i.isBought && i.isFavorite ? { ...i, isBought: false, boughtBy: null, boughtAt: null } : i
-      );
+      items = items
+        .filter((i) => !i.isBought || i.isFavorite)
+        .map((i) =>
+          i.isBought && i.isFavorite ? { ...i, isBought: false, boughtBy: null, boughtAt: null } : i
+        );
     } catch (e) {
       if (e instanceof ApiError) {
         error = e.message;
@@ -815,11 +817,15 @@
             ✕
           </button>
         </div>
-        <p class="text-sm text-stone-500 dark:text-stone-400 mb-3">{$t('groceries.staplesDescription')}</p>
-        
+        <p class="text-sm text-stone-500 dark:text-stone-400 mb-3">
+          {$t('groceries.staplesDescription')}
+        </p>
+
         {#if loadingStaples}
           <div class="flex justify-center py-4">
-            <div class="animate-spin w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full"></div>
+            <div
+              class="animate-spin w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full"
+            ></div>
           </div>
         {:else if staples.length === 0}
           <div class="text-center py-4 text-stone-400 dark:text-stone-500">
@@ -831,14 +837,21 @@
           <div class="space-y-2 max-h-64 overflow-y-auto">
             {#each staples as staple (staple.id)}
               {@const onList = isStapleOnList(staple.name)}
-              <div class="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-stone-800/50">
+              <div
+                class="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-stone-800/50"
+              >
                 <div class="flex items-center gap-2">
                   <span class="text-lg">{getCategoryIcon(staple.category)}</span>
-                  <span class="text-sm font-medium text-stone-700 dark:text-stone-200">{staple.name}</span>
-                  <span class="text-xs text-stone-400">{staple.quantity} {staple.unit || 'st'}</span>
+                  <span class="text-sm font-medium text-stone-700 dark:text-stone-200"
+                    >{staple.name}</span
+                  >
+                  <span class="text-xs text-stone-400">{staple.quantity} {staple.unit || 'st'}</span
+                  >
                 </div>
                 {#if onList}
-                  <span class="text-xs text-green-600 dark:text-green-400 px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded">
+                  <span
+                    class="text-xs text-green-600 dark:text-green-400 px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded"
+                  >
                     ✓ {$t('groceries.onList')}
                   </span>
                 {:else}
