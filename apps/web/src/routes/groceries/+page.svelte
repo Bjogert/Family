@@ -704,10 +704,14 @@
       <!-- Category filter -->
       <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
         <button
-          class="px-3 py-1 rounded-full text-sm whitespace-nowrap {filterCategory === null && !showFavoritesOnly
+          class="px-3 py-1 rounded-full text-sm whitespace-nowrap {filterCategory === null &&
+          !showFavoritesOnly
             ? 'bg-primary-600 text-white'
             : 'bg-gray-200 dark:bg-gray-700'}"
-          on:click={() => { filterCategory = null; showFavoritesOnly = false; }}
+          on:click={() => {
+            filterCategory = null;
+            showFavoritesOnly = false;
+          }}
         >
           {$t('groceries.filterAll')} ({pendingItems.length})
         </button>
@@ -716,7 +720,10 @@
           class="px-3 py-1 rounded-full text-sm whitespace-nowrap {showFavoritesOnly
             ? 'bg-yellow-500 text-white'
             : 'bg-gray-200 dark:bg-gray-700 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'}"
-          on:click={() => { showFavoritesOnly = !showFavoritesOnly; filterCategory = null; }}
+          on:click={() => {
+            showFavoritesOnly = !showFavoritesOnly;
+            filterCategory = null;
+          }}
         >
           ⭐ {favoriteItems.length}
         </button>
@@ -724,10 +731,14 @@
           {@const count = pendingItems.filter((i) => i.category === cat.name).length}
           {#if count > 0}
             <button
-              class="px-3 py-1 rounded-full text-sm whitespace-nowrap {filterCategory === cat.name && !showFavoritesOnly
+              class="px-3 py-1 rounded-full text-sm whitespace-nowrap {filterCategory ===
+                cat.name && !showFavoritesOnly
                 ? 'bg-primary-600 text-white'
                 : 'bg-gray-200 dark:bg-gray-700'}"
-              on:click={() => { filterCategory = filterCategory === cat.name ? null : cat.name; showFavoritesOnly = false; }}
+              on:click={() => {
+                filterCategory = filterCategory === cat.name ? null : cat.name;
+                showFavoritesOnly = false;
+              }}
             >
               {cat.icon}
               {count}

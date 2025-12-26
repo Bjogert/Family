@@ -38,7 +38,7 @@
   >
     {#if item.isBought}✓{/if}
   </button>
-  
+
   <!-- Favorite star button -->
   <button
     on:click={onToggleFavorite}
@@ -51,7 +51,7 @@
       <span class="text-gray-300 dark:text-gray-600 hover:text-yellow-400">☆</span>
     {/if}
   </button>
-  
+
   <div class="flex-1 min-w-0">
     <p class="font-medium truncate {item.isBought ? 'line-through' : ''}">{item.name}</p>
     {#if item.isBought && item.boughtBy}
@@ -118,7 +118,11 @@
   {/if}
 
   {#if !item.isBought}
-    <button on:click={onDelete} class="text-red-500 hover:text-red-700 p-1" aria-label={$t('common.delete')}>
+    <button
+      on:click={onDelete}
+      class="text-red-500 hover:text-red-700 p-1"
+      aria-label={$t('common.delete')}
+    >
       🗑️
     </button>
   {:else}
