@@ -12,7 +12,7 @@ param(
 )
 
 # Configuration
-$PI_HOST = "robert@192.168.68.127"
+$PI_HOST = "robert@192.168.68.118"
 $PI_PATH = "/home/robert/Family"
 $LOCAL_PATH = "c:\Tools\Git-Projects\Family"
 
