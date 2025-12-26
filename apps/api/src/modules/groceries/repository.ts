@@ -186,11 +186,48 @@ export async function remove(id: number, familyId: number): Promise<boolean> {
 }
 
 export async function clearBought(familyId: number): Promise<number> {
-    const result = await pool.query(
-        'DELETE FROM groceries WHERE family_id = $1 AND is_bought = true',
+    // Delete bought items that are NOT favorites
+    const deleteResult = await pool.query(
+        'DELETE FROM groceries WHERE family_id = $1 AND is_bought = true AND is_favorite = false',
         [familyId]
     );
-    return result.rowCount ?? 0;
+    
+    // Reset bought status for favorites (keep them in DB as "staples")
+    await pool.query(
+        'UPDATE groceries SET is_bought = false, bought_by = NULL, bought_at = NULL WHERE family_id = $1 AND is_bought = true AND is_favorite = true',
+        [familyId]
+    );
+    
+    return deleteResult.rowCount ?? 0;
+}
+
+// Get all favorite items for the family (for "Basvaror" feature)
+export async function getFavorites(familyId: number): Promise<GroceryRow[]> {
+    const result = await pool.query<GroceryRow>(
+        `SELECT 
+      g.id,
+      g.family_id,
+      g.name,
+      g.category,
+      g.quantity,
+      g.unit,
+      g.is_bought,
+      g.is_favorite,
+      g.added_by,
+      u_added.display_name as added_by_name,
+      g.bought_by,
+      u_bought.display_name as bought_by_name,
+      g.created_at,
+      g.updated_at,
+      g.bought_at
+    FROM groceries g
+    LEFT JOIN users u_added ON g.added_by = u_added.id
+    LEFT JOIN users u_bought ON g.bought_by = u_bought.id
+    WHERE g.family_id = $1 AND g.is_favorite = true
+    ORDER BY g.category, g.name`,
+        [familyId]
+    );
+    return result.rows;
 }
 
 export async function getCategories(): Promise<Array<{ name: string; icon: string; sort_order: number }>> {

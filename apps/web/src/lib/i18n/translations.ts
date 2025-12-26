@@ -481,6 +481,13 @@
         'groceries.connectionError': 'Anslutningsfel',
         'groceries.disconnected': 'Frånkopplad',
         'groceries.anonymous': 'Anonym',
+        'groceries.staples': 'Basvaror',
+        'groceries.staplesDescription': 'Dina favoritvaror som du ofta köper',
+        'groceries.addToList': 'Lägg till',
+        'groceries.onList': 'På listan',
+        'groceries.noStaples': 'Inga basvaror ännu',
+        'groceries.noStaplesHint': 'Stjärnmarkera varor för att spara dem som basvaror',
+        'groceries.addAllStaples': 'Lägg till alla',
 
         // Home page
         'home.allDone': 'Allt klart! Inget att göra just nu.',
@@ -971,6 +978,13 @@
         'groceries.connectionError': 'Connection error',
         'groceries.disconnected': 'Disconnected',
         'groceries.anonymous': 'Anonymous',
+        'groceries.staples': 'Staples',
+        'groceries.staplesDescription': 'Your favorite items that you often buy',
+        'groceries.addToList': 'Add',
+        'groceries.onList': 'On list',
+        'groceries.noStaples': 'No staples yet',
+        'groceries.noStaplesHint': 'Star items to save them as staples',
+        'groceries.addAllStaples': 'Add all',
 
         // Home page
         'home.allDone': 'All done! Nothing to do right now.',
@@ -1450,6 +1464,13 @@
         'groceries.connectionError': 'Erro de conexão',
         'groceries.disconnected': 'Desconectado',
         'groceries.anonymous': 'Anônimo',
+        'groceries.staples': 'Itens Básicos',
+        'groceries.staplesDescription': 'Seus itens favoritos que você costuma comprar',
+        'groceries.addToList': 'Adicionar',
+        'groceries.onList': 'Na lista',
+        'groceries.noStaples': 'Nenhum item básico ainda',
+        'groceries.noStaplesHint': 'Marque itens com estrela para salvá-los como básicos',
+        'groceries.addAllStaples': 'Adicionar todos',
 
         // Home page
         'home.allDone': 'Tudo pronto! Nada a fazer agora.',

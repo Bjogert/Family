@@ -1043,6 +1043,40 @@ Based on comprehensive project review, implemented following improvements:
 
 ---
 
+### Session 17 - 2025-12-26 (Favorite Toggle Fix & Basvaror Feature)
+**What we did:**
+
+**1. Fixed Favorite Toggle "Instantly Untoggles" Bug:**
+- **Problem:** Clicking star to favorite an item would toggle, then instantly revert
+- **Root Cause:** WebSocket race condition
+  - User clicks star → optimistic update shows `isFavorite: true`
+  - WebSocket immediately broadcasts `grocery:updated` with **stale data** (`isFavorite: false`)
+  - Old code overwrote optimistic update with stale WebSocket data
+- **Solution:**
+  - Added `toggleInFlight` Set to track items currently being toggled
+  - Modified `handleWebSocketMessage()` to skip `grocery:updated` for items in flight
+  - Prevents race condition between PATCH response and WebSocket broadcast
+- **Debug Process:**
+  - Added comprehensive console.log statements to trace the issue
+  - Logs confirmed: WebSocket was sending old state before server processed update
+  - Removed debug logging after fix confirmed working
+
+**Files Modified:**
+- `apps/web/src/routes/groceries/+page.svelte`:
+  - Added `toggleInFlight` Set for debounce protection
+  - Modified `handleWebSocketMessage()` to skip updates for in-flight items
+- `apps/web/src/lib/components/GroceryItemRow.svelte`:
+  - Added `|stopPropagation` to favorite button click
+
+**2. Deployment Script Fixes:**
+- **Issue 1:** SSH user was wrong (`family@` instead of `robert@`)
+- **Issue 2:** Old files weren't being cleaned before deploy
+- **Fix:** Added `rm -rf` cleanup before scp in deploy.ps1
+
+**Deployed:** ✅ Successfully deployed to Pi - Favorites now work correctly!
+
+---
+
 ## Blockers & Questions
 
 | Issue | Status | Resolution |

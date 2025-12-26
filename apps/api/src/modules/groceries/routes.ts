@@ -67,6 +67,17 @@ export default async function groceryRoutes(app: FastifyInstance) {
         });
     });
 
+    // GET /api/groceries/favorites - Get all favorite items (Basvaror)
+    app.get('/favorites', async (request: FastifyRequest, reply: FastifyReply) => {
+        const { familyId } = (request as AuthenticatedRequest).session;
+        const favorites = await groceryService.getFavorites(familyId);
+
+        return reply.send({
+            success: true,
+            items: favorites,
+        });
+    });
+
     // GET /api/groceries/:id - Get a specific grocery item
     app.get<{ Params: { id: string } }>(
         '/:id',

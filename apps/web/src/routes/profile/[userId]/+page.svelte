@@ -14,6 +14,12 @@
     isSubscribed,
     sendTestNotification,
   } from '$lib/utils/pushNotifications';
+  import {
+    ProfileSidebar,
+    ProfileOverview,
+    ProfileSettings,
+    ProfileAccount,
+  } from '$lib/components/profile';
 
   // Types
   interface UserProfile {
@@ -79,6 +85,7 @@
     isPinned: boolean;
     createdAt: string;
     author?: { displayName: string | null; avatarEmoji: string | null };
+    assignedTo?: { id: number; displayName: string | null; avatarEmoji: string | null }[];
   }
 
   // Color mapping
@@ -345,11 +352,10 @@
         // Filter notes assigned to this user (messages)
         // assignedTo is an array of objects with {id, displayName, avatarEmoji}
         userMessages = allNotes.filter(
-          (note: any) =>
-            note.assignedTo?.some((a: any) => a.id === userId) &&
+          (note) =>
+            note.assignedTo?.some((a) => a.id === userId) &&
             note.title?.includes('💬 Meddelande')
         );
-        console.log('User messages for', userId, ':', userMessages);
       }
     } catch {
       // Ignore
@@ -643,8 +649,8 @@
       passwordSuccess = true;
       passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
       setTimeout(() => (passwordSuccess = false), 3000);
-    } catch (err: any) {
-      passwordError = err.message || 'Kunde inte ändra lösenordet';
+    } catch (err) {
+      passwordError = err instanceof Error ? err.message : 'Kunde inte ändra lösenordet';
     } finally {
       saving = false;
     }
@@ -720,114 +726,22 @@
       </div>
     {:else if profile}
       <!-- Sidebar Navigation -->
-      <aside class="lg:w-64 flex-shrink-0">
-        <div
-          class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-3 lg:p-4"
-        >
-          <!-- User section: Avatar + Name as Overview button -->
-          <button
-            on:click={() => setSection('overview')}
-            class="w-full flex items-center gap-3 px-2 py-2 rounded-xl transition-colors text-left mb-2
-              {activeSection === 'overview'
-              ? 'bg-orange-100 dark:bg-orange-900/30'
-              : 'hover:bg-stone-100 dark:hover:bg-stone-700/50'}"
-          >
-            <div
-              class="{bgColor} w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md flex-shrink-0"
-            >
-              {profile.avatarEmoji || '👤'}
-            </div>
-            <div class="min-w-0 flex-1">
-              <span
-                class="font-semibold text-sm lg:text-base text-stone-800 dark:text-white truncate block"
-              >
-                {profile.displayName || profile.username}
-              </span>
-              <span class="text-xs text-stone-400 dark:text-stone-500 truncate block">
-                @{profile.username}
-              </span>
-            </div>
-          </button>
-
-          <!-- Message button (only show if viewing someone else's profile) -->
-          {#if !isOwnProfile}
-            <button
-              on:click={() => (showMessageForm = !showMessageForm)}
-              class="w-full flex items-center gap-2 px-3 py-2 rounded-xl transition-colors mb-2
-                {showMessageForm
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400'}"
-            >
-              <span>💬</span>
-              <span class="font-medium text-sm">Meddelande</span>
-            </button>
-          {/if}
-
-          <!-- Profile and Tillbaka buttons row -->
-          <div class="flex gap-2">
-            <button
-              on:click={() => setSection('profile')}
-              class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl transition-colors
-                {activeSection === 'profile'
-                ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
-                : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400'}"
-            >
-              <span>👤</span>
-              <span class="font-medium text-sm">Profil</span>
-            </button>
-            <button
-              on:click={() => goto('/')}
-              class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400 transition-colors"
-            >
-              <span>←</span>
-              <span class="font-medium text-sm">Tillbaka</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Message Form (appears below sidebar when active) -->
-        {#if showMessageForm && !isOwnProfile}
-          <div
-            class="mt-3 bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-200 dark:border-blue-800 p-4"
-          >
-            <div class="flex items-center gap-2 mb-3">
-              <span class="text-lg">💬</span>
-              <span class="font-semibold text-stone-700 dark:text-stone-200 text-sm"
-                >Skicka meddelande till {profile.displayName || profile.username}</span
-              >
-            </div>
-            <textarea
-              bind:value={messageText}
-              placeholder="Skriv ditt meddelande..."
-              class="w-full px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 text-sm resize-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-              rows="3"
-            ></textarea>
-            <div class="flex justify-end gap-2 mt-3">
-              <button
-                on:click={() => {
-                  showMessageForm = false;
-                  messageText = '';
-                }}
-                class="px-3 py-1.5 text-sm text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-lg transition-colors"
-              >
-                Avbryt
-              </button>
-              <button
-                on:click={sendMessage}
-                disabled={!messageText.trim() || sendingMessage}
-                class="px-4 py-1.5 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-              >
-                {#if sendingMessage}
-                  <span class="animate-spin">⏳</span>
-                {:else}
-                  <span>📌</span>
-                {/if}
-                Fäst
-              </button>
-            </div>
-          </div>
-        {/if}
-      </aside>
+      <ProfileSidebar
+        {profile}
+        {bgColor}
+        {activeSection}
+        {isOwnProfile}
+        {showMessageForm}
+        bind:messageText
+        {sendingMessage}
+        on:setSection={(e) => setSection(e.detail)}
+        on:toggleMessageForm={() => (showMessageForm = !showMessageForm)}
+        on:sendMessage={sendMessage}
+        on:cancelMessage={() => {
+          showMessageForm = false;
+          messageText = '';
+        }}
+      />
 
       <!-- Main Content -->
       <div class="flex-1 min-w-0">
@@ -852,229 +766,18 @@
 
           <!-- Overview Section -->
           {#if activeSection === 'overview'}
-            <!-- Points Badge - only show if has points -->
-            {#if earnedPoints > 0}
-              <div
-                class="flex items-center justify-end gap-2 mb-4"
-                title={$t('profile.earnedPoints')}
-              >
-                <span class="text-sm text-stone-500 dark:text-stone-400">🏆</span>
-                <span
-                  class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg"
-                >
-                  {earnedPoints}
-                </span>
-              </div>
-            {/if}
-
-            <div class="grid gap-4 md:grid-cols-2">
-              <!-- Assigned Groceries - only show if has items -->
-              {#if assignedGroceries.length > 0}
-                <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-3">
-                  <h3
-                    class="font-semibold text-stone-700 dark:text-stone-300 mb-2 flex items-center gap-2 text-sm"
-                  >
-                    <span>🛒</span>
-                    <span>Inköpslista</span>
-                    <span class="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">
-                      {assignedGroceries.length}
-                    </span>
-                  </h3>
-                  <ul class="space-y-1">
-                    {#each assignedGroceries as item}
-                      <li
-                        class="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300"
-                      >
-                        <span class="w-1.5 h-1.5 bg-orange-400 rounded-full"></span>
-                        <span>{item.name}</span>
-                        {#if item.quantity}
-                          <span class="text-stone-400"
-                            >({item.quantity % 1 === 0
-                              ? item.quantity
-                              : item.quantity.toFixed(1)}{item.unit || ''})</span
-                          >
-                        {/if}
-                      </li>
-                    {/each}
-                  </ul>
-                  <a
-                    href="/groceries"
-                    class="inline-block mt-2 text-xs text-orange-500 hover:text-orange-600 dark:text-orange-400"
-                  >
-                    Visa hela listan →
-                  </a>
-                </div>
-              {/if}
-
-              <!-- Assigned Tasks -->
-              <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-3">
-                <h3
-                  class="font-semibold text-stone-700 dark:text-stone-300 mb-2 flex items-center gap-2 text-sm"
-                >
-                  <span>📋</span>
-                  <span>{$t('profile.myTasks')}</span>
-                  {#if assignedTasks.length > 0}
-                    <span class="bg-teal-500 text-white text-xs px-2 py-0.5 rounded-full">
-                      {assignedTasks.length}
-                    </span>
-                  {/if}
-                </h3>
-                {#if assignedTasks.length === 0}
-                  <p class="text-sm text-stone-500 dark:text-stone-400">{$t('profile.noTasks')}</p>
-                {:else}
-                  <ul class="space-y-2">
-                    {#each assignedTasks as task}
-                      <li class="bg-white dark:bg-stone-600/50 rounded-lg p-2">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="flex-1 min-w-0">
-                            <span
-                              class="text-sm font-medium text-stone-700 dark:text-stone-200 block truncate"
-                            >
-                              {task.title}
-                            </span>
-                            <div class="flex items-center gap-2 mt-1 flex-wrap">
-                              <span class="text-xs text-stone-500 dark:text-stone-400">
-                                🏆 {task.points}
-                                {$t('tasks.points')}
-                              </span>
-                              {#if task.dueDate}
-                                <span class="text-xs text-stone-500 dark:text-stone-400">
-                                  📅 {formatDate(task.dueDate)}
-                                </span>
-                              {/if}
-                              {#if task.status === 'done'}
-                                <span
-                                  class="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full"
-                                >
-                                  {task.requiresValidation
-                                    ? $t('tasks.awaitingApproval')
-                                    : $t('tasks.statusDone')}
-                                </span>
-                                <button
-                                  on:click={() => reopenTask(task.id)}
-                                  disabled={taskUpdating}
-                                  class="text-xs text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 transition-colors disabled:opacity-50"
-                                  title={$t('tasks.reopen')}
-                                >
-                                  ↩️
-                                </button>
-                              {:else if task.status === 'in_progress'}
-                                <span
-                                  class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full"
-                                >
-                                  {$t('tasks.statusInProgress')}
-                                </span>
-                              {/if}
-                            </div>
-                          </div>
-
-                          <!-- Actions -->
-                          {#if task.status !== 'done'}
-                            <button
-                              on:click={() => markTaskDone(task.id)}
-                              disabled={taskUpdating}
-                              class="shrink-0 px-3 py-1.5 bg-teal-500 hover:bg-teal-600 text-white text-xs rounded-lg transition-colors disabled:opacity-50"
-                            >
-                              ✓ {$t('tasks.markDone')}
-                            </button>
-                          {:else if task.requiresValidation && task.createdBy === $currentUser?.id}
-                            <!-- Show verify button if current user is the creator -->
-                            <button
-                              on:click={() => verifyTask(task.id)}
-                              disabled={taskUpdating}
-                              class="shrink-0 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs rounded-lg transition-colors disabled:opacity-50"
-                            >
-                              ✅ {$t('tasks.approve')}
-                            </button>
-                          {/if}
-                        </div>
-                      </li>
-                    {/each}
-                  </ul>
-                  <a
-                    href="/tasks"
-                    class="inline-block mt-2 text-xs text-teal-500 hover:text-teal-600 dark:text-teal-400"
-                  >
-                    {$t('tasks.viewAll')} →
-                  </a>
-                {/if}
-              </div>
-
-              <!-- Upcoming Events - only show if has events -->
-              {#if upcomingEvents.length > 0}
-                <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-3">
-                  <h3
-                    class="font-semibold text-stone-700 dark:text-stone-300 mb-2 flex items-center gap-2 text-sm"
-                  >
-                    <span>📅</span>
-                    <span>Kommande händelser</span>
-                  </h3>
-                  <ul class="space-y-1">
-                    {#each upcomingEvents as event}
-                      <li class="text-sm">
-                        <span class="text-stone-600 dark:text-stone-300">{event.title}</span>
-                        <span class="text-stone-400 dark:text-stone-500 block text-xs">
-                          {formatEventDate(event.startDate)}
-                        </span>
-                      </li>
-                    {/each}
-                  </ul>
-                  <a
-                    href="/calendar"
-                    class="inline-block mt-2 text-xs text-orange-500 hover:text-orange-600 dark:text-orange-400"
-                  >
-                    Visa kalender →
-                  </a>
-                </div>
-              {/if}
-            </div>
-
-            <!-- Messages Section - show messages assigned to this user -->
-            {#if userMessages.length > 0}
-              <div class="mt-4">
-                <h3
-                  class="font-semibold text-stone-700 dark:text-stone-300 mb-3 flex items-center gap-2 text-sm"
-                >
-                  <span>💬</span>
-                  <span>Meddelanden</span>
-                  <span class="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
-                    {userMessages.length}
-                  </span>
-                </h3>
-                <div class="space-y-3">
-                  {#each userMessages as msg}
-                    <div
-                      class="bg-blue-50 dark:bg-blue-900/30 rounded-xl p-3 border-l-4 border-blue-400"
-                    >
-                      <div class="flex items-start justify-between gap-2">
-                        <div class="flex-1 min-w-0">
-                          <div class="flex items-center gap-2 mb-1">
-                            <span class="text-lg">{msg.author?.avatarEmoji || '👤'}</span>
-                            <span class="text-xs text-stone-500 dark:text-stone-400">
-                              {msg.title.replace('💬 Meddelande från ', '')}
-                            </span>
-                          </div>
-                          <p class="text-sm text-stone-700 dark:text-stone-200 whitespace-pre-wrap">
-                            {msg.content}
-                          </p>
-                          <span class="text-xs text-stone-400 dark:text-stone-500 mt-1 block">
-                            {new Date(msg.createdAt).toLocaleDateString('sv-SE', {
-                              day: 'numeric',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </div>
-                        {#if msg.isPinned}
-                          <span class="text-orange-500" title="Fäst meddelande">📌</span>
-                        {/if}
-                      </div>
-                    </div>
-                  {/each}
-                </div>
-              </div>
-            {/if}
+            <ProfileOverview
+              {earnedPoints}
+              {assignedGroceries}
+              {assignedTasks}
+              {upcomingEvents}
+              {userMessages}
+              {taskUpdating}
+              currentUserId={$currentUser?.id}
+              on:markTaskDone={(e) => markTaskDone(e.detail)}
+              on:reopenTask={(e) => reopenTask(e.detail)}
+              on:verifyTask={(e) => verifyTask(e.detail)}
+            />
 
             <!-- Profile Section -->
           {:else if activeSection === 'profile'}
@@ -1303,270 +1006,29 @@
 
             <!-- Settings Section -->
           {:else if activeSection === 'settings' && isOwnProfile}
-            <h2 class="text-xl font-bold text-stone-800 dark:text-white mb-6">Inställningar</h2>
-
-            <!-- Notification Settings -->
-            <div class="space-y-6">
-              <!-- Push Notifications Master Toggle -->
-              {#if pushSupported}
-                <div>
-                  <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-4">
-                    Push-notifikationer
-                  </h3>
-                  <div class="space-y-3">
-                    <div
-                      class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl"
-                    >
-                      <div>
-                        <p class="font-medium text-stone-800 dark:text-white">
-                          Aktivera push-notifikationer
-                        </p>
-                        <p class="text-sm text-stone-500 dark:text-stone-400">
-                          {#if pushPermission === 'denied'}
-                            Blockerad i webbläsaren - ändra i inställningarna
-                          {:else if pushSubscribed}
-                            Notifikationer är aktiverade på denna enhet
-                          {:else}
-                            Få notifikationer även när appen är stängd
-                          {/if}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        on:click={togglePushNotifications}
-                        disabled={pushLoading || pushPermission === 'denied'}
-                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed
-                          {pushSubscribed ? 'bg-orange-500' : 'bg-stone-300 dark:bg-stone-600'}"
-                      >
-                        <span
-                          class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
-                            {pushSubscribed ? 'translate-x-5' : 'translate-x-0'}"
-                        />
-                      </button>
-                    </div>
-
-                    {#if pushSubscribed}
-                      <button
-                        type="button"
-                        on:click={handleTestNotification}
-                        disabled={pushLoading}
-                        class="w-full py-2 text-sm bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-300 dark:hover:bg-stone-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {#if pushTestSent}
-                          <span>✅ Testnotifikation skickad!</span>
-                        {:else if pushLoading}
-                          <span>Skickar...</span>
-                        {:else}
-                          <span>🔔 Skicka testnotifikation</span>
-                        {/if}
-                      </button>
-                    {/if}
-                  </div>
-                </div>
-              {/if}
-
-              <!-- Notification Types -->
-              <div>
-                <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-4">
-                  Notifikationer
-                </h3>
-                <div class="space-y-3">
-                  <label
-                    class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl cursor-pointer"
-                  >
-                    <div>
-                      <p class="font-medium text-stone-800 dark:text-white">Tilldelade varor</p>
-                      <p class="text-sm text-stone-500 dark:text-stone-400">
-                        När någon tilldelar dig en vara
-                      </p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      bind:checked={preferences.notifications.groceryAssigned}
-                      class="w-5 h-5 text-orange-500 rounded focus:ring-orange-500"
-                    />
-                  </label>
-
-                  <label
-                    class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl cursor-pointer"
-                  >
-                    <div>
-                      <p class="font-medium text-stone-800 dark:text-white">
-                        Inköpslistan uppdaterad
-                      </p>
-                      <p class="text-sm text-stone-500 dark:text-stone-400">
-                        När varor läggs till eller tas bort
-                      </p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      bind:checked={preferences.notifications.groceryListUpdated}
-                      class="w-5 h-5 text-orange-500 rounded focus:ring-orange-500"
-                    />
-                  </label>
-
-                  <label
-                    class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl cursor-pointer"
-                  >
-                    <div>
-                      <p class="font-medium text-stone-800 dark:text-white">
-                        Nya kalenderhändelser
-                      </p>
-                      <p class="text-sm text-stone-500 dark:text-stone-400">
-                        När nya händelser skapas
-                      </p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      bind:checked={preferences.notifications.calendarEventCreated}
-                      class="w-5 h-5 text-orange-500 rounded focus:ring-orange-500"
-                    />
-                  </label>
-
-                  <label
-                    class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-700/50 rounded-xl cursor-pointer"
-                  >
-                    <div>
-                      <p class="font-medium text-stone-800 dark:text-white">Påminnelser</p>
-                      <p class="text-sm text-stone-500 dark:text-stone-400">
-                        Påminnelser för kommande händelser
-                      </p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      bind:checked={preferences.notifications.calendarEventReminder}
-                      class="w-5 h-5 text-orange-500 rounded focus:ring-orange-500"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <!-- Theme Settings -->
-              <div>
-                <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-4">Utseende</h3>
-                <div class="flex gap-3">
-                  {#each [{ value: 'light', label: 'Ljust', icon: '☀️' }, { value: 'dark', label: 'Mörkt', icon: '🌙' }, { value: 'system', label: 'System', icon: '💻' }] as theme}
-                    <button
-                      type="button"
-                      on:click={() => setTheme(theme.value)}
-                      class="flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-colors
-                        {preferences.theme === theme.value
-                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
-                        : 'border-stone-200 dark:border-stone-700 hover:border-orange-300'}"
-                    >
-                      <span class="text-2xl">{theme.icon}</span>
-                      <span class="text-sm font-medium text-stone-700 dark:text-stone-300"
-                        >{theme.label}</span
-                      >
-                    </button>
-                  {/each}
-                </div>
-              </div>
-
-              <button
-                on:click={savePreferences}
-                disabled={saving}
-                class="w-full py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
-              >
-                {saving ? $t('common.saving') : $t('profile.save')}
-              </button>
-            </div>
+            <ProfileSettings
+              bind:preferences
+              {pushSupported}
+              {pushSubscribed}
+              {pushPermission}
+              {pushLoading}
+              {pushTestSent}
+              {saving}
+              on:togglePush={togglePushNotifications}
+              on:testNotification={handleTestNotification}
+              on:setTheme={(e) => setTheme(e.detail)}
+              on:save={savePreferences}
+            />
 
             <!-- Account Section -->
           {:else if activeSection === 'account' && isOwnProfile}
-            <h2 class="text-xl font-bold text-stone-800 dark:text-white mb-6">Konto</h2>
-
-            <div class="space-y-6">
-              <!-- Change Password -->
-              <div class="bg-stone-50 dark:bg-stone-700/50 rounded-xl p-6">
-                <h3 class="font-semibold text-stone-700 dark:text-stone-300 mb-4">Byt lösenord</h3>
-
-                {#if passwordError}
-                  <div
-                    class="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-sm"
-                  >
-                    {passwordError}
-                  </div>
-                {/if}
-                {#if passwordSuccess}
-                  <div
-                    class="mb-4 p-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-sm"
-                  >
-                    {$t('profile.passwordChanged')}
-                  </div>
-                {/if}
-
-                <form on:submit|preventDefault={changePassword} class="space-y-4">
-                  <div>
-                    <label
-                      for="currentPassword"
-                      class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"
-                    >
-                      Nuvarande lösenord
-                    </label>
-                    <input
-                      type="password"
-                      id="currentPassword"
-                      bind:value={passwordForm.currentPassword}
-                      class="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      for="newPassword"
-                      class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"
-                    >
-                      Nytt lösenord
-                    </label>
-                    <input
-                      type="password"
-                      id="newPassword"
-                      bind:value={passwordForm.newPassword}
-                      class="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      for="confirmPassword"
-                      class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"
-                    >
-                      {$t('profile.confirmPasswordLabel')}
-                    </label>
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      bind:value={passwordForm.confirmPassword}
-                      class="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    class="w-full py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
-                  >
-                    {saving ? $t('common.saving') : $t('profile.changePassword')}
-                  </button>
-                </form>
-              </div>
-
-              <!-- Delete Account -->
-              <div
-                class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6"
-              >
-                <h3 class="font-semibold text-red-700 dark:text-red-400 mb-2">
-                  {$t('profile.deleteAccountTitle')}
-                </h3>
-                <p class="text-sm text-red-600 dark:text-red-400/80 mb-4">
-                  {$t('profile.deleteAccountDescription')}
-                </p>
-                <a
-                  href="/settings"
-                  class="inline-block px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  {$t('profile.goToAccountSettings')}
-                </a>
-              </div>
-            </div>
+            <ProfileAccount
+              bind:passwordForm
+              {passwordError}
+              {passwordSuccess}
+              {saving}
+              on:changePassword={changePassword}
+            />
           {/if}
         </div>
       </div>

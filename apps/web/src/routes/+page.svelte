@@ -5,7 +5,8 @@
   import { groceryWs } from '$lib/stores/groceryWs';
   import { currentFamily, currentUser } from '$lib/stores/auth';
   import type { GroceryItem } from '$lib/types/grocery';
-  import type { Task, TaskCategory, Activity, BulletinNote } from '@family-hub/shared/types';
+  import type { Task, TaskCategory, Activity, BulletinNote, CreateBulletinNoteInput, UpdateBulletinNoteInput } from '@family-hub/shared/types';
+  import type { WsMessage } from '$lib/websocket/client';
   import BulletinNoteForm from '$lib/components/BulletinNoteForm.svelte';
   import {
     FamilySidebar,
@@ -141,7 +142,7 @@
     });
   }
 
-  async function createNote(data: any) {
+  async function createNote(data: CreateBulletinNoteInput) {
     if (!$currentFamily) return;
     try {
       const response = await fetch('/api/bulletin', {
@@ -164,7 +165,7 @@
     showNoteForm = false;
   }
 
-  async function updateNote(id: number, data: any) {
+  async function updateNote(id: number, data: UpdateBulletinNoteInput) {
     if (!$currentFamily) return;
     try {
       const response = await fetch(`/api/bulletin/${id}`, {
@@ -214,32 +215,33 @@
     await updateNote(noteId, { listItems: updatedItems });
   }
 
-  function handleWebSocketMessage(message: any) {
+  function handleWebSocketMessage(message: WsMessage) {
+    const payload = message.payload as Record<string, unknown>;
     switch (message.type) {
       case 'grocery:added':
-        const newItem = message.payload.item;
+        const newItem = (payload as { item: GroceryItem }).item;
         if (!groceryItems.find((i) => i.id === newItem.id)) {
           groceryItems = [newItem, ...groceryItems];
         }
         break;
       case 'grocery:updated':
-        const updatedItem = message.payload.item;
+        const updatedItem = (payload as { item: GroceryItem }).item;
         groceryItems = groceryItems.map((i) => (i.id === updatedItem.id ? updatedItem : i));
         break;
       case 'grocery:deleted':
-        groceryItems = groceryItems.filter((i) => i.id !== message.payload.id);
+        groceryItems = groceryItems.filter((i) => i.id !== (payload as { id: number }).id);
         break;
       case 'grocery:cleared':
         groceryItems = groceryItems.filter((i) => !i.isBought);
         break;
       case 'grocery:assigned':
-        const assignedUserId = message.payload.userId;
+        const assignedUserId = (payload as { userId: number }).userId;
         if (!groceryAssignments.find((a) => a.userId === assignedUserId)) {
           groceryAssignments = [...groceryAssignments, { userId: assignedUserId }];
         }
         break;
       case 'grocery:unassigned':
-        groceryAssignments = groceryAssignments.filter((a) => a.userId !== message.payload.userId);
+        groceryAssignments = groceryAssignments.filter((a) => a.userId !== (payload as { userId: number }).userId);
         break;
     }
   }
@@ -284,7 +286,9 @@
               credentials: 'include',
             });
             if (tasksResponse.ok) tasks = await tasksResponse.json();
-          } catch {}
+          } catch (e) {
+            console.error('Failed to fetch tasks:', e);
+          }
 
           // Fetch activities
           try {
@@ -293,7 +297,9 @@
               credentials: 'include',
             });
             if (activitiesResponse.ok) activities = await activitiesResponse.json();
-          } catch {}
+          } catch (e) {
+            console.error('Failed to fetch activities:', e);
+          }
 
           // Fetch bulletin notes
           try {
@@ -302,7 +308,9 @@
               credentials: 'include',
             });
             if (bulletinResponse.ok) bulletinNotes = await bulletinResponse.json();
-          } catch {}
+          } catch (e) {
+            console.error('Failed to fetch bulletin notes:', e);
+          }
         } catch {
           // Ignore errors
         } finally {

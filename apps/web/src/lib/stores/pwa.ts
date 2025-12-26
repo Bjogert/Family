@@ -2,7 +2,7 @@
 import { browser } from '$app/environment';
 
 // Store for the deferred install prompt
-export const deferredPrompt = writable<any>(null);
+export const deferredPrompt = writable<BeforeInstallPromptEvent | null>(null);
 
 // Whether the app is already installed
 export const isInstalled = writable(false);
@@ -31,14 +31,12 @@ export function initPwaDetection() {
 
     // Listen for the install prompt event
     window.addEventListener('beforeinstallprompt', (e) => {
-        console.log('[PWA] Install prompt available');
         e.preventDefault();
         deferredPrompt.set(e);
     });
 
     // Detect if app was installed
     window.addEventListener('appinstalled', () => {
-        console.log('[PWA] App installed');
         isInstalled.set(true);
         deferredPrompt.set(null);
     });
@@ -46,7 +44,7 @@ export function initPwaDetection() {
 
 // Trigger the install prompt
 export async function triggerInstall(): Promise<'accepted' | 'dismissed' | 'unavailable'> {
-    let prompt: any = null;
+    let prompt: BeforeInstallPromptEvent | null = null;
 
     const unsubscribe = deferredPrompt.subscribe(p => {
         prompt = p;
@@ -54,13 +52,11 @@ export async function triggerInstall(): Promise<'accepted' | 'dismissed' | 'unav
     unsubscribe();
 
     if (!prompt) {
-        console.log('[PWA] No install prompt available');
         return 'unavailable';
     }
 
     prompt.prompt();
     const { outcome } = await prompt.userChoice;
-    console.log('[PWA] User choice:', outcome);
 
     if (outcome === 'accepted') {
         deferredPrompt.set(null);

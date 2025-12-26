@@ -17,6 +17,7 @@
   import CategorySection from '$lib/components/CategorySection.svelte';
   import GroceryItemRow from '$lib/components/GroceryItemRow.svelte';
   import { groceryWs } from '$lib/stores/groceryWs';
+  import type { WsMessage } from '$lib/websocket/client';
   import { currentFamily } from '$lib/stores/auth';
 
   interface GroceryAssignment {
@@ -55,6 +56,9 @@
   let editingQuantityId: number | null = null;
   let editQuantityValue = 1;
   let showAssignmentPanel = false;
+  let showStaplesPanel = false;
+  let staples: GroceryItem[] = [];
+  let loadingStaples = false;
 
   // Autocomplete state
   let showSuggestions = false;
@@ -96,6 +100,9 @@
   $: filteredBoughtItems = filterCategory
     ? boughtItems.filter((i) => i.category === filterCategory)
     : boughtItems;
+
+  // Track which staple names are currently on the list (for reactive UI updates)
+  $: itemNamesOnList = new Set(pendingItems.map((i) => i.name.toLowerCase()));
 
   $: groupedPendingItems = groupItemsByCategory(filteredPendingItems, categories, categoryOrder);
 
@@ -175,10 +182,17 @@
     }
   }
 
+  // Track in-flight toggles to prevent double-clicks
+  let toggleInFlight = new Set<number>();
+
   async function toggleBought(itemId: number) {
+    // Prevent multiple clicks while request is in flight
+    if (toggleInFlight.has(itemId)) return;
+
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
 
+    toggleInFlight.add(itemId);
     const newBoughtState = !item.isBought;
     // Optimistic update
     items = items.map((i) => (i.id === item.id ? { ...i, isBought: newBoughtState } : i));
@@ -193,13 +207,19 @@
       if (e instanceof ApiError) {
         error = e.message;
       }
+    } finally {
+      toggleInFlight.delete(itemId);
     }
   }
 
   async function toggleFavorite(itemId: number) {
+    // Prevent multiple clicks while request is in flight
+    if (toggleInFlight.has(itemId)) return;
+
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
 
+    toggleInFlight.add(itemId);
     const newFavoriteState = !item.isFavorite;
     // Optimistic update
     items = items.map((i) => (i.id === item.id ? { ...i, isFavorite: newFavoriteState } : i));
@@ -214,6 +234,8 @@
       if (e instanceof ApiError) {
         error = e.message;
       }
+    } finally {
+      toggleInFlight.delete(itemId);
     }
   }
 
@@ -241,12 +263,69 @@
 
     try {
       await post<{ success: boolean; count: number }>('/groceries/clear-bought');
-      items = items.filter((i) => !i.isBought);
+      // Filter out bought items that are NOT favorites
+      // Favorites will be reset to not-bought state by the API
+      items = items.filter((i) => !i.isBought || i.isFavorite).map((i) => 
+        i.isBought && i.isFavorite ? { ...i, isBought: false, boughtBy: null, boughtAt: null } : i
+      );
     } catch (e) {
       if (e instanceof ApiError) {
         error = e.message;
       }
     }
+  }
+
+  // Staples (Basvaror) functions
+  async function loadStaples() {
+    loadingStaples = true;
+    try {
+      const res = await get<{ success: boolean; items: GroceryItem[] }>('/groceries/favorites');
+      staples = res.items;
+    } catch (e) {
+      if (e instanceof ApiError) {
+        error = e.message;
+      }
+    } finally {
+      loadingStaples = false;
+    }
+  }
+
+  async function addStapleToList(staple: GroceryItem) {
+    // Check if item already exists on the list (not bought)
+    if (isStapleOnList(staple.name)) {
+      return; // Already on list
+    }
+
+    try {
+      await post<{ success: boolean; item: GroceryItem }>('/groceries', {
+        name: staple.name,
+        category: staple.category,
+        quantity: staple.quantity,
+        unit: staple.unit,
+      });
+      // WebSocket will add the item to the list
+    } catch (e) {
+      if (e instanceof ApiError) {
+        error = e.message;
+      }
+    }
+  }
+
+  async function addAllStaplesToList() {
+    const staplesToAdd = staples.filter((s) => !isStapleOnList(s.name));
+
+    for (const staple of staplesToAdd) {
+      await addStapleToList(staple);
+    }
+  }
+
+  function isStapleOnList(stapleName: string): boolean {
+    return itemNamesOnList.has(stapleName.toLowerCase());
+  }
+
+  function openStaplesPanel() {
+    showStaplesPanel = true;
+    loadStaples();
   }
 
   async function updateQuantity(itemId: number, newQuantity: number) {
@@ -479,7 +558,7 @@
     groceryWs.connect();
 
     // Subscribe to WebSocket messages
-    const unsubscribe = groceryWs.subscribe((state: { status: string; lastMessage: any }) => {
+    const unsubscribe = groceryWs.subscribe((state) => {
       if (state.lastMessage) {
         handleWebSocketMessage(state.lastMessage);
       }
@@ -495,25 +574,27 @@
   });
 
   // Handle incoming WebSocket messages
-  function handleWebSocketMessage(message: any) {
+  function handleWebSocketMessage(message: WsMessage) {
+    const payload = message.payload as Record<string, unknown>;
     switch (message.type) {
       case 'grocery:added':
         // Add new item if it doesn't exist
-        const newItem = message.payload.item;
+        const newItem = (payload as { item: GroceryItem }).item;
         if (!items.find((i) => i.id === newItem.id)) {
           items = [newItem, ...items];
         }
         break;
 
       case 'grocery:updated':
-        // Update existing item
-        const updatedItem = message.payload.item;
+        // Update existing item - skip if item is currently being toggled to prevent race condition
+        const updatedItem = (payload as { item: GroceryItem }).item;
+        if (toggleInFlight.has(updatedItem.id)) break;
         items = items.map((i) => (i.id === updatedItem.id ? updatedItem : i));
         break;
 
       case 'grocery:deleted':
         // Remove deleted item
-        const deletedId = message.payload.id;
+        const deletedId = (payload as { id: number }).id;
         items = items.filter((i) => i.id !== deletedId);
         break;
 
@@ -524,7 +605,8 @@
 
       case 'grocery:assigned':
         // Add new assignment
-        const assignedUserId = message.payload.userId;
+        const assignedPayload = payload as { userId: number; assignedBy: number | null };
+        const assignedUserId = assignedPayload.userId;
         if (!assignments.find((a) => a.userId === assignedUserId)) {
           const member = familyMembers.find((m) => m.id === assignedUserId);
           if (member) {
@@ -534,7 +616,7 @@
                 id: 0,
                 familyId: 0,
                 userId: assignedUserId,
-                assignedBy: message.payload.assignedBy,
+                assignedBy: assignedPayload.assignedBy,
                 createdAt: new Date().toISOString(),
                 userDisplayName: member.displayName,
                 userAvatarEmoji: member.avatarEmoji,
@@ -547,7 +629,7 @@
 
       case 'grocery:unassigned':
         // Remove assignment
-        const unassignedUserId = message.payload.userId;
+        const unassignedUserId = (payload as { userId: number }).userId;
         assignments = assignments.filter((a) => a.userId !== unassignedUserId);
         break;
     }
@@ -606,6 +688,15 @@
           <span class="text-base">🤖</span>
           <span class="hidden sm:inline">AI</span>
         </a>
+        <!-- Basvaror (Staples) button -->
+        <button
+          on:click={openStaplesPanel}
+          class="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-800/30 transition-colors text-amber-700 dark:text-amber-300 text-sm border border-amber-200 dark:border-amber-800"
+          title={$t('groceries.staples')}
+        >
+          <span class="text-base">⭐</span>
+          <span class="hidden sm:inline">{$t('groceries.staples')}</span>
+        </button>
         <!-- Connection status indicator -->
         <div class="flex items-center gap-1.5">
           {#if $groceryWs.status === 'connected'}
@@ -707,6 +798,71 @@
         >
           {$t('groceries.change')}
         </button>
+      </div>
+    {/if}
+
+    <!-- Staples (Basvaror) panel -->
+    {#if showStaplesPanel}
+      <div class="card p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-semibold text-stone-700 dark:text-stone-200">
+            ⭐ {$t('groceries.staples')}
+          </h3>
+          <button
+            on:click={() => (showStaplesPanel = false)}
+            class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+          >
+            ✕
+          </button>
+        </div>
+        <p class="text-sm text-stone-500 dark:text-stone-400 mb-3">{$t('groceries.staplesDescription')}</p>
+        
+        {#if loadingStaples}
+          <div class="flex justify-center py-4">
+            <div class="animate-spin w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full"></div>
+          </div>
+        {:else if staples.length === 0}
+          <div class="text-center py-4 text-stone-400 dark:text-stone-500">
+            <p class="text-2xl mb-2">⭐</p>
+            <p class="text-sm">{$t('groceries.noStaples')}</p>
+            <p class="text-xs mt-1">{$t('groceries.noStaplesHint')}</p>
+          </div>
+        {:else}
+          <div class="space-y-2 max-h-64 overflow-y-auto">
+            {#each staples as staple (staple.id)}
+              {@const onList = isStapleOnList(staple.name)}
+              <div class="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-stone-800/50">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">{getCategoryIcon(staple.category)}</span>
+                  <span class="text-sm font-medium text-stone-700 dark:text-stone-200">{staple.name}</span>
+                  <span class="text-xs text-stone-400">{staple.quantity} {staple.unit || 'st'}</span>
+                </div>
+                {#if onList}
+                  <span class="text-xs text-green-600 dark:text-green-400 px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded">
+                    ✓ {$t('groceries.onList')}
+                  </span>
+                {:else}
+                  <button
+                    on:click={() => addStapleToList(staple)}
+                    class="text-xs px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded hover:bg-amber-200 dark:hover:bg-amber-800/30 transition-colors"
+                  >
+                    + {$t('groceries.addToList')}
+                  </button>
+                {/if}
+              </div>
+            {/each}
+          </div>
+          {#if staples.some((s) => !isStapleOnList(s.name))}
+            <div class="mt-3 pt-3 border-t border-stone-200 dark:border-stone-700">
+              <button
+                on:click={addAllStaplesToList}
+                class="w-full py-2 px-4 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white rounded-lg font-medium text-sm transition-colors"
+              >
+                {$t('groceries.addAllStaples')}
+              </button>
+            </div>
+          {/if}
+        {/if}
       </div>
     {/if}
 

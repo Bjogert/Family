@@ -30,7 +30,6 @@
 
     // Check if user dismissed recently (24h cooldown)
     if (isDismissedRecently()) {
-      console.log('[PWA] Install prompt dismissed recently, waiting for cooldown');
       return;
     }
 

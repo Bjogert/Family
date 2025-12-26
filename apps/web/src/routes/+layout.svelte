@@ -54,7 +54,6 @@
       navigator.serviceWorker
         .register(`/sw.js?v=${swVersion}`)
         .then((registration) => {
-          console.log('[PWA] Service worker registered:', registration.scope);
           // Check for updates periodically
           registration.update();
         })

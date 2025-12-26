@@ -107,7 +107,6 @@ export async function subscribeToPush(): Promise<boolean> {
             },
         });
 
-        console.log('Successfully subscribed to push notifications');
         return true;
     } catch (error) {
         console.error('Failed to subscribe to push:', error);
@@ -137,7 +136,6 @@ export async function unsubscribeFromPush(): Promise<boolean> {
             });
         }
 
-        console.log('Successfully unsubscribed from push notifications');
         return true;
     } catch (error) {
         console.error('Failed to unsubscribe from push:', error);

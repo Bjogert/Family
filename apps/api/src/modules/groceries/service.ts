@@ -21,11 +21,13 @@ export interface GroceryItem {
 }
 
 function toGroceryItem(row: GroceryRow): GroceryItem {
+    // PostgreSQL DECIMAL returns as string, need to convert to number
+    const quantity = typeof row.quantity === 'string' ? parseFloat(row.quantity) : row.quantity;
     return {
         id: row.id,
         name: row.name,
         category: row.category,
-        quantity: row.quantity,
+        quantity: quantity,
         unit: row.unit,
         isBought: row.is_bought,
         isFavorite: row.is_favorite,
@@ -105,6 +107,11 @@ export async function clearBoughtGroceries(familyId: number): Promise<number> {
     }
 
     return count;
+}
+
+export async function getFavorites(familyId: number): Promise<GroceryItem[]> {
+    const rows = await repository.getFavorites(familyId);
+    return rows.map(toGroceryItem);
 }
 
 export interface CategoryInfo {

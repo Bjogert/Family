@@ -46,7 +46,7 @@
 
   <!-- Favorite star button -->
   <button
-    on:click={onToggleFavorite}
+    on:click|stopPropagation={onToggleFavorite}
     class="text-lg hover:scale-110 transition-transform"
     aria-label={item.isFavorite ? 'Ta bort favorit' : 'Lägg till favorit'}
   >

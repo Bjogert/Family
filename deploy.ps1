@@ -100,6 +100,8 @@ if ($deployWeb -and -not $SkipBuild) {
 if ($deployApi) {
     Write-Step "Deploying API to Pi..."
     try {
+        # Clean old dist directory first
+        ssh $PI_HOST "rm -rf ${PI_PATH}/apps/api/dist" 2>$null
         scp -r "$LOCAL_PATH\apps\api\dist" "${PI_HOST}:${PI_PATH}/apps/api/" 2>$null
         if ($LASTEXITCODE -ne 0) { throw "SCP failed" }
         Write-Success "API deployed"
@@ -114,6 +116,8 @@ if ($deployApi) {
 if ($deployWeb) {
     Write-Step "Deploying Web app to Pi..."
     try {
+        # Clean old build directory first (keeps node_modules etc)
+        ssh $PI_HOST "rm -rf ${PI_PATH}/apps/web/build" 2>$null
         scp -r "$LOCAL_PATH\apps\web\build" "${PI_HOST}:${PI_PATH}/apps/web/" 2>$null
         if ($LASTEXITCODE -ne 0) { throw "SCP failed" }
         Write-Success "Web app deployed"
