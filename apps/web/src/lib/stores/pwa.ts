@@ -9,62 +9,62 @@ export const isInstalled = writable(false);
 
 // Derived store: can we show the install button?
 export const canInstall = derived(
-  [deferredPrompt, isInstalled],
-  ([$deferredPrompt, $isInstalled]) => $deferredPrompt !== null && !$isInstalled
+    [deferredPrompt, isInstalled],
+    ([$deferredPrompt, $isInstalled]) => $deferredPrompt !== null && !$isInstalled
 );
 
 // Initialize PWA detection
 export function initPwaDetection() {
-  if (!browser) return;
+    if (!browser) return;
 
-  // Check if already installed
-  if (window.matchMedia('(display-mode: standalone)').matches) {
-    isInstalled.set(true);
-    return;
-  }
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        isInstalled.set(true);
+        return;
+    }
 
-  // Check iOS standalone mode
-  if ((window.navigator as any).standalone === true) {
-    isInstalled.set(true);
-    return;
-  }
+    // Check iOS standalone mode
+    if ((window.navigator as any).standalone === true) {
+        isInstalled.set(true);
+        return;
+    }
 
-  // Listen for the install prompt event
-  window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('[PWA] Install prompt available');
-    e.preventDefault();
-    deferredPrompt.set(e);
-  });
+    // Listen for the install prompt event
+    window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('[PWA] Install prompt available');
+        e.preventDefault();
+        deferredPrompt.set(e);
+    });
 
-  // Detect if app was installed
-  window.addEventListener('appinstalled', () => {
-    console.log('[PWA] App installed');
-    isInstalled.set(true);
-    deferredPrompt.set(null);
-  });
+    // Detect if app was installed
+    window.addEventListener('appinstalled', () => {
+        console.log('[PWA] App installed');
+        isInstalled.set(true);
+        deferredPrompt.set(null);
+    });
 }
 
 // Trigger the install prompt
 export async function triggerInstall(): Promise<'accepted' | 'dismissed' | 'unavailable'> {
-  let prompt: any = null;
-  
-  const unsubscribe = deferredPrompt.subscribe(p => {
-    prompt = p;
-  });
-  unsubscribe();
+    let prompt: any = null;
 
-  if (!prompt) {
-    console.log('[PWA] No install prompt available');
-    return 'unavailable';
-  }
+    const unsubscribe = deferredPrompt.subscribe(p => {
+        prompt = p;
+    });
+    unsubscribe();
 
-  prompt.prompt();
-  const { outcome } = await prompt.userChoice;
-  console.log('[PWA] User choice:', outcome);
+    if (!prompt) {
+        console.log('[PWA] No install prompt available');
+        return 'unavailable';
+    }
 
-  if (outcome === 'accepted') {
-    deferredPrompt.set(null);
-  }
+    prompt.prompt();
+    const { outcome } = await prompt.userChoice;
+    console.log('[PWA] User choice:', outcome);
 
-  return outcome;
+    if (outcome === 'accepted') {
+        deferredPrompt.set(null);
+    }
+
+    return outcome;
 }
