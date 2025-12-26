@@ -1,12 +1,15 @@
 ﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { t } from '$lib/i18n';
+  import { canInstall, isInstalled, triggerInstall } from '$lib/stores/pwa';
   import ThemeToggle from './ThemeToggle.svelte';
   import DeleteAccountSection from './DeleteAccountSection.svelte';
 
   export let open = false;
 
   const dispatch = createEventDispatcher();
+
+  let installStatus: 'idle' | 'installing' | 'success' | 'dismissed' = 'idle';
 
   function close() {
     open = false;
@@ -15,6 +18,12 @@
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') close();
+  }
+
+  async function handleInstall() {
+    installStatus = 'installing';
+    const result = await triggerInstall();
+    installStatus = result === 'accepted' ? 'success' : 'idle';
   }
 </script>
 
@@ -64,6 +73,38 @@
             {$t('settings.appearance')}
           </h3>
           <ThemeToggle />
+        </section>
+
+        <!-- Install App Section -->
+        <section>
+          <h3
+            class="text-sm font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-3"
+          >
+            {$t('settings.installApp')}
+          </h3>
+          {#if $isInstalled}
+            <div class="flex items-center gap-2 text-green-600 dark:text-green-400">
+              <span>✅</span>
+              <span class="text-sm">{$t('settings.appInstalled')}</span>
+            </div>
+          {:else if $canInstall}
+            <button
+              on:click={handleInstall}
+              disabled={installStatus === 'installing'}
+              class="w-full py-2 px-4 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              {#if installStatus === 'installing'}
+                <span class="animate-spin">⏳</span>
+              {:else}
+                <span>📲</span>
+              {/if}
+              {$t('settings.installButton')}
+            </button>
+          {:else}
+            <p class="text-sm text-stone-500 dark:text-stone-400">
+              {$t('settings.installUnavailable')}
+            </p>
+          {/if}
         </section>
 
         <!-- Danger Zone -->

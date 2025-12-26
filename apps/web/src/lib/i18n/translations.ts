@@ -28,6 +28,10 @@
         'settings.themeLight': 'Ljust',
         'settings.themeDark': 'Mörkt',
         'settings.themeSystem': 'System',
+        'settings.installApp': 'Installera app',
+        'settings.appInstalled': 'Appen är redan installerad',
+        'settings.installButton': 'Installera Family Hub',
+        'settings.installUnavailable': 'Installera via webbläsarens meny, eller öppna sidan i Chrome/Edge',
         'settings.dangerZone': 'Farozon',
         'settings.deleteAccount': 'Ta bort konto',
         'settings.deleteAccountDesc': 'Ta bort ditt konto permanent från denna familj',
@@ -321,8 +325,9 @@
         'bulletin.someone': 'Någon',
 
         // Install prompt
-        'install.title': 'Installera Family Hub',
-        'install.description': 'Lägg till på din hemskärm för snabb åtkomst',
+        'install.title': 'Välkommen till Family Hub! 🏠',
+        'install.appExplanation': 'Din familjs digitala samlingspunkt för uppgifter, inköpslistor, kalender och meddelanden.',
+        'install.description': 'Installera appen för bästa upplevelse!',
         'install.button': 'Installera',
         'install.notNow': 'Inte nu',
 
@@ -469,6 +474,10 @@
         'settings.themeLight': 'Light',
         'settings.themeDark': 'Dark',
         'settings.themeSystem': 'System',
+        'settings.installApp': 'Install App',
+        'settings.appInstalled': 'App is already installed',
+        'settings.installButton': 'Install Family Hub',
+        'settings.installUnavailable': 'Use browser menu to install, or open in Chrome/Edge',
         'settings.dangerZone': 'Danger Zone',
         'settings.deleteAccount': 'Delete Account',
         'settings.deleteAccountDesc': 'Permanently delete your account from this family',
@@ -762,8 +771,9 @@
         'bulletin.someone': 'Someone',
 
         // Install prompt
-        'install.title': 'Install Family Hub',
-        'install.description': 'Add to your home screen for quick access',
+        'install.title': 'Welcome to Family Hub! 🏠',
+        'install.appExplanation': 'Your family\'s digital hub for tasks, grocery lists, calendar, and messages.',
+        'install.description': 'Install the app for the best experience!',
         'install.button': 'Install',
         'install.notNow': 'Not now',
 
@@ -910,6 +920,10 @@
         'settings.themeLight': 'Claro',
         'settings.themeDark': 'Escuro',
         'settings.themeSystem': 'Sistema',
+        'settings.installApp': 'Instalar App',
+        'settings.appInstalled': 'O app já está instalado',
+        'settings.installButton': 'Instalar Family Hub',
+        'settings.installUnavailable': 'Use o menu do navegador para instalar ou abra no Chrome/Edge',
         'settings.dangerZone': 'Zona de Perigo',
         'settings.deleteAccount': 'Excluir Conta',
         'settings.deleteAccountDesc': 'Excluir permanentemente sua conta desta família',
@@ -1198,8 +1212,9 @@
         'bulletin.someone': 'Alguém',
 
         // Install prompt
-        'install.title': 'Instalar Family Hub',
-        'install.description': 'Adicione à tela inicial para acesso rápido',
+        'install.title': 'Bem-vindo ao Family Hub! 🏠',
+        'install.appExplanation': 'O hub digital da sua família para tarefas, listas de compras, calendário e mensagens.',
+        'install.description': 'Instale o app para a melhor experiência!',
         'install.button': 'Instalar',
         'install.notNow': 'Agora não',
 

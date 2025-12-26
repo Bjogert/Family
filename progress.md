@@ -14,10 +14,18 @@
 
 | Metric | Count |
 |--------|-------|
-| Phases Complete | 4/8 |
-| Current Phase | 2b - Task Assignments |
+| Phases Complete | 7/8 |
+| Current Phase | PWA Install Banner |
 | Blockers | None |
 | Public URL | https://familjehubben.vip |
+
+---
+
+## Active Development Plan
+
+See [Plan.md](Plan.md) for the full roadmap with detailed task breakdowns in `/plans/` directory.
+
+**Current Focus:** [01-StartScreen.md](plans/01-StartScreen.md) - PWA Install Banner
 
 ---
 
@@ -678,6 +686,167 @@ Based on comprehensive project review, implemented following improvements:
 - @fastify/helmet
 - @fastify/csrf-protection (installed, ready for future use)
 
+### Session 10 - 2025-12-24 (Calendar & Bulletin Board)
+**What we did:**
+
+**1. Calendar Full Implementation:**
+- Built complete calendar page with week and month views
+- Swedish calendar (weeks start Monday, Swedish month names)
+- Color-coded events by type with emoji icons
+- Add/Edit/Delete events with modal forms
+- Event categories: family, work, school, health, birthday, other
+- Recurring events support (daily, weekly, monthly, yearly)
+- All-day events vs. timed events
+- User assignment to events (who it concerns)
+- Database tables: calendar_events, event_participants
+
+**2. Bulletin Board (Home Page):**
+- Redesigned home page as bulletin board
+- Pinnable notes with colors (yellow, blue, green, pink, purple, orange)
+- Add/edit/delete notes
+- Pin notes to keep at top
+- Assign notes to family members
+- Notes show author with avatar
+- Database table: bulletin_notes, note_assignments
+
+**3. Activities Feature:**
+- New activities page for family activities
+- Activity categories: sports, music, hobby, social, other
+- Track when activities happen
+- Who participates in activities
+- Database tables: activities, activity_schedules
+
+**4. Tasks/Chores System:**
+- Full task management page
+- Task categories: cleaning, cooking, laundry, outdoor, pets, shopping, homework, other
+- Task assignment to family members
+- Points system for completed tasks
+- Difficulty levels: easy, medium, hard
+- Due dates and validation workflow
+- Task status: open, in_progress, done, verified
+- Database table: tasks
+
+**Files Created:**
+- `apps/web/src/routes/calendar/+page.svelte` - Full calendar implementation
+- `apps/web/src/routes/activities/+page.svelte` - Activities page
+- `apps/web/src/routes/tasks/+page.svelte` - Tasks/chores page
+- `apps/api/src/modules/calendar/` - Calendar API module
+- `apps/api/src/modules/bulletin/` - Bulletin board API module
+- `apps/api/src/modules/activities/` - Activities API module
+- `apps/api/src/modules/tasks/` - Tasks API module
+
+### Session 11 - 2025-12-25 (Profile & Push Notifications)
+**What we did:**
+
+**1. Push Notifications System:**
+- Web Push notifications using VAPID keys
+- Service worker for background notifications
+- User subscription management
+- Push notification for various events:
+  - New grocery assignments
+  - Task assignments
+  - Calendar reminders
+  - Bulletin messages
+- API endpoint: POST /api/push/send
+- Database table: push_subscriptions
+
+**2. Profile Page Enhancements:**
+- User profile pages at /profile/[userId]
+- View own profile and other family members
+- Edit profile (display name, avatar emoji, color, birthday, gender, role)
+- View assigned tasks on profile
+- View earned points from completed tasks
+- Push notification settings per user
+
+**3. Profile Message Feature:**
+- "Meddelande" button on other users' profiles
+- Send messages that appear as pinned bulletin notes
+- Messages trigger push notification to recipient
+- Messages display in "Meddelanden" section on profile
+
+**4. Calendar Fixes:**
+- Fixed "Månad" button being cut off on mobile
+- Default view changed to month view
+- Navigation made responsive with flex-wrap
+
+**5. Home Page Refactoring:**
+- Split +page.svelte from 913 lines into 6 components:
+  - FamilySidebar.svelte (~117 lines)
+  - MyTasksCard.svelte (~94 lines)
+  - BulletinNoteCard.svelte (~107 lines)
+  - UpcomingActivities.svelte (~70 lines)
+  - TasksPreview.svelte (~50 lines)
+  - GroceryPreview.svelte (~36 lines)
+- Main page reduced to ~421 lines
+- Created barrel export in index.ts
+
+**Files Created:**
+- `apps/web/src/lib/components/home/FamilySidebar.svelte`
+- `apps/web/src/lib/components/home/MyTasksCard.svelte`
+- `apps/web/src/lib/components/home/BulletinNoteCard.svelte`
+- `apps/web/src/lib/components/home/UpcomingActivities.svelte`
+- `apps/web/src/lib/components/home/TasksPreview.svelte`
+- `apps/web/src/lib/components/home/GroceryPreview.svelte`
+- `apps/web/src/lib/components/home/index.ts`
+- `apps/api/src/modules/push/` - Push notification module
+- `apps/web/static/sw.js` - Service worker
+
+**Files Modified:**
+- `apps/web/src/routes/+page.svelte` - Refactored with components
+- `apps/web/src/routes/calendar/+page.svelte` - Month view default, responsive nav
+- `apps/web/src/routes/profile/[userId]/+page.svelte` - Message feature
+- `apps/api/src/modules/push/routes.ts` - Added /send endpoint
+
+### Session 12 - 2025-12-26 (Planning Phase)
+**What we did:**
+
+**1. Development Plan Created:**
+- Created comprehensive Plan.md as main roadmap
+- Split into 6 separate detailed plan files in /plans/ directory:
+  - 01-StartScreen.md - PWA install banner
+  - 02-TempusIntegration.md - Work schedule sync
+  - 03-ThemesPersonalization.md - Visual customization
+  - 04-ProfilePictures.md - Avatar uploads
+  - 05-PointsRewards.md - Allowance system
+  - 06-GroceryAI.md - AI meal planning (4 phases)
+
+**2. Planning Highlights:**
+- 8 weeks estimated total work
+- PWA install banner is first priority (2 days)
+- Grocery AI split into 4 phases (preferences → menu → list → templates)
+- Tempus integration has rollback plan
+- Profile pictures need parental approval for children
+- Points system fully optional per family
+
+---
+
+### Session 13 - 2025-01-11 (PWA Install Banner)
+**What we did:**
+
+**1. PWA Install Banner Completed:**
+- Discovered existing `InstallPrompt.svelte` component
+- Enhanced with 24h cooldown after dismiss
+- Added iOS standalone detection
+- Added friendly app explanation message
+- Updated translations (Swedish, English, Portuguese)
+- Fixed localStorage check - was saving but not loading dismiss state!
+
+**2. Files Modified:**
+- `apps/web/src/lib/components/InstallPrompt.svelte` - Added cooldown logic, iOS check, better messaging
+- `apps/web/src/lib/i18n/translations.ts` - Added `install.appExplanation`, improved copy
+- `plans/01-StartScreen.md` - Marked as completed
+- `Plan.md` - Updated status to completed
+
+**3. PWA Install Banner Features:**
+- Shows welcome message explaining what the app does
+- "Install" button with 📲 emoji
+- "Not now" dismisses with 24h cooldown
+- Hides if already installed (standalone mode)
+- Hides on iOS if already in PWA
+- Clears dismiss state after successful install
+
+**Next:** Deploy and test on actual device
+
 ---
 
 ## Blockers & Questions
@@ -706,7 +875,8 @@ Based on comprehensive project review, implemented following improvements:
 - Each phase should result in something usable
 - Don't skip to later phases - foundation matters
 - Test on actual phone regularly, not just desktop
+- **400 lines max per file** - refactor if larger
 
 ---
 
-*Last updated: 2025-01-XX*
+*Last updated: 2025-01-11*
