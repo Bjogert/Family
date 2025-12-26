@@ -344,8 +344,10 @@
         const allNotes: BulletinNote[] = await response.json();
         // Filter notes assigned to this user (messages)
         // assignedTo is an array of objects with {id, displayName, avatarEmoji}
-        userMessages = allNotes.filter((note: any) => 
-          note.assignedTo?.some((a: any) => a.id === userId) && note.title?.includes('💬 Meddelande')
+        userMessages = allNotes.filter(
+          (note: any) =>
+            note.assignedTo?.some((a: any) => a.id === userId) &&
+            note.title?.includes('💬 Meddelande')
         );
         console.log('User messages for', userId, ':', userMessages);
       }
@@ -1037,7 +1039,9 @@
                 </h3>
                 <div class="space-y-3">
                   {#each userMessages as msg}
-                    <div class="bg-blue-50 dark:bg-blue-900/30 rounded-xl p-3 border-l-4 border-blue-400">
+                    <div
+                      class="bg-blue-50 dark:bg-blue-900/30 rounded-xl p-3 border-l-4 border-blue-400"
+                    >
                       <div class="flex items-start justify-between gap-2">
                         <div class="flex-1 min-w-0">
                           <div class="flex items-center gap-2 mb-1">
@@ -1050,11 +1054,11 @@
                             {msg.content}
                           </p>
                           <span class="text-xs text-stone-400 dark:text-stone-500 mt-1 block">
-                            {new Date(msg.createdAt).toLocaleDateString('sv-SE', { 
-                              day: 'numeric', 
+                            {new Date(msg.createdAt).toLocaleDateString('sv-SE', {
+                              day: 'numeric',
                               month: 'short',
                               hour: '2-digit',
-                              minute: '2-digit'
+                              minute: '2-digit',
                             })}
                           </span>
                         </div>
