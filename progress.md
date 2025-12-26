@@ -979,6 +979,70 @@ Based on comprehensive project review, implemented following improvements:
 
 ---
 
+### Session 16 - 2025-12-26 (Decimal Quantities & Collapsible Categories)
+**What we did:**
+
+**1. Decimal Quantity Support:**
+- **Problem:** Adding items with decimal quantities (0.6 kg) failed with "Validation failed"
+- **Root Cause:** Zod schema had `.int()` constraint and database had `INTEGER` column
+- **Fix 1:** Updated `packages/shared/src/schemas/grocery.ts`:
+  - Removed `.int()` from `CreateGrocerySchema.quantity`
+  - Removed `.int()` from `UpdateGrocerySchema.quantity`
+  - Now allows decimal quantities like 0.6, 1.5, etc.
+- **Fix 2:** Created database migration `003_quantity_decimal.ts`:
+  - Changed `quantity` from `INTEGER` to `DECIMAL(10,2)`
+  - Updated default to 1.00
+  - Includes rollback (down migration rounds decimals to integers)
+
+**2. Smart Quantity Formatting:**
+- **Problem:** Quantities displayed as "1.00" instead of clean "1"
+- **Solution:** Added `formatQuantity()` helper function:
+  - Shows "1" for whole numbers (not "1.00")
+  - Shows "1.5" or "0.3" when decimals are needed
+- Applied formatting to all quantity displays:
+  - `GroceryItemRow.svelte` - Item list display
+  - `GroceryItemRow.svelte` - Edit quantity mode
+  - `GroceryItemRow.svelte` - Bought items display
+  - `profile/[userId]/+page.svelte` - Profile grocery list
+
+**3. Collapsible Category Sections:**
+- Category sections now collapse/expand on header click
+- Collapsed sections show summary: "3 varor dolda"
+- Collapse arrow (▼) rotates when collapsed
+- **Drag handle (⋮⋮)** preserved for reordering sections
+- State persisted to localStorage (survives page refresh)
+
+**4. Helper Functions Added:**
+- `apps/web/src/lib/utils/groceryHelpers.ts`:
+  - `loadCollapsedCategories()` - Load from localStorage
+  - `saveCollapsedCategories()` - Save to localStorage
+
+**5. A11y Fix:**
+- Added `<!-- svelte-ignore a11y-no-static-element-interactions -->` to drag handle span
+
+**Files Created:**
+- `apps/api/src/db/migrations/003_quantity_decimal.ts`
+
+**Files Modified:**
+- `packages/shared/src/schemas/grocery.ts` - Removed `.int()` constraints
+- `apps/api/src/db/migrations/index.ts` - Added migration003
+- `apps/web/src/lib/utils/groceryHelpers.ts` - Collapse state functions
+- `apps/web/src/lib/components/GroceryItemRow.svelte` - formatQuantity()
+- `apps/web/src/lib/components/CategorySection.svelte` - Collapsible UI
+- `apps/web/src/routes/groceries/+page.svelte` - Collapse state management
+- `apps/web/src/routes/profile/[userId]/+page.svelte` - Quantity formatting
+
+**UX Improvements:**
+- Categories can be collapsed to reduce visual clutter
+- Category order remembered (drag to reorder, persists in localStorage)
+- Collapse state remembered per category
+- Clean quantity display (no unnecessary decimals)
+- Decimal quantities now work (0.5 kg, 0.3 l, etc.)
+
+**Deployed:** ✅ Successfully deployed to Pi
+
+---
+
 ## Blockers & Questions
 
 | Issue | Status | Resolution |
