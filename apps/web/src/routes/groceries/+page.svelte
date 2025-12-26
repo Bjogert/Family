@@ -490,16 +490,45 @@
             </span>
           {/if}
         </button>
+        <!-- Preferences link -->
+        <a
+          href="/groceries/preferences"
+          class="flex items-center gap-1 px-2 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-stone-600 dark:text-stone-300 text-sm"
+          title={$t('preferences.title')}
+        >
+          <span class="text-base">🍽️</span>
+        </a>
+        <!-- Menu link -->
+        <a
+          href="/groceries/menu"
+          class="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/30 hover:from-orange-200 hover:to-amber-200 dark:hover:from-orange-800/30 dark:hover:to-amber-800/30 transition-colors text-orange-700 dark:text-orange-300 text-sm border border-orange-200 dark:border-orange-800"
+          title={$t('menu.title')}
+        >
+          <span class="text-base">🤖</span>
+          <span class="hidden sm:inline">AI</span>
+        </a>
         <!-- Connection status indicator -->
         <div class="flex items-center gap-1.5">
           {#if $groceryWs.status === 'connected'}
-            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" title={$t('calendar.connectionStatus')}></div>
+            <div
+              class="w-2 h-2 bg-green-500 rounded-full animate-pulse"
+              title={$t('calendar.connectionStatus')}
+            ></div>
           {:else if $groceryWs.status === 'connecting'}
-            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title={$t('groceries.connecting')}></div>
+            <div
+              class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"
+              title={$t('groceries.connecting')}
+            ></div>
           {:else if $groceryWs.status === 'error'}
-            <div class="w-2 h-2 bg-red-500 rounded-full" title={$t('groceries.connectionError')}></div>
+            <div
+              class="w-2 h-2 bg-red-500 rounded-full"
+              title={$t('groceries.connectionError')}
+            ></div>
           {:else}
-            <div class="w-2 h-2 bg-gray-400 rounded-full" title={$t('groceries.disconnected')}></div>
+            <div
+              class="w-2 h-2 bg-gray-400 rounded-full"
+              title={$t('groceries.disconnected')}
+            ></div>
           {/if}
         </div>
       </div>

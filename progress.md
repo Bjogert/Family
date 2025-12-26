@@ -820,10 +820,10 @@ Based on comprehensive project review, implemented following improvements:
 
 ---
 
-### Session 13 - 2025-01-11 (PWA Install Banner)
+### Session 13 - 2025-12-26 (PWA Install Banner)
 **What we did:**
 
-**1. PWA Install Banner Completed:**
+**1. PWA Install Banner Enhanced:**
 - Discovered existing `InstallPrompt.svelte` component
 - Enhanced with 24h cooldown after dismiss
 - Added iOS standalone detection
@@ -831,21 +831,88 @@ Based on comprehensive project review, implemented following improvements:
 - Updated translations (Swedish, English, Portuguese)
 - Fixed localStorage check - was saving but not loading dismiss state!
 
-**2. Files Modified:**
-- `apps/web/src/lib/components/InstallPrompt.svelte` - Added cooldown logic, iOS check, better messaging
-- `apps/web/src/lib/i18n/translations.ts` - Added `install.appExplanation`, improved copy
+**2. Install App in Settings:**
+- Created shared PWA store: `apps/web/src/lib/stores/pwa.ts`
+- Store exposes: `deferredPrompt`, `isInstalled`, `canInstall`, `triggerInstall()`
+- Added "Install App" section to SettingsModal
+- Shows 3 states: already installed ✅, install button 📲, or browser instructions
+- Users can always find install option in Settings even after dismissing banner
+
+**3. Files Created:**
+- `apps/web/src/lib/stores/pwa.ts` - Shared PWA install prompt store
+
+**4. Files Modified:**
+- `apps/web/src/lib/components/InstallPrompt.svelte` - Uses shared store, cooldown logic
+- `apps/web/src/lib/components/SettingsModal.svelte` - Added Install App section
+- `apps/web/src/lib/i18n/translations.ts` - Added install.appExplanation + settings.installApp translations
 - `plans/01-StartScreen.md` - Marked as completed
 - `Plan.md` - Updated status to completed
 
-**3. PWA Install Banner Features:**
-- Shows welcome message explaining what the app does
-- "Install" button with 📲 emoji
-- "Not now" dismisses with 24h cooldown
-- Hides if already installed (standalone mode)
-- Hides on iOS if already in PWA
-- Clears dismiss state after successful install
+**5. New Translations Added:**
+- `settings.installApp` - Section header
+- `settings.appInstalled` - "App is already installed"
+- `settings.installButton` - "Install Family Hub"
+- `settings.installUnavailable` - Browser fallback message
 
-**Next:** Deploy and test on actual device
+**Deployed:** ✅ Successfully deployed to Pi
+
+---
+
+### Session 14 - 2025-12-26 (Grocery AI Phase 1: Food Preferences)
+**What we did:**
+
+**1. Database Schema:**
+- Created `food_preferences` table with 9 preference columns (1-10 scale):
+  - spicy, asian, swedish, vegetarian, vegan
+  - health_conscious, kid_friendly, quick_meals, budget_conscious
+- Created `dietary_restrictions` table for allergens:
+  - 12 restrictions: lactose, gluten, nuts, peanuts, eggs, fish, shellfish, soy, sesame, celery, mustard, sulfites
+
+**2. API Module (apps/api/src/modules/preferences/):**
+- `repository.ts` - Database CRUD: getFamilyPreferences, upsertFamilyPreferences, getFamilyRestrictions, setFamilyRestrictions, resetFamilyPreferences
+- `service.ts` - Business logic + DIETARY_RESTRICTIONS list
+- `routes.ts` - API endpoints with auth middleware:
+  - `GET /preferences` - Get preferences + restrictions
+  - `PUT /preferences` - Update preferences + restrictions
+  - `GET /preferences/restrictions` - Get available restriction options
+  - `POST /preferences/reset` - Reset to defaults
+- `index.ts` - Module exports
+
+**3. Frontend Page (apps/web/src/routes/groceries/preferences/+page.svelte):**
+- 9 range sliders for taste preferences with emojis:
+  - 🌶️ Kryddig mat, 🍜 Asiatiskt, 🇸🇪 Husmanskost
+  - 🥗 Vegetariskt, 🌱 Veganskt, 💪 Hälsosamt
+  - 👶 Barnvänligt, ⏱️ Snabba måltider, 💰 Budgetvänligt
+- Dietary restrictions toggle buttons (red when active)
+- Save/Reset buttons with loading states
+- Success/error message display
+- Link from grocery page header (🍽️ icon)
+
+**4. Translations Added:**
+- Swedish, English, Portuguese translations for:
+  - preferences.title, description, tastePreferences
+  - preferences.dietaryRestrictions, restrictionsDescription
+  - preferences.low, high, saved, reset, confirmReset, infoBox
+
+**5. Files Created:**
+- `apps/api/src/modules/preferences/repository.ts`
+- `apps/api/src/modules/preferences/service.ts`
+- `apps/api/src/modules/preferences/routes.ts`
+- `apps/api/src/modules/preferences/index.ts`
+- `apps/web/src/routes/groceries/preferences/+page.svelte`
+
+**6. Files Modified:**
+- `apps/api/src/db/index.ts` - Added food_preferences & dietary_restrictions tables
+- `apps/api/src/app.ts` - Registered preferencesRoutes
+- `apps/web/src/lib/i18n/translations.ts` - Added 13 preference translation keys
+- `apps/web/src/routes/groceries/+page.svelte` - Added 🍽️ link to preferences
+
+**Deployed:** ✅ API and Web successfully deployed to Pi
+
+**Next Session:**
+- Test preferences page on real device
+- Update 06-GroceryAI.md plan file with Phase 1 completion
+- Start Phase 2: AI Menu Suggestions (OpenAI integration)
 
 ---
 

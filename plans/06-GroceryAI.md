@@ -1,6 +1,6 @@
 ﻿# 6. Grocery List with AI Assistance
 
-**Status:** 🔴 Not Started  
+**Status:** � In Progress  
 **Priority:** High  
 **Estimated Effort:** Very Large (2-3 weeks total)
 
@@ -19,7 +19,7 @@
 
 This feature is split into 4 phases, each building on the previous:
 
-1. **Phase 1:** Preferences - Build the foundation
+1. **Phase 1:** Preferences - Build the foundation ✅ Completed
 2. **Phase 2:** AI Menu Suggestions - Generate weekly menus
 3. **Phase 3:** Grocery List Generation - Auto-create shopping lists
 4. **Phase 4:** Base Templates - Save and reuse lists
@@ -28,43 +28,47 @@ This feature is split into 4 phases, each building on the previous:
 
 ## Phase 1: Preferences
 
-**Status:** 🔴 Not Started  
+**Status:** ✅ Completed (2025-12-26)  
 **Estimated Effort:** Small (2-3 days)
 
 ### Goals
-- Capture family food preferences
-- Store preferences per-family or per-user
+- Capture family food preferences ✅
+- Store preferences per-family ✅
 - Use preferences to guide AI menu suggestions
 
 ### Requirements
-- [ ] Create taste & preference table with sliders (1–10)
-- [ ] Add preference categories:
-  - [ ] Spicy tolerance
-  - [ ] Asian cuisine preference
-  - [ ] Swedish "Husmanskost" preference
-  - [ ] Vegetarian preference
-  - [ ] Vegan preference
-  - [ ] Health-conscious
-  - [ ] Kid-friendly meals
-  - [ ] Quick meals (<30 min)
-  - [ ] Budget-conscious
-- [ ] Dietary restrictions (allergies, intolerances)
-- [ ] Preferences can be per-family or per-user
-- [ ] Store preferences in database
+- [x] Create taste & preference table with sliders (1–10)
+- [x] Add preference categories:
+  - [x] Spicy tolerance
+  - [x] Asian cuisine preference
+  - [x] Swedish "Husmanskost" preference
+  - [x] Vegetarian preference
+  - [x] Vegan preference
+  - [x] Health-conscious
+  - [x] Kid-friendly meals
+  - [x] Quick meals (<30 min)
+  - [x] Budget-conscious
+- [x] Dietary restrictions (allergies, intolerances)
+- [x] Store preferences in database
 
 ### Implementation Steps
-1. [ ] Database schema (0.5 day)
-   - Create `food_preferences` table
-   - Create `dietary_restrictions` table
-2. [ ] Backend API (0.5 day)
-   - `GET /api/preferences/:familyId`
-   - `PUT /api/preferences/:familyId`
-3. [ ] Frontend UI (1-1.5 days)
-   - Create preferences page
-   - Slider components for each category
-   - Multi-select for restrictions
-   - Save button
-   - Reset to defaults
+1. [x] Database schema (0.5 day)
+   - Created `food_preferences` table with 9 preference columns
+   - Created `dietary_restrictions` table for allergens
+2. [x] Backend API (0.5 day)
+   - `GET /api/preferences` - Get family preferences + restrictions
+   - `PUT /api/preferences` - Update preferences + restrictions
+   - `GET /api/preferences/restrictions` - Available restriction options
+   - `POST /api/preferences/reset` - Reset to defaults
+3. [x] Frontend UI (1 day)
+   - Created preferences page at `/groceries/preferences`
+   - 9 range sliders with emojis (🌶️🍜🇸🇪🥗🌱💪👶⏱️💰)
+   - Toggle buttons for 12 dietary restrictions
+   - Save/Reset buttons with loading states
+   - Success/error feedback
+   - Link from grocery page header (🍽️)
+4. [x] Translations
+   - Swedish, English, Portuguese translations added
 
 ### Technical Notes
 ```typescript

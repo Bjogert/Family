@@ -1,6 +1,6 @@
 // Service Worker for Family Hub PWA
 // Handles caching, offline fallback, and push notifications
-const CACHE_VERSION = 'family-hub-v5';
+const CACHE_VERSION = 'family-hub-v6';
 const OFFLINE_URL = '/offline';
 
 // Only cache the offline page - everything else is fetched fresh

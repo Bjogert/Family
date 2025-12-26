@@ -64,6 +64,11 @@ export const config = {
     subject: process.env.VAPID_SUBJECT || 'mailto:admin@familjehubben.vip',
   },
 
+  // OpenAI
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY || '',
+  },
+
   // App URLs
   appUrl: process.env.APP_URL || 'http://localhost:5173',
 } as const;

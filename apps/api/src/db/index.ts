@@ -182,6 +182,65 @@ export async function initDatabase(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_groceries_bought ON groceries(is_bought)
     `);
 
+    // Create food_preferences table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS food_preferences (
+        id SERIAL PRIMARY KEY,
+        family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        spicy INTEGER DEFAULT 5 CHECK (spicy >= 1 AND spicy <= 10),
+        asian INTEGER DEFAULT 5 CHECK (asian >= 1 AND asian <= 10),
+        swedish INTEGER DEFAULT 5 CHECK (swedish >= 1 AND swedish <= 10),
+        vegetarian INTEGER DEFAULT 3 CHECK (vegetarian >= 1 AND vegetarian <= 10),
+        vegan INTEGER DEFAULT 1 CHECK (vegan >= 1 AND vegan <= 10),
+        health_conscious INTEGER DEFAULT 5 CHECK (health_conscious >= 1 AND health_conscious <= 10),
+        kid_friendly INTEGER DEFAULT 5 CHECK (kid_friendly >= 1 AND kid_friendly <= 10),
+        quick_meals INTEGER DEFAULT 5 CHECK (quick_meals >= 1 AND quick_meals <= 10),
+        budget_conscious INTEGER DEFAULT 5 CHECK (budget_conscious >= 1 AND budget_conscious <= 10),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(family_id, user_id)
+      )
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_food_preferences_family_id ON food_preferences(family_id)
+    `);
+
+    // Create dietary_restrictions table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS dietary_restrictions (
+        id SERIAL PRIMARY KEY,
+        family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        restriction VARCHAR(50) NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(family_id, user_id, restriction)
+      )
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_dietary_restrictions_family_id ON dietary_restrictions(family_id)
+    `);
+
+    // Create weekly_menus table for AI-generated menus
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS weekly_menus (
+        id SERIAL PRIMARY KEY,
+        family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+        week_start DATE NOT NULL,
+        meals JSONB NOT NULL DEFAULT '[]',
+        created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(family_id, week_start)
+      )
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_weekly_menus_family_id ON weekly_menus(family_id)
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_weekly_menus_week_start ON weekly_menus(week_start)
+    `);
+
     // Seed default family if it doesn't exist
     const defaultFamilyName = 'Familjen Wiesel';
     const existingFamily = await client.query(
