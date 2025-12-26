@@ -166,7 +166,7 @@ export async function update(
     const query = `UPDATE groceries SET ${fields.join(', ')}
     WHERE id = $${paramIndex++} AND family_id = $${paramIndex}
     RETURNING id`;
-    
+
     console.log('UPDATE query:', query);
     console.log('UPDATE values:', values);
     console.log('UPDATE paramIndex after:', paramIndex);
