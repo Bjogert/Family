@@ -55,6 +55,7 @@ export const UpdateGrocerySchema = z.object({
     .nullable()
     .optional(),
   isBought: z.boolean().optional(),
+  isFavorite: z.boolean().optional(),
 });
 
 // Grocery item from database

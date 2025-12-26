@@ -13,6 +13,7 @@
   export let onDragOver: (e: DragEvent) => void;
   export let onDragEnd: () => void;
   export let onToggleBought: (itemId: number) => void;
+  export let onToggleFavorite: (itemId: number) => void;
   export let onDelete: (itemId: number) => void;
   export let onStartEdit: (itemId: number, quantity: number) => void;
   export let onUpdateQuantity: (itemId: number, quantity: number) => void;
@@ -46,6 +47,7 @@
         bind:editQuantityValue
         categoryIcon={getCategoryIcon(item.category)}
         onToggleBought={() => onToggleBought(item.id)}
+        onToggleFavorite={() => onToggleFavorite(item.id)}
         onDelete={() => onDelete(item.id)}
         onStartEdit={() => onStartEdit(item.id, item.quantity)}
         onUpdateQuantity={(val) => onUpdateQuantity(item.id, val)}

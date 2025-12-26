@@ -49,10 +49,14 @@
 
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {
+      // Add version to bust Cloudflare cache
+      const swVersion = 'v9';
       navigator.serviceWorker
-        .register('/sw.js')
+        .register(`/sw.js?v=${swVersion}`)
         .then((registration) => {
           console.log('[PWA] Service worker registered:', registration.scope);
+          // Check for updates periodically
+          registration.update();
         })
         .catch((error) => {
           console.error('[PWA] Service worker registration failed:', error);

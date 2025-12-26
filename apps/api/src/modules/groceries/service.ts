@@ -12,6 +12,7 @@ export interface GroceryItem {
     quantity: number;
     unit: string | null;
     isBought: boolean;
+    isFavorite: boolean;
     addedBy: { id: number; name: string } | null;
     boughtBy: { id: number; name: string } | null;
     createdAt: string;
@@ -27,6 +28,7 @@ function toGroceryItem(row: GroceryRow): GroceryItem {
         quantity: row.quantity,
         unit: row.unit,
         isBought: row.is_bought,
+        isFavorite: row.is_favorite,
         addedBy: row.added_by ? { id: row.added_by, name: row.added_by_name || 'Unknown' } : null,
         boughtBy: row.bought_by ? { id: row.bought_by, name: row.bought_by_name || 'Unknown' } : null,
         createdAt: row.created_at.toISOString(),

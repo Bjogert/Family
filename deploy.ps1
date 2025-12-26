@@ -128,11 +128,14 @@ if ($deployWeb) {
 if (-not $NoRestart) {
     Write-Step "Restarting services..."
     try {
+        # Kill any zombie processes holding the ports
         if ($deployApi) {
+            ssh $PI_HOST "sudo fuser -k 3001/tcp 2>/dev/null; sleep 1" 2>$null
             ssh $PI_HOST "sudo systemctl restart family-hub-api" 2>$null
             Write-Success "API service restarted"
         }
         if ($deployWeb) {
+            ssh $PI_HOST "sudo fuser -k 3000/tcp 2>/dev/null; sleep 1" 2>$null
             ssh $PI_HOST "sudo systemctl restart family-hub-web" 2>$null
             Write-Success "Web service restarted"
         }

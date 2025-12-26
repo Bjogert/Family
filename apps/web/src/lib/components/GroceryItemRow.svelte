@@ -11,6 +11,7 @@
   export let onStartEdit: () => void;
   export let onUpdateQuantity: (value: number) => void;
   export let onCancelEdit: () => void;
+  export let onToggleFavorite: () => void;
 
   function decrementQuantity() {
     if (editQuantityValue > 1) {
@@ -37,6 +38,20 @@
   >
     {#if item.isBought}✓{/if}
   </button>
+  
+  <!-- Favorite star button -->
+  <button
+    on:click={onToggleFavorite}
+    class="text-lg hover:scale-110 transition-transform"
+    aria-label={item.isFavorite ? 'Ta bort favorit' : 'Lägg till favorit'}
+  >
+    {#if item.isFavorite}
+      <span class="text-yellow-500">⭐</span>
+    {:else}
+      <span class="text-gray-300 dark:text-gray-600 hover:text-yellow-400">☆</span>
+    {/if}
+  </button>
+  
   <div class="flex-1 min-w-0">
     <p class="font-medium truncate {item.isBought ? 'line-through' : ''}">{item.name}</p>
     {#if item.isBought && item.boughtBy}

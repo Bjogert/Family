@@ -8,6 +8,7 @@ export interface GroceryRow {
     quantity: number;
     unit: string | null;
     is_bought: boolean;
+    is_favorite: boolean;
     added_by: number | null;
     added_by_name: string | null;
     bought_by: number | null;
@@ -32,6 +33,7 @@ export interface UpdateGroceryData {
     quantity?: number;
     unit?: string | null;
     isBought?: boolean;
+    isFavorite?: boolean;
     boughtBy?: number | null;
 }
 
@@ -45,6 +47,7 @@ export async function findAllByFamily(familyId: number): Promise<GroceryRow[]> {
       g.quantity,
       g.unit,
       g.is_bought,
+      g.is_favorite,
       g.added_by,
       ua.display_name as added_by_name,
       g.bought_by,
@@ -72,6 +75,7 @@ export async function findById(id: number, familyId: number): Promise<GroceryRow
       g.quantity,
       g.unit,
       g.is_bought,
+      g.is_favorite,
       g.added_by,
       ua.display_name as added_by_name,
       g.bought_by,
@@ -146,6 +150,10 @@ export async function update(
             fields.push(`bought_at = NULL`);
             fields.push(`bought_by = NULL`);
         }
+    }
+    if (data.isFavorite !== undefined) {
+        fields.push(`is_favorite = $${paramIndex++}`);
+        values.push(data.isFavorite);
     }
 
     if (fields.length === 0) {

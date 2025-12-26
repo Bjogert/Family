@@ -46,6 +46,7 @@
   let newItemCategory = 'other';
   let newItemQuantity = 1;
   let showBought = false;
+  let showFavoritesOnly = false;
   let filterCategory: string | null = null;
   let adding = false;
   let editingQuantityId: number | null = null;
@@ -72,9 +73,12 @@
   // Reactive derived values
   $: pendingItems = items.filter((i) => !i.isBought);
   $: boughtItems = items.filter((i) => i.isBought);
-  $: filteredPendingItems = filterCategory
-    ? pendingItems.filter((i) => i.category === filterCategory)
-    : pendingItems;
+  $: favoriteItems = items.filter((i) => i.isFavorite && !i.isBought);
+  $: filteredPendingItems = showFavoritesOnly
+    ? favoriteItems.filter((i) => !filterCategory || i.category === filterCategory)
+    : filterCategory
+      ? pendingItems.filter((i) => i.category === filterCategory)
+      : pendingItems;
   $: filteredBoughtItems = filterCategory
     ? boughtItems.filter((i) => i.category === filterCategory)
     : boughtItems;
@@ -170,6 +174,27 @@
     } catch (e) {
       // Revert on error
       items = items.map((i) => (i.id === item.id ? { ...i, isBought: !newBoughtState } : i));
+      if (e instanceof ApiError) {
+        error = e.message;
+      }
+    }
+  }
+
+  async function toggleFavorite(itemId: number) {
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+
+    const newFavoriteState = !item.isFavorite;
+    // Optimistic update
+    items = items.map((i) => (i.id === item.id ? { ...i, isFavorite: newFavoriteState } : i));
+
+    try {
+      await patch<{ success: boolean; item: GroceryItem }>(`/groceries/${item.id}`, {
+        isFavorite: newFavoriteState,
+      });
+    } catch (e) {
+      // Revert on error
+      items = items.map((i) => (i.id === item.id ? { ...i, isFavorite: !newFavoriteState } : i));
       if (e instanceof ApiError) {
         error = e.message;
       }
@@ -679,21 +704,30 @@
       <!-- Category filter -->
       <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
         <button
-          class="px-3 py-1 rounded-full text-sm whitespace-nowrap {filterCategory === null
+          class="px-3 py-1 rounded-full text-sm whitespace-nowrap {filterCategory === null && !showFavoritesOnly
             ? 'bg-primary-600 text-white'
             : 'bg-gray-200 dark:bg-gray-700'}"
-          on:click={() => (filterCategory = null)}
+          on:click={() => { filterCategory = null; showFavoritesOnly = false; }}
         >
           {$t('groceries.filterAll')} ({pendingItems.length})
+        </button>
+        <!-- Favorites filter button -->
+        <button
+          class="px-3 py-1 rounded-full text-sm whitespace-nowrap {showFavoritesOnly
+            ? 'bg-yellow-500 text-white'
+            : 'bg-gray-200 dark:bg-gray-700 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'}"
+          on:click={() => { showFavoritesOnly = !showFavoritesOnly; filterCategory = null; }}
+        >
+          ⭐ {favoriteItems.length}
         </button>
         {#each categories as cat}
           {@const count = pendingItems.filter((i) => i.category === cat.name).length}
           {#if count > 0}
             <button
-              class="px-3 py-1 rounded-full text-sm whitespace-nowrap {filterCategory === cat.name
+              class="px-3 py-1 rounded-full text-sm whitespace-nowrap {filterCategory === cat.name && !showFavoritesOnly
                 ? 'bg-primary-600 text-white'
                 : 'bg-gray-200 dark:bg-gray-700'}"
-              on:click={() => (filterCategory = filterCategory === cat.name ? null : cat.name)}
+              on:click={() => { filterCategory = filterCategory === cat.name ? null : cat.name; showFavoritesOnly = false; }}
             >
               {cat.icon}
               {count}
@@ -722,6 +756,7 @@
             onDragOver={(e) => handleCategoryDragOver(e, index)}
             onDragEnd={handleCategoryDragEnd}
             onToggleBought={toggleBought}
+            onToggleFavorite={toggleFavorite}
             onDelete={deleteItem}
             onStartEdit={startEditingQuantity}
             onUpdateQuantity={updateQuantity}
@@ -758,6 +793,7 @@
                   bind:editQuantityValue
                   categoryIcon={getCategoryIcon(item.category)}
                   onToggleBought={() => toggleBought(item.id)}
+                  onToggleFavorite={() => toggleFavorite(item.id)}
                   onDelete={() => deleteItem(item.id)}
                   onStartEdit={() => startEditingQuantity(item.id, item.quantity)}
                   onUpdateQuantity={(val) => updateQuantity(item.id, val)}

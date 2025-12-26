@@ -137,13 +137,13 @@ export default async function groceryRoutes(app: FastifyInstance) {
     // PATCH /api/groceries/:id - Update a grocery item
     app.patch<{
         Params: { id: string };
-        Body: { name?: string; category?: string; quantity?: number; unit?: string; isBought?: boolean };
+        Body: { name?: string; category?: string; quantity?: number; unit?: string; isBought?: boolean; isFavorite?: boolean };
     }>(
         '/:id',
         async (
             request: FastifyRequest<{
                 Params: { id: string };
-                Body: { name?: string; category?: string; quantity?: number; unit?: string; isBought?: boolean };
+                Body: { name?: string; category?: string; quantity?: number; unit?: string; isBought?: boolean; isFavorite?: boolean };
             }>,
             reply: FastifyReply
         ) => {
@@ -167,13 +167,14 @@ export default async function groceryRoutes(app: FastifyInstance) {
                 });
             }
 
-            const { name, category, quantity, unit, isBought } = validation.data;
+            const { name, category, quantity, unit, isBought, isFavorite } = validation.data;
             const updateData: {
                 name?: string;
                 category?: string;
                 quantity?: number;
                 unit?: string | null;
                 isBought?: boolean;
+                isFavorite?: boolean;
                 boughtBy?: number;
             } = {};
 
@@ -183,6 +184,7 @@ export default async function groceryRoutes(app: FastifyInstance) {
             if (quantity !== undefined) updateData.quantity = quantity;
             if (unit !== undefined) updateData.unit = unit;
             if (isBought !== undefined) updateData.isBought = isBought;
+            if (isFavorite !== undefined) updateData.isFavorite = isFavorite;
 
             // If marking as bought, record who bought it
             if (updateData.isBought === true) {

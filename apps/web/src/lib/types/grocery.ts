@@ -10,6 +10,7 @@ export interface GroceryItem {
     quantity: number;
     unit: string | null;
     isBought: boolean;
+    isFavorite: boolean;
     addedBy: GroceryUser | null;
     boughtBy: GroceryUser | null;
     createdAt: string;
