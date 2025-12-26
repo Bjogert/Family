@@ -71,6 +71,16 @@
     allDay: boolean;
   }
 
+  interface BulletinNote {
+    id: number;
+    title: string;
+    content: string;
+    color: string;
+    isPinned: boolean;
+    createdAt: string;
+    author?: { displayName: string | null; avatarEmoji: string | null };
+  }
+
   // Color mapping
   const colorClasses: Record<string, string> = {
     orange: 'bg-orange-400',
@@ -161,6 +171,7 @@
   let assignedTasks: AssignedTask[] = [];
   let earnedPoints = 0; // Total points from verified tasks
   let upcomingEvents: CalendarEvent[] = [];
+  let userMessages: BulletinNote[] = [];
   let loading = true;
   let saving = false;
   let taskUpdating = false;
@@ -196,6 +207,11 @@
   let pushPermission: NotificationPermission = 'default';
   let pushLoading = false;
   let pushTestSent = false;
+
+  // Message form
+  let showMessageForm = false;
+  let messageText = '';
+  let sendingMessage = false;
 
   // Computed
   $: isOwnProfile = $currentUser?.id === userId;
@@ -307,10 +323,34 @@
       } catch {
         // Ignore
       }
+
+      // Load messages assigned to this user
+      await loadUserMessages();
     } catch (err) {
       error = 'Kunde inte ladda profilen';
     } finally {
       loading = false;
+    }
+  }
+
+  async function loadUserMessages() {
+    if (!$currentFamily) return;
+    try {
+      const response = await fetch('/api/bulletin', {
+        headers: { 'x-family-id': String($currentFamily.id) },
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const allNotes: BulletinNote[] = await response.json();
+        // Filter notes assigned to this user (messages)
+        // assignedTo is an array of objects with {id, displayName, avatarEmoji}
+        userMessages = allNotes.filter((note: any) => 
+          note.assignedTo?.some((a: any) => a.id === userId) && note.title?.includes('💬 Meddelande')
+        );
+        console.log('User messages for', userId, ':', userMessages);
+      }
+    } catch {
+      // Ignore
     }
   }
 
@@ -346,6 +386,68 @@
       error = 'Kunde inte spara inställningarna';
     } finally {
       saving = false;
+    }
+  }
+
+  async function sendMessage() {
+    if (!messageText.trim() || !$currentFamily || !$currentUser || !profile) return;
+    sendingMessage = true;
+    error = null;
+
+    try {
+      // Create a bulletin note assigned to this user
+      const response = await fetch('/api/bulletin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-family-id': String($currentFamily.id),
+          'x-user-id': String($currentUser.id),
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: `💬 Meddelande från ${$currentUser.displayName || $currentUser.username}`,
+          content: messageText,
+          color: 'blue',
+          isPinned: true,
+          assignedTo: [userId],
+        }),
+      });
+
+      if (response.ok) {
+        // Send push notification
+        try {
+          await fetch('/api/push/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-family-id': String($currentFamily.id),
+              'x-user-id': String($currentUser.id),
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              targetUserId: userId,
+              title: `💬 ${$currentUser.displayName || $currentUser.username}`,
+              body: messageText.length > 100 ? messageText.substring(0, 100) + '...' : messageText,
+              url: `/profile/${userId}`,
+            }),
+          });
+        } catch {
+          // Notification failed but message was created
+        }
+
+        messageText = '';
+        showMessageForm = false;
+        successMessage = 'Meddelande skickat!';
+        setTimeout(() => (successMessage = null), 3000);
+        // Reload messages to show the new one
+        await loadUserMessages();
+      } else {
+        error = 'Kunde inte skicka meddelandet';
+      }
+    } catch (err) {
+      error = 'Kunde inte skicka meddelandet';
+    } finally {
+      sendingMessage = false;
     }
   }
 
@@ -620,34 +722,50 @@
         <div
           class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-3 lg:p-4"
         >
-          <!-- Profile header row: Emoji + Name as Overview button, Profile button on right -->
-          <div class="flex items-center gap-2 mb-2">
-            <button
-              on:click={() => setSection('overview')}
-              class="flex-[2] flex items-center gap-3 px-2 py-2 rounded-xl transition-colors text-left min-w-0
-                {activeSection === 'overview'
-                ? 'bg-orange-100 dark:bg-orange-900/30'
-                : 'hover:bg-stone-100 dark:hover:bg-stone-700/50'}"
+          <!-- User section: Avatar + Name as Overview button -->
+          <button
+            on:click={() => setSection('overview')}
+            class="w-full flex items-center gap-3 px-2 py-2 rounded-xl transition-colors text-left mb-2
+              {activeSection === 'overview'
+              ? 'bg-orange-100 dark:bg-orange-900/30'
+              : 'hover:bg-stone-100 dark:hover:bg-stone-700/50'}"
+          >
+            <div
+              class="{bgColor} w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md flex-shrink-0"
             >
-              <div
-                class="{bgColor} w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md flex-shrink-0"
+              {profile.avatarEmoji || '👤'}
+            </div>
+            <div class="min-w-0 flex-1">
+              <span
+                class="font-semibold text-sm lg:text-base text-stone-800 dark:text-white truncate block"
               >
-                {profile.avatarEmoji || '👤'}
-              </div>
-              <div class="min-w-0">
-                <span
-                  class="font-semibold text-sm lg:text-base text-stone-800 dark:text-white truncate block"
-                >
-                  {profile.displayName || profile.username}
-                </span>
-                <span class="text-xs text-stone-400 dark:text-stone-500 truncate block">
-                  @{profile.username}
-                </span>
-              </div>
+                {profile.displayName || profile.username}
+              </span>
+              <span class="text-xs text-stone-400 dark:text-stone-500 truncate block">
+                @{profile.username}
+              </span>
+            </div>
+          </button>
+
+          <!-- Message button (only show if viewing someone else's profile) -->
+          {#if !isOwnProfile}
+            <button
+              on:click={() => (showMessageForm = !showMessageForm)}
+              class="w-full flex items-center gap-2 px-3 py-2 rounded-xl transition-colors mb-2
+                {showMessageForm
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400'}"
+            >
+              <span>💬</span>
+              <span class="font-medium text-sm">Meddelande</span>
             </button>
+          {/if}
+
+          <!-- Profile and Tillbaka buttons row -->
+          <div class="flex gap-2">
             <button
               on:click={() => setSection('profile')}
-              class="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl transition-colors
+              class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl transition-colors
                 {activeSection === 'profile'
                 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
                 : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400'}"
@@ -655,17 +773,58 @@
               <span>👤</span>
               <span class="font-medium text-sm">Profil</span>
             </button>
+            <button
+              on:click={() => goto('/')}
+              class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400 transition-colors"
+            >
+              <span>←</span>
+              <span class="font-medium text-sm">Tillbaka</span>
+            </button>
           </div>
-
-          <!-- Back button -->
-          <button
-            on:click={() => goto('/')}
-            class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400 transition-colors text-left"
-          >
-            <span class="text-lg">←</span>
-            <span class="font-medium text-sm lg:text-base">Tillbaka</span>
-          </button>
         </div>
+
+        <!-- Message Form (appears below sidebar when active) -->
+        {#if showMessageForm && !isOwnProfile}
+          <div
+            class="mt-3 bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-200 dark:border-blue-800 p-4"
+          >
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-lg">💬</span>
+              <span class="font-semibold text-stone-700 dark:text-stone-200 text-sm"
+                >Skicka meddelande till {profile.displayName || profile.username}</span
+              >
+            </div>
+            <textarea
+              bind:value={messageText}
+              placeholder="Skriv ditt meddelande..."
+              class="w-full px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 text-sm resize-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+              rows="3"
+            ></textarea>
+            <div class="flex justify-end gap-2 mt-3">
+              <button
+                on:click={() => {
+                  showMessageForm = false;
+                  messageText = '';
+                }}
+                class="px-3 py-1.5 text-sm text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-lg transition-colors"
+              >
+                Avbryt
+              </button>
+              <button
+                on:click={sendMessage}
+                disabled={!messageText.trim() || sendingMessage}
+                class="px-4 py-1.5 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                {#if sendingMessage}
+                  <span class="animate-spin">⏳</span>
+                {:else}
+                  <span>📌</span>
+                {/if}
+                Fäst
+              </button>
+            </div>
+          </div>
+        {/if}
       </aside>
 
       <!-- Main Content -->
@@ -863,6 +1022,51 @@
                 </div>
               {/if}
             </div>
+
+            <!-- Messages Section - show messages assigned to this user -->
+            {#if userMessages.length > 0}
+              <div class="mt-4">
+                <h3
+                  class="font-semibold text-stone-700 dark:text-stone-300 mb-3 flex items-center gap-2 text-sm"
+                >
+                  <span>💬</span>
+                  <span>Meddelanden</span>
+                  <span class="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    {userMessages.length}
+                  </span>
+                </h3>
+                <div class="space-y-3">
+                  {#each userMessages as msg}
+                    <div class="bg-blue-50 dark:bg-blue-900/30 rounded-xl p-3 border-l-4 border-blue-400">
+                      <div class="flex items-start justify-between gap-2">
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center gap-2 mb-1">
+                            <span class="text-lg">{msg.author?.avatarEmoji || '👤'}</span>
+                            <span class="text-xs text-stone-500 dark:text-stone-400">
+                              {msg.title.replace('💬 Meddelande från ', '')}
+                            </span>
+                          </div>
+                          <p class="text-sm text-stone-700 dark:text-stone-200 whitespace-pre-wrap">
+                            {msg.content}
+                          </p>
+                          <span class="text-xs text-stone-400 dark:text-stone-500 mt-1 block">
+                            {new Date(msg.createdAt).toLocaleDateString('sv-SE', { 
+                              day: 'numeric', 
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                        {#if msg.isPinned}
+                          <span class="text-orange-500" title="Fäst meddelande">📌</span>
+                        {/if}
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {/if}
 
             <!-- Profile Section -->
           {:else if activeSection === 'profile'}

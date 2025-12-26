@@ -166,4 +166,53 @@ export default async function pushRoutes(app: FastifyInstance) {
             message: success ? 'Test notification sent!' : 'Failed to send notification',
         });
     });
+
+    // POST /api/push/send - Send a notification to a specific user
+    app.post<{
+        Body: {
+            targetUserId: number;
+            title: string;
+            body: string;
+            url?: string;
+        };
+    }>('/send', async (request: any, reply: FastifyReply) => {
+        const { targetUserId, title, body, url } = request.body;
+
+        if (!targetUserId || !title || !body) {
+            return reply.status(400).send({
+                success: false,
+                message: 'targetUserId, title, and body are required',
+            });
+        }
+
+        if (!isPushEnabled()) {
+            return reply.status(503).send({
+                success: false,
+                message: 'Push notifications not configured',
+            });
+        }
+
+        try {
+            const results = await pushService.sendToUser(targetUserId, {
+                title,
+                body,
+                url,
+                requireInteraction: true,
+            });
+
+            const anySuccess = results.some((r) => r.success);
+
+            return reply.send({
+                success: anySuccess,
+                message: anySuccess ? 'Notification sent' : 'No active subscriptions or failed to send',
+                results,
+            });
+        } catch (error: any) {
+            logger.error('Failed to send notification', { error: error.message });
+            return reply.status(500).send({
+                success: false,
+                message: 'Failed to send notification',
+            });
+        }
+    });
 }
