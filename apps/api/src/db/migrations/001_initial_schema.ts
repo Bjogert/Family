@@ -2,12 +2,12 @@
 import { Migration } from './index.js';
 
 export const migration001: Migration = {
-  version: 1,
-  name: 'initial_schema',
-  
-  up: async (client: PoolClient) => {
-    // Create families table
-    await client.query(`
+    version: 1,
+    name: 'initial_schema',
+
+    up: async (client: PoolClient) => {
+        // Create families table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS families (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL UNIQUE,
@@ -17,10 +17,10 @@ export const migration001: Migration = {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_families_name ON families(name)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_families_name ON families(name)`);
 
-    // Create users table
-    await client.query(`
+        // Create users table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -44,12 +44,12 @@ export const migration001: Migration = {
         UNIQUE(family_id, username)
       )
     `);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_users_family_id ON users(family_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`);
-    await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users(email) WHERE email IS NOT NULL`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_users_family_id ON users(family_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`);
+        await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users(email) WHERE email IS NOT NULL`);
 
-    // Create sessions table
-    await client.query(`
+        // Create sessions table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS sessions (
         id UUID PRIMARY KEY,
         family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -59,12 +59,12 @@ export const migration001: Migration = {
         user_agent TEXT
       )
     `);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_sessions_family_id ON sessions(family_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_sessions_family_id ON sessions(family_id)`);
 
-    // Create user_preferences table
-    await client.query(`
+        // Create user_preferences table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS user_preferences (
         user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
         theme VARCHAR(20) DEFAULT 'system',
@@ -77,8 +77,8 @@ export const migration001: Migration = {
       )
     `);
 
-    // Create push_subscriptions table
-    await client.query(`
+        // Create push_subscriptions table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS push_subscriptions (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -90,10 +90,10 @@ export const migration001: Migration = {
         last_used_at TIMESTAMPTZ
       )
     `);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON push_subscriptions(user_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON push_subscriptions(user_id)`);
 
-    // Create grocery_categories table
-    await client.query(`
+        // Create grocery_categories table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS grocery_categories (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL UNIQUE,
@@ -102,8 +102,8 @@ export const migration001: Migration = {
       )
     `);
 
-    // Create groceries table
-    await client.query(`
+        // Create groceries table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS groceries (
         id SERIAL PRIMARY KEY,
         family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -119,14 +119,14 @@ export const migration001: Migration = {
         bought_at TIMESTAMPTZ
       )
     `);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_groceries_family_id ON groceries(family_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_groceries_added_by ON groceries(added_by)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_groceries_bought_by ON groceries(bought_by)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_groceries_category ON groceries(category)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_groceries_bought ON groceries(is_bought)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_groceries_family_id ON groceries(family_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_groceries_added_by ON groceries(added_by)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_groceries_bought_by ON groceries(bought_by)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_groceries_category ON groceries(category)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_groceries_bought ON groceries(is_bought)`);
 
-    // Create grocery_assignments table
-    await client.query(`
+        // Create grocery_assignments table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS grocery_assignments (
         id SERIAL PRIMARY KEY,
         family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -137,8 +137,8 @@ export const migration001: Migration = {
       )
     `);
 
-    // Create food_preferences table
-    await client.query(`
+        // Create food_preferences table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS food_preferences (
         id SERIAL PRIMARY KEY,
         family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -157,10 +157,10 @@ export const migration001: Migration = {
         UNIQUE(family_id, user_id)
       )
     `);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_food_preferences_family_id ON food_preferences(family_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_food_preferences_family_id ON food_preferences(family_id)`);
 
-    // Create dietary_restrictions table
-    await client.query(`
+        // Create dietary_restrictions table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS dietary_restrictions (
         id SERIAL PRIMARY KEY,
         family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -170,10 +170,10 @@ export const migration001: Migration = {
         UNIQUE(family_id, user_id, restriction)
       )
     `);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_dietary_restrictions_family_id ON dietary_restrictions(family_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_dietary_restrictions_family_id ON dietary_restrictions(family_id)`);
 
-    // Create weekly_menus table
-    await client.query(`
+        // Create weekly_menus table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS weekly_menus (
         id SERIAL PRIMARY KEY,
         family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -185,11 +185,11 @@ export const migration001: Migration = {
         UNIQUE(family_id, week_start)
       )
     `);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_weekly_menus_family_id ON weekly_menus(family_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_weekly_menus_week_start ON weekly_menus(week_start)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_weekly_menus_family_id ON weekly_menus(family_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_weekly_menus_week_start ON weekly_menus(week_start)`);
 
-    // Create calendar_events table
-    await client.query(`
+        // Create calendar_events table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS calendar_events (
         id SERIAL PRIMARY KEY,
         family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -207,11 +207,11 @@ export const migration001: Migration = {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_calendar_events_family_id ON calendar_events(family_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_calendar_events_start_time ON calendar_events(start_time)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_calendar_events_family_id ON calendar_events(family_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_calendar_events_start_time ON calendar_events(start_time)`);
 
-    // Create event_participants table
-    await client.query(`
+        // Create event_participants table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS event_participants (
         id SERIAL PRIMARY KEY,
         event_id INTEGER NOT NULL REFERENCES calendar_events(id) ON DELETE CASCADE,
@@ -222,8 +222,8 @@ export const migration001: Migration = {
       )
     `);
 
-    // Create tasks table
-    await client.query(`
+        // Create tasks table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS tasks (
         id SERIAL PRIMARY KEY,
         family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -241,13 +241,13 @@ export const migration001: Migration = {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_tasks_family_id ON tasks(family_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_tasks_reminder ON tasks(reminder_minutes, reminder_sent, due_date, status) WHERE reminder_minutes IS NOT NULL AND reminder_sent = false`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_tasks_family_id ON tasks(family_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_tasks_reminder ON tasks(reminder_minutes, reminder_sent, due_date, status) WHERE reminder_minutes IS NOT NULL AND reminder_sent = false`);
 
-    // Create bulletin_notes table
-    await client.query(`
+        // Create bulletin_notes table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS bulletin_notes (
         id SERIAL PRIMARY KEY,
         family_id INTEGER NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -262,12 +262,12 @@ export const migration001: Migration = {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_bulletin_notes_family ON bulletin_notes(family_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_bulletin_notes_created_at ON bulletin_notes(created_at DESC)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_bulletin_notes_expires ON bulletin_notes(expires_at) WHERE expires_at IS NOT NULL`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_bulletin_notes_family ON bulletin_notes(family_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_bulletin_notes_created_at ON bulletin_notes(created_at DESC)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_bulletin_notes_expires ON bulletin_notes(expires_at) WHERE expires_at IS NOT NULL`);
 
-    // Create bulletin_note_assignments table
-    await client.query(`
+        // Create bulletin_note_assignments table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS bulletin_note_assignments (
         id SERIAL PRIMARY KEY,
         note_id INTEGER NOT NULL REFERENCES bulletin_notes(id) ON DELETE CASCADE,
@@ -276,11 +276,11 @@ export const migration001: Migration = {
         UNIQUE(note_id, user_id)
       )
     `);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_bulletin_assignments_note ON bulletin_note_assignments(note_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_bulletin_assignments_user ON bulletin_note_assignments(user_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_bulletin_assignments_note ON bulletin_note_assignments(note_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_bulletin_assignments_user ON bulletin_note_assignments(user_id)`);
 
-    // Create google_calendar_connections table
-    await client.query(`
+        // Create google_calendar_connections table
+        await client.query(`
       CREATE TABLE IF NOT EXISTS google_calendar_connections (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -295,26 +295,26 @@ export const migration001: Migration = {
         UNIQUE(user_id)
       )
     `);
-  },
+    },
 
-  down: async (client: PoolClient) => {
-    // Drop tables in reverse order (respecting foreign keys)
-    await client.query('DROP TABLE IF EXISTS google_calendar_connections CASCADE');
-    await client.query('DROP TABLE IF EXISTS bulletin_note_assignments CASCADE');
-    await client.query('DROP TABLE IF EXISTS bulletin_notes CASCADE');
-    await client.query('DROP TABLE IF EXISTS tasks CASCADE');
-    await client.query('DROP TABLE IF EXISTS event_participants CASCADE');
-    await client.query('DROP TABLE IF EXISTS calendar_events CASCADE');
-    await client.query('DROP TABLE IF EXISTS weekly_menus CASCADE');
-    await client.query('DROP TABLE IF EXISTS dietary_restrictions CASCADE');
-    await client.query('DROP TABLE IF EXISTS food_preferences CASCADE');
-    await client.query('DROP TABLE IF EXISTS grocery_assignments CASCADE');
-    await client.query('DROP TABLE IF EXISTS groceries CASCADE');
-    await client.query('DROP TABLE IF EXISTS grocery_categories CASCADE');
-    await client.query('DROP TABLE IF EXISTS push_subscriptions CASCADE');
-    await client.query('DROP TABLE IF EXISTS user_preferences CASCADE');
-    await client.query('DROP TABLE IF EXISTS sessions CASCADE');
-    await client.query('DROP TABLE IF EXISTS users CASCADE');
-    await client.query('DROP TABLE IF EXISTS families CASCADE');
-  },
+    down: async (client: PoolClient) => {
+        // Drop tables in reverse order (respecting foreign keys)
+        await client.query('DROP TABLE IF EXISTS google_calendar_connections CASCADE');
+        await client.query('DROP TABLE IF EXISTS bulletin_note_assignments CASCADE');
+        await client.query('DROP TABLE IF EXISTS bulletin_notes CASCADE');
+        await client.query('DROP TABLE IF EXISTS tasks CASCADE');
+        await client.query('DROP TABLE IF EXISTS event_participants CASCADE');
+        await client.query('DROP TABLE IF EXISTS calendar_events CASCADE');
+        await client.query('DROP TABLE IF EXISTS weekly_menus CASCADE');
+        await client.query('DROP TABLE IF EXISTS dietary_restrictions CASCADE');
+        await client.query('DROP TABLE IF EXISTS food_preferences CASCADE');
+        await client.query('DROP TABLE IF EXISTS grocery_assignments CASCADE');
+        await client.query('DROP TABLE IF EXISTS groceries CASCADE');
+        await client.query('DROP TABLE IF EXISTS grocery_categories CASCADE');
+        await client.query('DROP TABLE IF EXISTS push_subscriptions CASCADE');
+        await client.query('DROP TABLE IF EXISTS user_preferences CASCADE');
+        await client.query('DROP TABLE IF EXISTS sessions CASCADE');
+        await client.query('DROP TABLE IF EXISTS users CASCADE');
+        await client.query('DROP TABLE IF EXISTS families CASCADE');
+    },
 };
