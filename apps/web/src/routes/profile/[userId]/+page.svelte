@@ -290,7 +290,15 @@
           pushSupported = isPushSupported();
           pushPermission = getPermissionStatus();
           if (pushSupported) {
-            pushSubscribed = await isSubscribed();
+            // Check both browser subscription AND server subscription
+            const browserSubscribed = await isSubscribed();
+            // Also check server status
+            try {
+              const statusRes = await get<{ success: boolean; enabled: boolean; subscribed: boolean }>('/push/status');
+              pushSubscribed = browserSubscribed || statusRes.subscribed;
+            } catch {
+              pushSubscribed = browserSubscribed;
+            }
           }
         }
       }

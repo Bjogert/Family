@@ -66,22 +66,23 @@
           </button>
         </div>
 
-        {#if pushSubscribed}
-          <button
-            type="button"
-            on:click={() => dispatch('testNotification')}
-            disabled={pushLoading}
-            class="w-full py-2 text-sm bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-300 dark:hover:bg-stone-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {#if pushTestSent}
-              <span>✅ Testnotifikation skickad!</span>
-            {:else if pushLoading}
-              <span>Skickar...</span>
-            {:else}
-              <span>🔔 Skicka testnotifikation</span>
-            {/if}
-          </button>
-        {/if}
+        <!-- Test notification button - always visible when push is supported -->
+        <button
+          type="button"
+          on:click={() => dispatch('testNotification')}
+          disabled={pushLoading || !pushSubscribed}
+          class="w-full py-2 text-sm bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-300 dark:hover:bg-stone-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {#if pushTestSent}
+            <span>✅ Testnotifikation skickad!</span>
+          {:else if pushLoading}
+            <span>Skickar...</span>
+          {:else if !pushSubscribed}
+            <span>🔔 Aktivera push först för att testa</span>
+          {:else}
+            <span>🔔 Skicka testnotifikation</span>
+          {/if}
+        </button>
       </div>
     </div>
   {/if}
