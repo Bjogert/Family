@@ -171,9 +171,7 @@ export default async function groceryRoutes(app: FastifyInstance) {
             }
 
             // Validate request body
-            console.log('PATCH validation input:', request.body);
             const validation = UpdateGrocerySchema.safeParse(request.body);
-            console.log('PATCH validation result:', validation);
             if (!validation.success) {
                 return reply.status(400).send({
                     success: false,

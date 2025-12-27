@@ -167,10 +167,6 @@ export async function update(
     WHERE id = $${paramIndex++} AND family_id = $${paramIndex}
     RETURNING id`;
 
-    console.log('UPDATE query:', query);
-    console.log('UPDATE values:', values);
-    console.log('UPDATE paramIndex after:', paramIndex);
-
     const result = await pool.query(query, values);
 
     if (result.rows.length === 0) {

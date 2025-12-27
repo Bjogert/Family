@@ -285,7 +285,7 @@
   <title>Kalender - Family Hub</title>
 </svelte:head>
 
-<div class="flex-1 p-4 max-w-6xl mx-auto w-full">
+<div class="flex-1 p-4 max-w-4xl mx-auto w-full">
   <!-- Header -->
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-stone-800 dark:text-stone-100">

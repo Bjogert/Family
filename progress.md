@@ -1077,6 +1077,84 @@ Based on comprehensive project review, implemented following improvements:
 
 ---
 
+### Session 18 - 2025-12-26 (Basvaror Feature & Shared Package Bug Fix)
+**What we did:**
+
+**1. Basvaror (Favorites/Staples) Feature:**
+- Added "Basvaror" tab in groceries page to show only favorite items
+- Star icon (☆/★) to mark items as favorites
+- Favorites persist to database via `isFavorite` boolean field
+- Quick-add favorite items back to shopping list
+
+**2. Fixed Decimal Display:**
+- **Problem:** Quantities showed "1.00" instead of clean "1"
+- **Solution:** Added `parseFloat()` conversion in service.ts
+- Numbers now display cleanly: "1" not "1.00", "0.5" not "0.50"
+
+**3. Fixed Favorites Not Saving to Database (MAJOR BUG):**
+- **Problem:** Toggling favorites via API returned success, but database never updated
+- **Debug Process:**
+  1. Added logging to frontend `toggleFavorite()` - confirmed API call made
+  2. Added logging to `routes.ts` - saw `request.body: { isFavorite: true }`
+  3. Added logging to `service.ts` - saw `validation.data: {}` (EMPTY!)
+  4. Realized Zod was stripping `isFavorite` field during validation
+- **Root Cause:** 
+  - `UpdateGrocerySchema` in shared package **already had** `isFavorite` field
+  - BUT the **compiled dist** on the Pi was **OLD** and missing the field
+  - Zod strips unknown fields by default → `isFavorite` was silently removed
+  - API processed empty update → no changes to database
+- **Solution:**
+  1. Rebuilt shared package locally: `cd packages/shared && pnpm build`
+  2. Deployed compiled shared package to Pi
+  3. Updated `deploy.ps1` to ALWAYS build and deploy shared package
+
+**4. Deploy Script Updated:**
+- Added Step 2: Build shared package (`pnpm build` in packages/shared)
+- Added Step 5: Deploy shared package (`scp -r packages/shared/dist`)
+- This prevents future schema sync issues
+
+**5. Debug Documentation:**
+- Created `docs/DEBUG-favorites-not-saving.md` with full debugging trace
+- Marked as RESOLVED with solution and lessons learned
+
+**Files Modified:**
+- `apps/api/src/modules/groceries/service.ts` - parseFloat fix for decimals
+- `deploy.ps1` - Added shared package build/deploy steps
+
+**Files Created:**
+- `docs/DEBUG-favorites-not-saving.md` - Debug documentation
+
+**Deployed:** ✅ Full deploy with shared package - Favorites now persist!
+
+---
+
+## 🎓 Lessons Learned (Session 18)
+
+### Monorepo Shared Package Gotchas
+
+| Lesson | Details |
+|--------|---------|
+| **Rebuild shared packages** | When changing schemas in `packages/shared`, you MUST run `pnpm build` before deploying |
+| **Deploy shared package dist** | The compiled `dist` folder must be deployed, not just source files |
+| **Zod strips unknown fields** | If a field isn't in the Zod schema, it's silently removed - no error thrown |
+| **Debug at every layer** | Log `request.body` AND `validation.data` to catch where data is lost |
+| **Schema changes need full deploy** | Changing TypeScript schemas requires: 1) Rebuild shared, 2) Deploy shared, 3) Rebuild API, 4) Deploy API |
+
+### Debug Strategy That Worked
+
+1. **Start at the edge** - Frontend confirmed data was sent correctly
+2. **Trace through layers** - routes.ts → service.ts → repository.ts
+3. **Compare before/after validation** - This revealed `data: {}` after Zod
+4. **Check compiled artifacts** - Source was correct, but compiled dist was stale
+
+### Prevention Measures Implemented
+
+- ✅ `deploy.ps1` now always builds shared package first
+- ✅ `deploy.ps1` deploys `packages/shared/dist` to Pi
+- ✅ Debug documentation created for future reference
+
+---
+
 ## Blockers & Questions
 
 | Issue | Status | Resolution |

@@ -68,7 +68,21 @@ catch {
     exit 1
 }
 
-# Step 2: Build API
+# Step 2: Build shared package (ALWAYS - required by both API and Web)
+if (-not $SkipBuild) {
+    Write-Step "Building shared package..."
+    Push-Location "$LOCAL_PATH\packages\shared"
+    cmd /c "pnpm build 2>&1 >nul"
+    $buildResult = $LASTEXITCODE
+    Pop-Location
+    if ($buildResult -ne 0) { 
+        Write-Fail "Shared package build failed"
+        exit 1
+    }
+    Write-Success "Shared package built successfully"
+}
+
+# Step 3: Build API
 if ($deployApi -and -not $SkipBuild) {
     Write-Step "Building API..."
     Push-Location "$LOCAL_PATH\apps\api"
@@ -82,7 +96,7 @@ if ($deployApi -and -not $SkipBuild) {
     Write-Success "API built successfully"
 }
 
-# Step 3: Build Web
+# Step 4: Build Web
 if ($deployWeb -and -not $SkipBuild) {
     Write-Step "Building Web app..."
     Push-Location "$LOCAL_PATH\apps\web"
@@ -96,7 +110,19 @@ if ($deployWeb -and -not $SkipBuild) {
     Write-Success "Web app built successfully"
 }
 
-# Step 4: Deploy API
+# Step 5: Deploy shared package (ALWAYS - required by API)
+Write-Step "Deploying shared package to Pi..."
+try {
+    scp -r "$LOCAL_PATH\packages\shared\dist\*" "${PI_HOST}:${PI_PATH}/packages/shared/dist/" 2>$null
+    if ($LASTEXITCODE -ne 0) { throw "SCP failed" }
+    Write-Success "Shared package deployed"
+}
+catch {
+    Write-Fail "Shared package deploy failed: $_"
+    exit 1
+}
+
+# Step 6: Deploy API
 if ($deployApi) {
     Write-Step "Deploying API to Pi..."
     try {
@@ -112,7 +138,7 @@ if ($deployApi) {
     }
 }
 
-# Step 5: Deploy Web
+# Step 7: Deploy Web
 if ($deployWeb) {
     Write-Step "Deploying Web app to Pi..."
     try {

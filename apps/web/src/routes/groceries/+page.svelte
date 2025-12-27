@@ -213,32 +213,25 @@
   }
 
   async function toggleFavorite(itemId: number) {
-    console.log('toggleFavorite called with itemId:', itemId);
     // Prevent multiple clicks while request is in flight
     if (toggleInFlight.has(itemId)) {
-      console.log('toggleFavorite: request already in flight, skipping');
       return;
     }
 
     const item = items.find((i) => i.id === itemId);
     if (!item) {
-      console.log('toggleFavorite: item not found');
       return;
     }
 
-    console.log('toggleFavorite: item found', item.name, 'current favorite:', item.isFavorite);
     toggleInFlight.add(itemId);
     const newFavoriteState = !item.isFavorite;
-    console.log('toggleFavorite: setting to', newFavoriteState);
     // Optimistic update
     items = items.map((i) => (i.id === item.id ? { ...i, isFavorite: newFavoriteState } : i));
 
     try {
-      console.log('toggleFavorite: sending PATCH request');
-      const result = await patch<{ success: boolean; item: GroceryItem }>(`/groceries/${item.id}`, {
+      await patch<{ success: boolean; item: GroceryItem }>(`/groceries/${item.id}`, {
         isFavorite: newFavoriteState,
       });
-      console.log('toggleFavorite: PATCH result', result);
     } catch (e) {
       console.error('toggleFavorite: error', e);
       // Revert on error
@@ -665,426 +658,370 @@
   <title>Groceries - Family Hub</title>
 </svelte:head>
 
-<main class="flex-1 p-4 pb-24">
-  <div class="max-w-2xl mx-auto">
-    <header class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-3">
-        <h1 class="text-2xl font-bold">🛒 {$t('groceries.title')}</h1>
-        <!-- Assignment button - next to title -->
-        <button
-          on:click={() => (showAssignmentPanel = !showAssignmentPanel)}
-          class="relative flex items-center gap-1 px-2 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
-          title="Tilldela handlingslistan"
-        >
-          <span class="text-base">🏷️</span>
-          {#if assignments.length > 0}
-            <span
-              class="absolute -top-1 -right-1 bg-primary-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium text-[10px]"
-            >
-              {assignments.length}
-            </span>
-          {/if}
-        </button>
-        <!-- Preferences link -->
-        <a
-          href="/groceries/preferences"
-          class="flex items-center gap-1 px-2 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-stone-600 dark:text-stone-300 text-sm"
-          title={$t('preferences.title')}
-        >
-          <span class="text-base">🍽️</span>
-        </a>
-        <!-- Menu link -->
-        <a
-          href="/groceries/menu"
-          class="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/30 hover:from-orange-200 hover:to-amber-200 dark:hover:from-orange-800/30 dark:hover:to-amber-800/30 transition-colors text-orange-700 dark:text-orange-300 text-sm border border-orange-200 dark:border-orange-800"
-          title={$t('menu.title')}
-        >
-          <span class="text-base">🤖</span>
-          <span class="hidden sm:inline">AI</span>
-        </a>
-        <!-- Basvaror (Staples) button -->
-        <button
-          on:click={openStaplesPanel}
-          class="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-800/30 transition-colors text-amber-700 dark:text-amber-300 text-sm border border-amber-200 dark:border-amber-800"
-          title={$t('groceries.staples')}
-        >
-          <span class="text-base">⭐</span>
-          <span class="hidden sm:inline">{$t('groceries.staples')}</span>
-        </button>
-        <!-- Connection status indicator -->
-        <div class="flex items-center gap-1.5">
-          {#if $groceryWs.status === 'connected'}
-            <div
-              class="w-2 h-2 bg-green-500 rounded-full animate-pulse"
-              title={$t('calendar.connectionStatus')}
-            ></div>
-          {:else if $groceryWs.status === 'connecting'}
-            <div
-              class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"
-              title={$t('groceries.connecting')}
-            ></div>
-          {:else if $groceryWs.status === 'error'}
-            <div
-              class="w-2 h-2 bg-red-500 rounded-full"
-              title={$t('groceries.connectionError')}
-            ></div>
-          {:else}
-            <div
-              class="w-2 h-2 bg-gray-400 rounded-full"
-              title={$t('groceries.disconnected')}
-            ></div>
-          {/if}
-        </div>
-      </div>
-      <a
-        href="/"
-        class="text-orange-500 hover:text-orange-600 dark:text-amber-400 dark:hover:text-amber-500 hover:underline text-sm"
-        >← Tillbaka</a
+<!-- Extra action buttons for grocery page -->
+<div class="flex items-center gap-2 mb-4">
+  <!-- Assignment button -->
+  <button
+    on:click={() => (showAssignmentPanel = !showAssignmentPanel)}
+    class="relative flex items-center gap-1 px-2 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm border-2 border-transparent"
+    title="Tilldela handlingslistan"
+  >
+    <span class="text-lg">🏷️</span>
+    {#if assignments.length > 0}
+      <span
+        class="absolute -top-1 -right-1 bg-primary-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium text-[10px]"
       >
-    </header>
-
-    <!-- Assignment panel -->
-    {#if showAssignmentPanel}
-      <div class="card p-4 mb-4">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-semibold text-stone-700 dark:text-stone-200">
-            📋 Tilldela handlingslistan
-          </h3>
-          <button
-            on:click={() => (showAssignmentPanel = false)}
-            class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
-          >
-            ✕
-          </button>
-        </div>
-        <p class="text-sm text-stone-500 dark:text-stone-400 mb-3">Välj vem som ska handla idag:</p>
-        <div class="flex flex-wrap gap-2">
-          {#each familyMembers as member}
-            {@const assigned = assignedUserIds.has(member.id)}
-            <button
-              on:click={() => toggleAssignment(member.id)}
-              class="flex items-center gap-2 px-3 py-2 rounded-lg transition-all {assigned
-                ? 'ring-2 ring-primary-500 bg-primary-50 dark:bg-primary-900/30'
-                : 'bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700'}"
-            >
-              <div
-                class="w-8 h-8 rounded-full flex items-center justify-center text-lg"
-                style="background-color: {member.color || '#9CA3AF'}"
-              >
-                {member.avatarEmoji || '👤'}
-              </div>
-              <span class="text-sm font-medium">{member.displayName || 'Anonym'}</span>
-              {#if assigned}
-                <span class="text-green-500 text-lg">✓</span>
-              {/if}
-            </button>
-          {/each}
-        </div>
-        {#if assignments.length > 0}
-          <div class="mt-3 pt-3 border-t border-stone-200 dark:border-stone-700">
-            <p class="text-sm text-stone-600 dark:text-stone-300">
-              <span class="font-medium">Tilldelad:</span>
-              {assignments.map((a) => a.userDisplayName || 'Anonym').join(', ')}
-            </p>
-          </div>
-        {/if}
-      </div>
+        {assignments.length}
+      </span>
     {/if}
+  </button>
+  <!-- Basvaror (Staples) button -->
+  <button
+    on:click={openStaplesPanel}
+    class="flex items-center gap-1 px-2 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-stone-600 dark:text-stone-300 text-sm border-2 border-transparent"
+    title={$t('groceries.staples')}
+  >
+    <span class="text-lg">⭐</span>
+  </button>
+</div>
 
-    <!-- Show assigned members summary if any -->
-    {#if assignments.length > 0 && !showAssignmentPanel}
-      <div class="flex items-center gap-2 mb-4 p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-        <span class="text-sm text-stone-600 dark:text-stone-300">{$t('groceries.assigned')}</span>
-        <div class="flex -space-x-2">
-          {#each assignments as assignment}
-            <div
-              class="w-7 h-7 rounded-full flex items-center justify-center text-sm ring-2 ring-white dark:ring-stone-900"
-              style="background-color: {assignment.userColor || '#9CA3AF'}"
-              title={assignment.userDisplayName || $t('groceries.anonymous')}
-            >
-              {assignment.userAvatarEmoji || '👤'}
-            </div>
-          {/each}
-        </div>
+<!-- Assignment panel -->
+{#if showAssignmentPanel}
+  <div class="card p-4 mb-4">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-semibold text-stone-700 dark:text-stone-200">📋 Tilldela handlingslistan</h3>
+      <button
+        on:click={() => (showAssignmentPanel = false)}
+        class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+      >
+        ✕
+      </button>
+    </div>
+    <p class="text-sm text-stone-500 dark:text-stone-400 mb-3">Välj vem som ska handla idag:</p>
+    <div class="flex flex-wrap gap-2">
+      {#each familyMembers as member}
+        {@const assigned = assignedUserIds.has(member.id)}
         <button
-          on:click={() => (showAssignmentPanel = true)}
-          class="ml-auto text-xs text-primary-600 dark:text-primary-400 hover:underline"
+          on:click={() => toggleAssignment(member.id)}
+          class="flex items-center gap-2 px-3 py-2 rounded-lg transition-all {assigned
+            ? 'ring-2 ring-primary-500 bg-primary-50 dark:bg-primary-900/30'
+            : 'bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700'}"
         >
-          {$t('groceries.change')}
-        </button>
-      </div>
-    {/if}
-
-    <!-- Staples (Basvaror) panel -->
-    {#if showStaplesPanel}
-      <div class="card p-4 mb-4">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-semibold text-stone-700 dark:text-stone-200">
-            ⭐ {$t('groceries.staples')}
-          </h3>
-          <button
-            on:click={() => (showStaplesPanel = false)}
-            class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+          <div
+            class="w-8 h-8 rounded-full flex items-center justify-center text-lg"
+            style="background-color: {member.color || '#9CA3AF'}"
           >
-            ✕
-          </button>
-        </div>
-        <p class="text-sm text-stone-500 dark:text-stone-400 mb-3">
-          {$t('groceries.staplesDescription')}
-        </p>
-
-        {#if loadingStaples}
-          <div class="flex justify-center py-4">
-            <div
-              class="animate-spin w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full"
-            ></div>
+            {member.avatarEmoji || '👤'}
           </div>
-        {:else if staples.length === 0}
-          <div class="text-center py-4 text-stone-400 dark:text-stone-500">
-            <p class="text-2xl mb-2">⭐</p>
-            <p class="text-sm">{$t('groceries.noStaples')}</p>
-            <p class="text-xs mt-1">{$t('groceries.noStaplesHint')}</p>
-          </div>
-        {:else}
-          <div class="space-y-2 max-h-64 overflow-y-auto">
-            {#each staples as staple (staple.id)}
-              {@const onList = isStapleOnList(staple.name)}
-              <div
-                class="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-stone-800/50"
-              >
-                <div class="flex items-center gap-2">
-                  <span class="text-lg">{getCategoryIcon(staple.category)}</span>
-                  <span class="text-sm font-medium text-stone-700 dark:text-stone-200"
-                    >{staple.name}</span
-                  >
-                  <span class="text-xs text-stone-400">{staple.quantity} {staple.unit || 'st'}</span
-                  >
-                </div>
-                {#if onList}
-                  <span
-                    class="text-xs text-green-600 dark:text-green-400 px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded"
-                  >
-                    ✓ {$t('groceries.onList')}
-                  </span>
-                {:else}
-                  <button
-                    on:click={() => addStapleToList(staple)}
-                    class="text-xs px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded hover:bg-amber-200 dark:hover:bg-amber-800/30 transition-colors"
-                  >
-                    + {$t('groceries.addToList')}
-                  </button>
-                {/if}
-              </div>
-            {/each}
-          </div>
-          {#if staples.some((s) => !isStapleOnList(s.name))}
-            <div class="mt-3 pt-3 border-t border-stone-200 dark:border-stone-700">
-              <button
-                on:click={addAllStaplesToList}
-                class="w-full py-2 px-4 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white rounded-lg font-medium text-sm transition-colors"
-              >
-                {$t('groceries.addAllStaples')}
-              </button>
-            </div>
+          <span class="text-sm font-medium">{member.displayName || 'Anonym'}</span>
+          {#if assigned}
+            <span class="text-green-500 text-lg">✓</span>
           {/if}
-        {/if}
+        </button>
+      {/each}
+    </div>
+    {#if assignments.length > 0}
+      <div class="mt-3 pt-3 border-t border-stone-200 dark:border-stone-700">
+        <p class="text-sm text-stone-600 dark:text-stone-300">
+          <span class="font-medium">Tilldelad:</span>
+          {assignments.map((a) => a.userDisplayName || 'Anonym').join(', ')}
+        </p>
       </div>
     {/if}
+  </div>
+{/if}
 
-    {#if error}
-      <div class="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-3 rounded-lg mb-4">
-        {error}
-        <button class="ml-2 underline" on:click={() => (error = '')}>{$t('common.close')}</button>
-      </div>
-    {/if}
-
-    {#if loading}
-      <div class="card p-8 text-center">
+<!-- Show assigned members summary if any -->
+{#if assignments.length > 0 && !showAssignmentPanel}
+  <div class="flex items-center gap-2 mb-4 p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+    <span class="text-sm text-stone-600 dark:text-stone-300">{$t('groceries.assigned')}</span>
+    <div class="flex -space-x-2">
+      {#each assignments as assignment}
         <div
-          class="animate-spin w-8 h-8 border-4 border-orange-400 border-t-transparent dark:border-amber-400 dark:border-t-transparent rounded-full mx-auto"
+          class="w-7 h-7 rounded-full flex items-center justify-center text-sm ring-2 ring-white dark:ring-stone-900"
+          style="background-color: {assignment.userColor || '#9CA3AF'}"
+          title={assignment.userDisplayName || $t('groceries.anonymous')}
+        >
+          {assignment.userAvatarEmoji || '👤'}
+        </div>
+      {/each}
+    </div>
+    <button
+      on:click={() => (showAssignmentPanel = true)}
+      class="ml-auto text-xs text-primary-600 dark:text-primary-400 hover:underline"
+    >
+      {$t('groceries.change')}
+    </button>
+  </div>
+{/if}
+
+<!-- Staples (Basvaror) panel -->
+{#if showStaplesPanel}
+  <div class="card p-4 mb-4">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-semibold text-stone-700 dark:text-stone-200">
+        ⭐ {$t('groceries.staples')}
+      </h3>
+      <button
+        on:click={() => (showStaplesPanel = false)}
+        class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+      >
+        ✕
+      </button>
+    </div>
+    <p class="text-sm text-stone-500 dark:text-stone-400 mb-3">
+      {$t('groceries.staplesDescription')}
+    </p>
+
+    {#if loadingStaples}
+      <div class="flex justify-center py-4">
+        <div
+          class="animate-spin w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full"
         ></div>
-        <p class="mt-4 text-stone-500 dark:text-stone-400">{$t('common.loading')}</p>
+      </div>
+    {:else if staples.length === 0}
+      <div class="text-center py-4 text-stone-400 dark:text-stone-500">
+        <p class="text-2xl mb-2">⭐</p>
+        <p class="text-sm">{$t('groceries.noStaples')}</p>
+        <p class="text-xs mt-1">{$t('groceries.noStaplesHint')}</p>
       </div>
     {:else}
-      <!-- Add item form -->
-      <form on:submit={addItem} class="card p-4 mb-4">
-        <div class="flex gap-2 relative">
-          <div class="flex-1 relative">
-            <input
-              type="text"
-              bind:value={newItemName}
-              bind:this={inputElement}
-              placeholder={$t('groceries.addPlaceholder')}
-              class="w-full input"
-              disabled={adding}
-              on:keydown={handleInputKeydown}
-              on:focus={handleInputFocus}
-              on:blur={handleInputBlur}
-              on:input={handleInput}
-              autocomplete="off"
-            />
-
-            <!-- Autocomplete dropdown -->
-            {#if showSuggestions && suggestions.length > 0}
-              <AutocompleteDropdown
-                {suggestions}
-                selectedIndex={selectedSuggestionIndex}
-                {getCategoryIcon}
-                {getCategoryTranslation}
-                onSelectSuggestion={selectSuggestion}
-              />
-            {/if}
-          </div>
-          <button type="submit" class="btn btn-primary" disabled={adding || !newItemName.trim()}>
-            {adding ? '...' : '+'}
-          </button>
-        </div>
-
-        <div class="flex gap-2 mt-3">
-          <select bind:value={newItemCategory} class="input flex-1">
-            {#each categories as cat}
-              <option value={cat.name}>{cat.icon} {getCategoryTranslation(cat.name)}</option>
-            {/each}
-          </select>
-          <div class="flex items-center gap-1">
-            <button
-              type="button"
-              on:click={decrementQuantity}
-              class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-bold"
-            >
-              −
-            </button>
-            <span class="w-14 text-center font-medium">
-              {newItemQuantity % 1 === 0 ? newItemQuantity : newItemQuantity.toFixed(1)}
-              {newItemUnit}
-            </span>
-            <button
-              type="button"
-              on:click={incrementQuantity}
-              class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-bold"
-            >
-              +
-            </button>
-          </div>
-        </div>
-      </form>
-
-      <!-- Category filter -->
-      <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
-        <button
-          class="px-3 py-1 rounded-full text-sm whitespace-nowrap {filterCategory === null &&
-          !showFavoritesOnly
-            ? 'bg-primary-600 text-white'
-            : 'bg-gray-200 dark:bg-gray-700'}"
-          on:click={() => {
-            filterCategory = null;
-            showFavoritesOnly = false;
-          }}
-        >
-          {$t('groceries.filterAll')} ({pendingItems.length})
-        </button>
-        <!-- Favorites filter button -->
-        <button
-          class="px-3 py-1 rounded-full text-sm whitespace-nowrap {showFavoritesOnly
-            ? 'bg-yellow-500 text-white'
-            : 'bg-gray-200 dark:bg-gray-700 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'}"
-          on:click={() => {
-            showFavoritesOnly = !showFavoritesOnly;
-            filterCategory = null;
-          }}
-        >
-          ⭐ {favoriteItems.length}
-        </button>
-        {#each categories as cat}
-          {@const count = pendingItems.filter((i) => i.category === cat.name).length}
-          {#if count > 0}
-            <button
-              class="px-3 py-1 rounded-full text-sm whitespace-nowrap {filterCategory ===
-                cat.name && !showFavoritesOnly
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700'}"
-              on:click={() => {
-                filterCategory = filterCategory === cat.name ? null : cat.name;
-                showFavoritesOnly = false;
-              }}
-            >
-              {cat.icon}
-              {count}
-            </button>
-          {/if}
-        {/each}
-      </div>
-
-      <!-- Pending items grouped by category -->
-      {#if filteredPendingItems.length === 0}
-        <div class="card p-8 text-center text-stone-500 dark:text-stone-400">
-          <p class="text-4xl mb-2">🎉</p>
-          <p>{$t('groceries.emptyList')}</p>
-        </div>
-      {:else}
-        {#each groupedPendingItems as group, index}
-          <CategorySection
-            {group}
-            {index}
-            draggingIndex={draggingCategoryIndex}
-            {editingQuantityId}
-            bind:editQuantityValue
-            isCollapsed={collapsedCategories.has(group.category.name)}
-            {getCategoryIcon}
-            {getCategoryTranslation}
-            onDragStart={(e) => handleCategoryDragStart(e, index)}
-            onDragOver={(e) => handleCategoryDragOver(e, index)}
-            onDragEnd={handleCategoryDragEnd}
-            onToggleBought={toggleBought}
-            onToggleFavorite={toggleFavorite}
-            onDelete={deleteItem}
-            onStartEdit={startEditingQuantity}
-            onUpdateQuantity={updateQuantity}
-            onCancelEdit={cancelEditingQuantity}
-            onToggleCollapse={() => toggleCategoryCollapse(group.category.name)}
-          />
-        {/each}
-      {/if}
-
-      <!-- Bought items section -->
-      {#if boughtItems.length > 0}
-        <div class="mt-6">
-          <button
-            on:click={() => (showBought = !showBought)}
-            class="flex items-center gap-2 text-stone-500 dark:text-stone-400 mb-2 w-full"
+      <div class="space-y-2 max-h-64 overflow-y-auto">
+        {#each staples as staple (staple.id)}
+          {@const onList = isStapleOnList(staple.name)}
+          <div
+            class="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-stone-800/50"
           >
-            <span class="text-sm">{showBought ? '▼' : '▶'}</span>
-            <span class="text-sm font-semibold">Köpta ({boughtItems.length})</span>
-            {#if showBought}
-              <button
-                on:click|stopPropagation={clearBoughtItems}
-                class="ml-auto text-xs text-red-500 hover:text-red-700"
+            <div class="flex items-center gap-2">
+              <span class="text-lg">{getCategoryIcon(staple.category)}</span>
+              <span class="text-sm font-medium text-stone-700 dark:text-stone-200"
+                >{staple.name}</span
               >
-                {$t('groceries.clearBought')}
+              <span class="text-xs text-stone-400">{staple.quantity} {staple.unit || 'st'}</span>
+            </div>
+            {#if onList}
+              <span
+                class="text-xs text-green-600 dark:text-green-400 px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded"
+              >
+                ✓ {$t('groceries.onList')}
+              </span>
+            {:else}
+              <button
+                on:click={() => addStapleToList(staple)}
+                class="text-xs px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded hover:bg-amber-200 dark:hover:bg-amber-800/30 transition-colors"
+              >
+                + {$t('groceries.addToList')}
               </button>
             {/if}
+          </div>
+        {/each}
+      </div>
+      {#if staples.some((s) => !isStapleOnList(s.name))}
+        <div class="mt-3 pt-3 border-t border-stone-200 dark:border-stone-700">
+          <button
+            on:click={addAllStaplesToList}
+            class="w-full py-2 px-4 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white rounded-lg font-medium text-sm transition-colors"
+          >
+            {$t('groceries.addAllStaples')}
           </button>
-
-          {#if showBought}
-            <div class="card divide-y divide-gray-200 dark:divide-gray-700 opacity-60">
-              {#each filteredBoughtItems as item (item.id)}
-                <GroceryItemRow
-                  {item}
-                  {editingQuantityId}
-                  bind:editQuantityValue
-                  categoryIcon={getCategoryIcon(item.category)}
-                  onToggleBought={() => toggleBought(item.id)}
-                  onToggleFavorite={() => toggleFavorite(item.id)}
-                  onDelete={() => deleteItem(item.id)}
-                  onStartEdit={() => startEditingQuantity(item.id, item.quantity)}
-                  onUpdateQuantity={(val) => updateQuantity(item.id, val)}
-                  onCancelEdit={cancelEditingQuantity}
-                />
-              {/each}
-            </div>
-          {/if}
         </div>
       {/if}
     {/if}
   </div>
-</main>
+{/if}
+
+{#if error}
+  <div class="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-3 rounded-lg mb-4">
+    {error}
+    <button class="ml-2 underline" on:click={() => (error = '')}>{$t('common.close')}</button>
+  </div>
+{/if}
+
+{#if loading}
+  <div class="card p-8 text-center">
+    <div
+      class="animate-spin w-8 h-8 border-4 border-orange-400 border-t-transparent dark:border-amber-400 dark:border-t-transparent rounded-full mx-auto"
+    ></div>
+    <p class="mt-4 text-stone-500 dark:text-stone-400">{$t('common.loading')}</p>
+  </div>
+{:else}
+  <!-- Add item form -->
+  <form on:submit={addItem} class="card p-4 mb-4">
+    <div class="flex gap-2 relative">
+      <div class="flex-1 relative">
+        <input
+          type="text"
+          bind:value={newItemName}
+          bind:this={inputElement}
+          placeholder={$t('groceries.addPlaceholder')}
+          class="w-full input"
+          disabled={adding}
+          on:keydown={handleInputKeydown}
+          on:focus={handleInputFocus}
+          on:blur={handleInputBlur}
+          on:input={handleInput}
+          autocomplete="off"
+        />
+
+        <!-- Autocomplete dropdown -->
+        {#if showSuggestions && suggestions.length > 0}
+          <AutocompleteDropdown
+            {suggestions}
+            selectedIndex={selectedSuggestionIndex}
+            {getCategoryIcon}
+            {getCategoryTranslation}
+            onSelectSuggestion={selectSuggestion}
+          />
+        {/if}
+      </div>
+      <button type="submit" class="btn btn-primary" disabled={adding || !newItemName.trim()}>
+        {adding ? '...' : '+'}
+      </button>
+    </div>
+
+    <div class="flex gap-2 mt-3">
+      <select bind:value={newItemCategory} class="input flex-1">
+        {#each categories as cat}
+          <option value={cat.name}>{cat.icon} {getCategoryTranslation(cat.name)}</option>
+        {/each}
+      </select>
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          on:click={decrementQuantity}
+          class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-bold"
+        >
+          −
+        </button>
+        <span class="w-14 text-center font-medium">
+          {newItemQuantity % 1 === 0 ? newItemQuantity : newItemQuantity.toFixed(1)}
+          {newItemUnit}
+        </span>
+        <button
+          type="button"
+          on:click={incrementQuantity}
+          class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center text-lg font-bold"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Category filter -->
+  <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+    <button
+      class="px-3 py-1 rounded-full text-sm whitespace-nowrap {filterCategory === null &&
+      !showFavoritesOnly
+        ? 'bg-primary-600 text-white'
+        : 'bg-gray-200 dark:bg-gray-700'}"
+      on:click={() => {
+        filterCategory = null;
+        showFavoritesOnly = false;
+      }}
+    >
+      {$t('groceries.filterAll')} ({pendingItems.length})
+    </button>
+    <!-- Favorites filter button -->
+    <button
+      class="px-3 py-1 rounded-full text-sm whitespace-nowrap {showFavoritesOnly
+        ? 'bg-yellow-500 text-white'
+        : 'bg-gray-200 dark:bg-gray-700 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'}"
+      on:click={() => {
+        showFavoritesOnly = !showFavoritesOnly;
+        filterCategory = null;
+      }}
+    >
+      ⭐ {favoriteItems.length}
+    </button>
+    {#each categories as cat}
+      {@const count = pendingItems.filter((i) => i.category === cat.name).length}
+      {#if count > 0}
+        <button
+          class="px-3 py-1 rounded-full text-sm whitespace-nowrap {filterCategory === cat.name &&
+          !showFavoritesOnly
+            ? 'bg-primary-600 text-white'
+            : 'bg-gray-200 dark:bg-gray-700'}"
+          on:click={() => {
+            filterCategory = filterCategory === cat.name ? null : cat.name;
+            showFavoritesOnly = false;
+          }}
+        >
+          {cat.icon}
+          {count}
+        </button>
+      {/if}
+    {/each}
+  </div>
+
+  <!-- Pending items grouped by category -->
+  {#if filteredPendingItems.length === 0}
+    <div class="card p-8 text-center text-stone-500 dark:text-stone-400">
+      <p class="text-4xl mb-2">🎉</p>
+      <p>{$t('groceries.emptyList')}</p>
+    </div>
+  {:else}
+    {#each groupedPendingItems as group, index}
+      <CategorySection
+        {group}
+        {index}
+        draggingIndex={draggingCategoryIndex}
+        {editingQuantityId}
+        bind:editQuantityValue
+        isCollapsed={collapsedCategories.has(group.category.name)}
+        {getCategoryIcon}
+        {getCategoryTranslation}
+        onDragStart={(e) => handleCategoryDragStart(e, index)}
+        onDragOver={(e) => handleCategoryDragOver(e, index)}
+        onDragEnd={handleCategoryDragEnd}
+        onToggleBought={toggleBought}
+        onToggleFavorite={toggleFavorite}
+        onDelete={deleteItem}
+        onStartEdit={startEditingQuantity}
+        onUpdateQuantity={updateQuantity}
+        onCancelEdit={cancelEditingQuantity}
+        onToggleCollapse={() => toggleCategoryCollapse(group.category.name)}
+      />
+    {/each}
+  {/if}
+
+  <!-- Bought items section -->
+  {#if boughtItems.length > 0}
+    <div class="mt-6">
+      <button
+        on:click={() => (showBought = !showBought)}
+        class="flex items-center gap-2 text-stone-500 dark:text-stone-400 mb-2 w-full"
+      >
+        <span class="text-sm">{showBought ? '▼' : '▶'}</span>
+        <span class="text-sm font-semibold">Köpta ({boughtItems.length})</span>
+        {#if showBought}
+          <button
+            on:click|stopPropagation={clearBoughtItems}
+            class="ml-auto text-xs text-red-500 hover:text-red-700"
+          >
+            {$t('groceries.clearBought')}
+          </button>
+        {/if}
+      </button>
+
+      {#if showBought}
+        <div class="card divide-y divide-gray-200 dark:divide-gray-700 opacity-60">
+          {#each filteredBoughtItems as item (item.id)}
+            <GroceryItemRow
+              {item}
+              {editingQuantityId}
+              bind:editQuantityValue
+              categoryIcon={getCategoryIcon(item.category)}
+              onToggleBought={() => toggleBought(item.id)}
+              onToggleFavorite={() => toggleFavorite(item.id)}
+              onDelete={() => deleteItem(item.id)}
+              onStartEdit={() => startEditingQuantity(item.id, item.quantity)}
+              onUpdateQuantity={(val) => updateQuantity(item.id, val)}
+              onCancelEdit={cancelEditingQuantity}
+            />
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/if}
+{/if}

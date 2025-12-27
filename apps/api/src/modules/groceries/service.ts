@@ -67,9 +67,7 @@ export async function updateGrocery(
     familyId: number,
     data: UpdateGroceryData
 ): Promise<GroceryItem | null> {
-    console.log('SERVICE updateGrocery called:', { id, familyId, data });
     const row = await repository.update(id, familyId, data);
-    console.log('SERVICE updateGrocery result row:', row);
     if (!row) return null;
 
     const item = toGroceryItem(row);

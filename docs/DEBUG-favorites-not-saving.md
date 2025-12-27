@@ -1,6 +1,31 @@
 ﻿# Debug: Favorites (Basvaror) Not Saving to Database
 
-## Problem Summary
+## ✅ RESOLVED - 2025-12-26
+
+### Root Cause
+**The shared package (`@family-hub/shared`) was not being rebuilt/deployed.**
+
+The Zod schema `UpdateGrocerySchema` on the Pi was an OLD version that didn't include the `isFavorite` field. When Zod validated the request, it stripped out `isFavorite` because it wasn't in the schema!
+
+```
+request.body: { isFavorite: true }     ← Data came in correctly
+validation.data: {}                     ← Zod stripped it out!
+```
+
+### Solution
+1. Rebuilt the shared package: `pnpm build` in `packages/shared`
+2. Deployed the shared package to Pi
+3. Updated `deploy.ps1` to always build and deploy the shared package
+
+### Lessons Learned
+1. **Monorepo shared packages must be rebuilt when schemas change**
+2. **Deploy scripts must include shared package deployment**
+3. **Debug logging at multiple points helps trace where data is lost**
+4. **Zod validation can silently strip fields not in the schema**
+
+---
+
+## Original Problem Summary
 When toggling the favorite/star icon on a grocery item, the UI updates correctly and the API returns `{success: true, item: {...}}`, but the change is **not persisted to the database**. When navigating away and back, or refreshing the page, the favorite status reverts to its original value.
 
 ## Symptoms
