@@ -52,6 +52,7 @@
           type="password"
           id="currentPassword"
           bind:value={passwordForm.currentPassword}
+          autocomplete="current-password"
           class="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         />
       </div>
@@ -66,6 +67,7 @@
           type="password"
           id="newPassword"
           bind:value={passwordForm.newPassword}
+          autocomplete="new-password"
           class="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         />
       </div>
@@ -80,6 +82,7 @@
           type="password"
           id="confirmPassword"
           bind:value={passwordForm.confirmPassword}
+          autocomplete="new-password"
           class="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-700 text-stone-800 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         />
       </div>
