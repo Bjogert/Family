@@ -220,6 +220,7 @@
   let showMessageForm = false;
   let messageText = '';
   let sendingMessage = false;
+  let messageType: 'private' | 'pinned' | 'both' = 'private';
 
   // Computed (isOwnProfile is now defined at the top near userId)
   $: bgColor = colorClasses[profile?.color || 'orange'];
@@ -362,18 +363,13 @@
   async function loadUserMessages() {
     if (!$currentFamily) return;
     try {
-      const response = await fetch('/api/bulletin', {
+      // Fetch private messages for this user's wall
+      const response = await fetch(`/api/bulletin/user/${userId}`, {
         headers: { 'x-family-id': String($currentFamily.id) },
         credentials: 'include',
       });
       if (response.ok) {
-        const allNotes: BulletinNote[] = await response.json();
-        // Filter notes assigned to this user (messages)
-        // assignedTo is an array of objects with {id, displayName, avatarEmoji}
-        userMessages = allNotes.filter(
-          (note) =>
-            note.assignedTo?.some((a) => a.id === userId) && note.title?.includes('💬 Meddelande')
-        );
+        userMessages = await response.json();
       }
     } catch {
       // Ignore
@@ -421,7 +417,11 @@
     error = null;
 
     try {
-      // Create a bulletin note assigned to this user
+      // Determine what to create based on messageType
+      const shouldPin = messageType === 'pinned' || messageType === 'both';
+      const shouldBePrivate = messageType === 'private' || messageType === 'both';
+
+      // Create a bulletin note
       const response = await fetch('/api/bulletin', {
         method: 'POST',
         headers: {
@@ -434,7 +434,8 @@
           title: '',
           content: messageText,
           color: 'blue',
-          isPinned: true,
+          isPinned: shouldPin,
+          recipientId: shouldBePrivate ? userId : undefined,
           assignedTo: [userId],
         }),
       });
@@ -442,6 +443,9 @@
       if (response.ok) {
         // Send push notification
         try {
+          const notificationBody = messageText.length > 100 ? messageText.substring(0, 100) + '...' : messageText;
+          const notificationUrl = shouldBePrivate ? `/profile/${userId}` : '/';
+          
           await fetch('/api/push/send', {
             method: 'POST',
             headers: {
@@ -453,8 +457,8 @@
             body: JSON.stringify({
               targetUserId: userId,
               title: `💬 ${$currentUser.displayName || $currentUser.username}`,
-              body: messageText.length > 100 ? messageText.substring(0, 100) + '...' : messageText,
-              url: `/profile/${userId}`,
+              body: notificationBody,
+              url: notificationUrl,
             }),
           });
         } catch {
@@ -462,9 +466,21 @@
         }
 
         messageText = '';
+        messageType = 'private';
         showMessageForm = false;
-        successMessage = 'Meddelande skickat!';
+        
+        // Build success message based on type
+        let successMsg = 'Meddelande skickat!';
+        if (messageType === 'private') {
+          successMsg = `Privat meddelande skickat till ${profile.displayName || profile.username}!`;
+        } else if (messageType === 'pinned') {
+          successMsg = 'Meddelande fäst på startsidan!';
+        } else {
+          successMsg = 'Meddelande skickat och fäst!';
+        }
+        successMessage = successMsg;
         setTimeout(() => (successMessage = null), 3000);
+        
         // Reload messages to show the new one
         await loadUserMessages();
       } else {
@@ -752,13 +768,16 @@
         {showMessageForm}
         bind:messageText
         {sendingMessage}
+        {messageType}
         on:setSection={(e) => setSection(e.detail)}
         on:toggleMessageForm={() => (showMessageForm = !showMessageForm)}
         on:sendMessage={sendMessage}
         on:cancelMessage={() => {
           showMessageForm = false;
           messageText = '';
+          messageType = 'private';
         }}
+        on:setMessageType={(e) => (messageType = e.detail)}
       />
 
       <!-- Main Content -->

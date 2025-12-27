@@ -8,6 +8,7 @@ export interface BulletinNote {
     listItems: BulletinListItem[] | null;
     color: BulletinColor;
     isPinned: boolean;
+    recipientId: number | null; // For private messages to a specific user
     expiresAt: string | null; // ISO date
     createdBy: number;
     createdAt: string;
@@ -23,6 +24,11 @@ export interface BulletinNote {
         displayName: string | null;
         avatarEmoji: string | null;
     }[];
+    recipient?: {
+        id: number;
+        displayName: string | null;
+        avatarEmoji: string | null;
+    };
 }
 
 export interface BulletinListItem {
@@ -39,6 +45,7 @@ export interface CreateBulletinNoteInput {
     listItems?: BulletinListItem[];
     color?: BulletinColor;
     isPinned?: boolean;
+    recipientId?: number; // For private message to a specific user's wall
     expiresAt?: string | null;
     assignedTo?: number[]; // User IDs to notify
 }
@@ -49,6 +56,7 @@ export interface UpdateBulletinNoteInput {
     listItems?: BulletinListItem[] | null;
     color?: BulletinColor;
     isPinned?: boolean;
+    recipientId?: number | null;
     expiresAt?: string | null;
     assignedTo?: number[];
 }

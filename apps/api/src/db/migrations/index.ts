@@ -12,12 +12,14 @@ export interface Migration {
 import { migration001 } from './001_initial_schema.js';
 import { migration002 } from './002_add_is_favorite.js';
 import { migration003 } from './003_quantity_decimal.js';
+import { migration004 } from './004_bulletin_recipient.js';
 
 // Register migrations in order
 const migrations: Migration[] = [
     migration001,
     migration002,
     migration003,
+    migration004,
 ];
 
 export async function runMigrations(pool: Pool): Promise<void> {

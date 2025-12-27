@@ -12,6 +12,7 @@ function mapRowToNote(row: bulletinRepo.BulletinNoteRow): BulletinNote {
         listItems: row.list_items,
         color: row.color as BulletinColor,
         isPinned: row.is_pinned,
+        recipientId: row.recipient_id,
         expiresAt: row.expires_at?.toISOString() || null,
         createdBy: row.created_by,
         createdAt: row.created_at.toISOString(),
@@ -20,6 +21,11 @@ function mapRowToNote(row: bulletinRepo.BulletinNoteRow): BulletinNote {
             id: row.created_by,
             displayName: row.creator_name,
             avatarEmoji: row.creator_emoji || null,
+        } : undefined,
+        recipient: row.recipient_id && row.recipient_name ? {
+            id: row.recipient_id,
+            displayName: row.recipient_name,
+            avatarEmoji: row.recipient_emoji || null,
         } : undefined,
     };
 }
@@ -68,6 +74,7 @@ interface CreateNoteParams {
     listItems?: BulletinListItem[];
     color?: BulletinColor;
     isPinned?: boolean;
+    recipientId?: number;
     expiresAt?: string | null;
     assignedTo?: number[];
     createdBy: number;
@@ -81,6 +88,7 @@ export async function createNote(params: CreateNoteParams): Promise<BulletinNote
         listItems: params.listItems,
         color: params.color,
         isPinned: params.isPinned,
+        recipientId: params.recipientId,
         expiresAt: params.expiresAt,
         createdBy: params.createdBy,
     });
@@ -174,6 +182,26 @@ export async function updateNote(
 
 export async function deleteNote(id: number, familyId: number): Promise<boolean> {
     return bulletinRepo.remove(id, familyId);
+}
+
+// Get private messages for a specific user's wall
+export async function getNotesForRecipient(familyId: number, recipientId: number): Promise<BulletinNote[]> {
+    const rows = await bulletinRepo.findByRecipient(familyId, recipientId);
+    const notes = rows.map(mapRowToNote);
+
+    // Fetch assignments for all notes
+    for (const note of notes) {
+        const assignments = await bulletinRepo.getAssignments(note.id);
+        if (assignments.length > 0) {
+            note.assignedTo = assignments.map(a => ({
+                id: a.user_id,
+                displayName: a.display_name,
+                avatarEmoji: a.avatar_emoji,
+            }));
+        }
+    }
+
+    return notes;
 }
 
 async function getCreatorName(userId: number): Promise<string> {

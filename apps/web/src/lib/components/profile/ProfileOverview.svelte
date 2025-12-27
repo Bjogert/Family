@@ -28,10 +28,14 @@
   interface BulletinNote {
     id: number;
     title: string;
-    content: string;
+    content: string | null;
     isPinned: boolean;
     createdAt: string;
-    author?: { displayName: string | null; avatarEmoji: string | null };
+    creator?: { 
+      id: number;
+      displayName: string | null; 
+      avatarEmoji: string | null;
+    };
   }
 
   export let earnedPoints: number;
@@ -235,7 +239,7 @@
   {/if}
 </div>
 
-<!-- Messages Section - show messages assigned to this user -->
+<!-- Messages Section - show private messages to this user -->
 {#if userMessages.length > 0}
   <div class="mt-4">
     <h3
@@ -253,13 +257,13 @@
           <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-1">
-                <span class="text-lg">{msg.author?.avatarEmoji || '👤'}</span>
-                <span class="text-xs text-stone-500 dark:text-stone-400">
-                  {msg.title.replace('💬 Meddelande från ', '')}
+                <span class="text-lg">{msg.creator?.avatarEmoji || '👤'}</span>
+                <span class="text-xs font-medium text-stone-600 dark:text-stone-300">
+                  {msg.creator?.displayName || 'Någon'}
                 </span>
               </div>
               <p class="text-sm text-stone-700 dark:text-stone-200 whitespace-pre-wrap">
-                {msg.content}
+                {msg.content || ''}
               </p>
               <span class="text-xs text-stone-400 dark:text-stone-500 mt-1 block">
                 {new Date(msg.createdAt).toLocaleDateString('sv-SE', {
@@ -271,7 +275,7 @@
               </span>
             </div>
             {#if msg.isPinned}
-              <span class="text-orange-500" title="Fäst meddelande">📌</span>
+              <span class="text-orange-500" title="Också fäst på startsidan">📌</span>
             {/if}
           </div>
         </div>

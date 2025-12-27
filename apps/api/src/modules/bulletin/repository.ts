@@ -9,6 +9,7 @@ export interface BulletinNoteRow {
     list_items: BulletinListItem[] | null;
     color: string;
     is_pinned: boolean;
+    recipient_id: number | null;
     expires_at: Date | null;
     created_by: number;
     created_at: Date;
@@ -16,6 +17,8 @@ export interface BulletinNoteRow {
     // Joined
     creator_name?: string | null;
     creator_emoji?: string | null;
+    recipient_name?: string | null;
+    recipient_emoji?: string | null;
 }
 
 export interface AssignmentRow {
@@ -31,6 +34,7 @@ export interface CreateBulletinData {
     listItems?: BulletinListItem[];
     color?: string;
     isPinned?: boolean;
+    recipientId?: number;
     expiresAt?: string | null;
     createdBy: number;
 }
@@ -41,23 +45,28 @@ export interface UpdateBulletinData {
     listItems?: BulletinListItem[] | null;
     color?: string;
     isPinned?: boolean;
+    recipientId?: number | null;
     expiresAt?: string | null;
 }
 
 const SELECT_NOTE = `
   SELECT bn.id, bn.family_id, bn.title, bn.content, bn.list_items,
-         bn.color, bn.is_pinned, bn.expires_at, bn.created_by,
+         bn.color, bn.is_pinned, bn.recipient_id, bn.expires_at, bn.created_by,
          bn.created_at, bn.updated_at,
-         u.display_name as creator_name, u.avatar_emoji as creator_emoji
+         u.display_name as creator_name, u.avatar_emoji as creator_emoji,
+         r.display_name as recipient_name, r.avatar_emoji as recipient_emoji
   FROM bulletin_notes bn
   LEFT JOIN users u ON bn.created_by = u.id
+  LEFT JOIN users r ON bn.recipient_id = r.id
 `;
 
 export async function findAllByFamily(familyId: number): Promise<BulletinNoteRow[]> {
-    // Get non-expired notes, pinned first, then newest first
+    // Get non-expired notes that are NOT private messages (recipient_id IS NULL)
+    // Private messages are shown on user profiles instead
     const result = await pool.query<BulletinNoteRow>(
         `${SELECT_NOTE}
          WHERE bn.family_id = $1
+           AND bn.recipient_id IS NULL
            AND (bn.expires_at IS NULL OR bn.expires_at > NOW())
          ORDER BY bn.is_pinned DESC, bn.created_at DESC`,
         [familyId]
@@ -76,8 +85,8 @@ export async function findById(id: number, familyId: number): Promise<BulletinNo
 
 export async function create(data: CreateBulletinData): Promise<BulletinNoteRow> {
     const result = await pool.query<{ id: number }>(
-        `INSERT INTO bulletin_notes (family_id, title, content, list_items, color, is_pinned, expires_at, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO bulletin_notes (family_id, title, content, list_items, color, is_pinned, recipient_id, expires_at, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING id`,
         [
             data.familyId,
@@ -86,6 +95,7 @@ export async function create(data: CreateBulletinData): Promise<BulletinNoteRow>
             data.listItems ? JSON.stringify(data.listItems) : null,
             data.color || 'yellow',
             data.isPinned || false,
+            data.recipientId || null,
             data.expiresAt || null,
             data.createdBy,
         ]
@@ -119,6 +129,10 @@ export async function update(id: number, familyId: number, data: UpdateBulletinD
     if (data.isPinned !== undefined) {
         setClauses.push(`is_pinned = $${paramIndex++}`);
         values.push(data.isPinned);
+    }
+    if (data.recipientId !== undefined) {
+        setClauses.push(`recipient_id = $${paramIndex++}`);
+        values.push(data.recipientId);
     }
     if (data.expiresAt !== undefined) {
         setClauses.push(`expires_at = $${paramIndex++}`);
@@ -190,4 +204,17 @@ export async function deleteExpired(): Promise<number> {
         'DELETE FROM bulletin_notes WHERE expires_at IS NOT NULL AND expires_at < NOW()'
     );
     return result.rowCount || 0;
+}
+
+// Get private messages for a specific user's wall
+export async function findByRecipient(familyId: number, recipientId: number): Promise<BulletinNoteRow[]> {
+    const result = await pool.query<BulletinNoteRow>(
+        `${SELECT_NOTE}
+         WHERE bn.family_id = $1
+           AND bn.recipient_id = $2
+           AND (bn.expires_at IS NULL OR bn.expires_at > NOW())
+         ORDER BY bn.created_at DESC`,
+        [familyId, recipientId]
+    );
+    return result.rows;
 }

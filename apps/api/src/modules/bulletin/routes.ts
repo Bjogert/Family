@@ -40,6 +40,24 @@ export default async function bulletinRoutes(app: FastifyInstance) {
         }
     );
 
+    // GET /api/bulletin/user/:userId - Get private messages for a specific user's wall
+    app.get<{ Params: { userId: string } }>(
+        '/user/:userId',
+        async (request: FastifyRequest<{ Params: { userId: string } }>, reply: FastifyReply) => {
+            const familyId = request.headers['x-family-id'];
+            if (!familyId) {
+                return reply.status(400).send({ error: 'Family ID required' });
+            }
+
+            const notes = await bulletinService.getNotesForRecipient(
+                Number(familyId),
+                parseInt(request.params.userId, 10)
+            );
+
+            return reply.send(notes);
+        }
+    );
+
     // POST /api/bulletin - Create note
     app.post<{ Body: CreateBulletinNoteInput }>(
         '/',
@@ -61,6 +79,7 @@ export default async function bulletinRoutes(app: FastifyInstance) {
                 listItems: request.body.listItems,
                 color: request.body.color,
                 isPinned: request.body.isPinned,
+                recipientId: request.body.recipientId,
                 expiresAt: request.body.expiresAt,
                 assignedTo: request.body.assignedTo,
                 createdBy: Number(userId),
