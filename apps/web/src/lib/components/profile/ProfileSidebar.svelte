@@ -25,24 +25,48 @@
   <div
     class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-3"
   >
-    <!-- User Header with Profile button in top right -->
+    <!-- User Header with navigation buttons in top right -->
     <div class="relative">
-      <!-- Profile button in top right corner -->
-      <button
-        on:click={() => dispatch('setSection', 'profile')}
-        class="absolute top-0 right-0 p-1.5 rounded-lg transition-colors
-          {activeSection === 'profile'
-          ? 'bg-orange-200 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400'
-          : 'hover:bg-stone-200/50 dark:hover:bg-stone-600/50 text-stone-400 dark:text-stone-500'}"
-        title="Profil"
-      >
-        <span class="text-sm">👤</span>
-      </button>
+      <!-- Navigation buttons in top right corner: Profile - Account - Settings -->
+      <div class="absolute top-0 right-0 flex items-center gap-0.5">
+        <button
+          on:click={() => dispatch('setSection', 'profile')}
+          class="p-1.5 rounded-lg transition-colors
+            {activeSection === 'profile'
+            ? 'bg-orange-200 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400'
+            : 'hover:bg-stone-200/50 dark:hover:bg-stone-600/50 text-stone-400 dark:text-stone-500'}"
+          title="Profil"
+        >
+          <span class="text-sm">👤</span>
+        </button>
+        {#if isOwnProfile}
+          <button
+            on:click={() => dispatch('setSection', 'account')}
+            class="p-1.5 rounded-lg transition-colors
+              {activeSection === 'account'
+              ? 'bg-orange-200 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400'
+              : 'hover:bg-stone-200/50 dark:hover:bg-stone-600/50 text-stone-400 dark:text-stone-500'}"
+            title="Konto"
+          >
+            <span class="text-sm">🔐</span>
+          </button>
+          <button
+            on:click={() => dispatch('setSection', 'settings')}
+            class="p-1.5 rounded-lg transition-colors
+              {activeSection === 'settings'
+              ? 'bg-orange-200 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400'
+              : 'hover:bg-stone-200/50 dark:hover:bg-stone-600/50 text-stone-400 dark:text-stone-500'}"
+            title="Inställningar"
+          >
+            <span class="text-sm">⚙️</span>
+          </button>
+        {/if}
+      </div>
 
       <!-- User section: Avatar + Name as Overview button -->
       <button
         on:click={() => dispatch('setSection', 'overview')}
-        class="w-full flex items-center gap-2.5 pr-8 py-1 rounded-xl transition-colors text-left
+        class="w-full flex items-center gap-2.5 pr-20 py-1 rounded-xl transition-colors text-left
           {activeSection === 'overview'
           ? 'bg-orange-100/50 dark:bg-orange-900/20'
           : 'hover:bg-stone-100/50 dark:hover:bg-stone-700/30'}"
@@ -75,32 +99,6 @@
         <span>💬</span>
         <span class="font-medium">Meddelande</span>
       </button>
-    {/if}
-
-    <!-- Settings and Account buttons (only show on own profile) -->
-    {#if isOwnProfile}
-      <div class="mt-2 pt-2 border-t border-stone-200 dark:border-stone-700 space-y-1">
-        <button
-          on:click={() => dispatch('setSection', 'settings')}
-          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-sm
-            {activeSection === 'settings'
-            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
-            : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400'}"
-        >
-          <span>⚙️</span>
-          <span class="font-medium">Inställningar</span>
-        </button>
-        <button
-          on:click={() => dispatch('setSection', 'account')}
-          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-sm
-            {activeSection === 'account'
-            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
-            : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400'}"
-        >
-          <span>🔐</span>
-          <span class="font-medium">Konto</span>
-        </button>
-      </div>
     {/if}
   </div>
 
