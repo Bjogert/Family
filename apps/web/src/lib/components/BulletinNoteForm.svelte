@@ -108,7 +108,9 @@
 
   <!-- Note Type Toggle -->
   <div>
-    <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">{$t('bulletin.type')}</span>
+    <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2"
+      >{$t('bulletin.type')}</span
+    >
     <div class="flex gap-2">
       <button
         type="button"
@@ -195,7 +197,9 @@
 
   <!-- Color -->
   <div>
-    <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">{$t('bulletin.color')}</span>
+    <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2"
+      >{$t('bulletin.color')}</span
+    >
     <div class="flex gap-2 flex-wrap">
       {#each colorOptions as opt}
         <button

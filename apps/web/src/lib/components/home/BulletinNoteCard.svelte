@@ -52,7 +52,8 @@
           <span class="mx-0.5">→</span>
           {#each note.assignedTo as recipient, i}
             {recipient.avatarEmoji || '👤'}
-            {recipient.displayName || 'Användare'}{#if i < note.assignedTo.length - 1}, {/if}
+            {recipient.displayName || 'Användare'}{#if i < note.assignedTo.length - 1},
+            {/if}
           {/each}
         {/if}
         <span class="mx-1">·</span>
