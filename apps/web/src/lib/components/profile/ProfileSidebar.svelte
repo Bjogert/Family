@@ -76,6 +76,32 @@
         <span class="font-medium">Meddelande</span>
       </button>
     {/if}
+
+    <!-- Settings and Account buttons (only show on own profile) -->
+    {#if isOwnProfile}
+      <div class="mt-2 pt-2 border-t border-stone-200 dark:border-stone-700 space-y-1">
+        <button
+          on:click={() => dispatch('setSection', 'settings')}
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-sm
+            {activeSection === 'settings'
+            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+            : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400'}"
+        >
+          <span>⚙️</span>
+          <span class="font-medium">Inställningar</span>
+        </button>
+        <button
+          on:click={() => dispatch('setSection', 'account')}
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-sm
+            {activeSection === 'account'
+            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+            : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400'}"
+        >
+          <span>🔐</span>
+          <span class="font-medium">Konto</span>
+        </button>
+      </div>
+    {/if}
   </div>
 
   <!-- Message Form (appears below sidebar when active) -->
