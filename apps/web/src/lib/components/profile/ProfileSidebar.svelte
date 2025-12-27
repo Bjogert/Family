@@ -12,14 +12,14 @@
   export let showMessageForm: boolean;
   export let messageText: string;
   export let sendingMessage: boolean;
-  export let messageType: 'private' | 'pinned' | 'both' = 'private';
+  export let isPrivate: boolean = false;
 
   const dispatch = createEventDispatcher<{
     setSection: string;
     toggleMessageForm: void;
     sendMessage: void;
     cancelMessage: void;
-    setMessageType: 'private' | 'pinned' | 'both';
+    togglePrivate: void;
   }>();
 </script>
 
@@ -122,49 +122,23 @@
         rows="3"
       ></textarea>
 
-      <!-- Message type selection -->
-      <div class="mt-3 space-y-2">
-        <span class="text-xs font-medium text-stone-500 dark:text-stone-400">Visa meddelandet:</span
+      <!-- Private toggle -->
+      <div class="mt-3 flex items-center justify-between">
+        <button
+          on:click={() => dispatch('togglePrivate')}
+          class="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg transition-colors
+            {isPrivate
+            ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border-2 border-purple-400'
+            : 'bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-600'}"
         >
-        <div class="flex flex-wrap gap-2">
-          <button
-            on:click={() => dispatch('setMessageType', 'private')}
-            class="px-3 py-1.5 text-xs rounded-lg transition-colors flex items-center gap-1.5
-              {messageType === 'private'
-              ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border-2 border-purple-400'
-              : 'bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-600'}"
-          >
-            <span>👤</span>
-            <span>Privat</span>
-          </button>
-          <button
-            on:click={() => dispatch('setMessageType', 'pinned')}
-            class="px-3 py-1.5 text-xs rounded-lg transition-colors flex items-center gap-1.5
-              {messageType === 'pinned'
-              ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 border-2 border-orange-400'
-              : 'bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-600'}"
-          >
-            <span>📌</span>
-            <span>Startsidan</span>
-          </button>
-          <button
-            on:click={() => dispatch('setMessageType', 'both')}
-            class="px-3 py-1.5 text-xs rounded-lg transition-colors flex items-center gap-1.5
-              {messageType === 'both'
-              ? 'bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 border-2 border-teal-400'
-              : 'bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-600'}"
-          >
-            <span>✨</span>
-            <span>Båda</span>
-          </button>
-        </div>
-        <p class="text-[10px] text-stone-400 dark:text-stone-500">
-          {#if messageType === 'private'}
-            Visas bara på {profile.displayName || profile.username}s profilsida
-          {:else if messageType === 'pinned'}
-            Visas på startsidan (fäst notis)
+          <span>{isPrivate ? '🔒' : '🔓'}</span>
+          <span>Privat</span>
+        </button>
+        <p class="text-[10px] text-stone-400 dark:text-stone-500 text-right flex-1 ml-2">
+          {#if isPrivate}
+            Bara på {profile.displayName || profile.username}s sida
           {:else}
-            Visas på både profilsidan och startsidan
+            Visas på startsidan också
           {/if}
         </p>
       </div>

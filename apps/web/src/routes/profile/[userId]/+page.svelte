@@ -220,7 +220,7 @@
   let showMessageForm = false;
   let messageText = '';
   let sendingMessage = false;
-  let messageType: 'private' | 'pinned' | 'both' = 'private';
+  let isPrivateMessage = false;
 
   // Computed (isOwnProfile is now defined at the top near userId)
   $: bgColor = colorClasses[profile?.color || 'orange'];
@@ -421,9 +421,9 @@
     error = null;
 
     try {
-      // Determine what to create based on messageType
-      const shouldPin = messageType === 'pinned' || messageType === 'both';
-      const shouldBePrivate = messageType === 'private' || messageType === 'both';
+      // If private: only recipient's page. Otherwise: both pinned and recipient's page
+      const shouldPin = !isPrivateMessage;
+      const recipientId = userId; // Always set recipient for profile messages
 
       // Create a bulletin note
       const response = await fetch('/api/bulletin', {
@@ -439,7 +439,7 @@
           content: messageText,
           color: 'blue',
           isPinned: shouldPin,
-          recipientId: shouldBePrivate ? userId : undefined,
+          recipientId: recipientId,
           assignedTo: [userId],
         }),
       });
@@ -449,7 +449,7 @@
         try {
           const notificationBody =
             messageText.length > 100 ? messageText.substring(0, 100) + '...' : messageText;
-          const notificationUrl = shouldBePrivate ? `/profile/${userId}` : '/';
+          const notificationUrl = `/profile/${userId}`;
 
           await fetch('/api/push/send', {
             method: 'POST',
@@ -471,18 +471,13 @@
         }
 
         messageText = '';
-        messageType = 'private';
+        isPrivateMessage = false;
         showMessageForm = false;
 
         // Build success message based on type
-        let successMsg = 'Meddelande skickat!';
-        if (messageType === 'private') {
-          successMsg = `Privat meddelande skickat till ${profile.displayName || profile.username}!`;
-        } else if (messageType === 'pinned') {
-          successMsg = 'Meddelande fäst på startsidan!';
-        } else {
-          successMsg = 'Meddelande skickat och fäst!';
-        }
+        const successMsg = isPrivateMessage
+          ? `Privat meddelande skickat till ${profile.displayName || profile.username}!`
+          : `Meddelande skickat till ${profile.displayName || profile.username} och fäst på startsidan!`;
         successMessage = successMsg;
         setTimeout(() => (successMessage = null), 3000);
 
@@ -773,16 +768,16 @@
         {showMessageForm}
         bind:messageText
         {sendingMessage}
-        {messageType}
+        isPrivate={isPrivateMessage}
         on:setSection={(e) => setSection(e.detail)}
         on:toggleMessageForm={() => (showMessageForm = !showMessageForm)}
         on:sendMessage={sendMessage}
         on:cancelMessage={() => {
           showMessageForm = false;
           messageText = '';
-          messageType = 'private';
+          isPrivateMessage = false;
         }}
-        on:setMessageType={(e) => (messageType = e.detail)}
+        on:togglePrivate={() => (isPrivateMessage = !isPrivateMessage)}
       />
 
       <!-- Main Content -->

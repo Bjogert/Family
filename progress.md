@@ -1155,6 +1155,75 @@ Based on comprehensive project review, implemented following improvements:
 
 ---
 
+### Session 12 - 2025-12-27 (Private Messages & Database Permissions Fix)
+**What we did:**
+
+**1. Private Messages Feature:**
+- Added `recipient_id` column to `bulletin_notes` table
+- Messages can now be sent privately to specific users
+- Messages appear on recipient's profile page in "Meddelanden" section
+- Simple "Privat" toggle in message form:
+  - 🔓 Off (default): Message posts to both recipient's wall AND main bulletin board
+  - 🔒 On: Message only visible on recipient's profile page
+- API endpoint: GET `/api/bulletin/user/:userId` - fetch messages for a specific user
+
+**2. Database Migration Permission Fix:**
+- **Problem**: Migration 004 failed with "must be owner of table bulletin_notes"
+- **Root Cause**: Tables created by `postgres` superuser can't be altered by `family_hub` app user
+- **Solution**: Created `fix_permissions.sql` script that:
+  - Changes ownership of postgres-owned tables to family_hub
+  - Grants ALL PRIVILEGES on all tables and sequences
+  - Sets DEFAULT PRIVILEGES for future objects
+- **Prevention**: Permissions script deployed to Pi for future use
+
+**3. Systemd vs pm2 Discovery:**
+- **Problem**: pm2 processes kept crashing with EADDRINUSE
+- **Root Cause**: Apps already running via systemd user services!
+- **Solution**: Use systemd services instead of pm2
+- Services location: `~/.config/systemd/user/family-api.service` and `family-web.service`
+- Commands:
+  - `systemctl --user status family-api family-web` - Check status
+  - `systemctl --user restart family-api family-web` - Restart
+  - `journalctl --user -u family-api -f` - View logs
+
+**Database Changes:**
+```sql
+ALTER TABLE bulletin_notes ADD COLUMN recipient_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+CREATE INDEX idx_bulletin_notes_recipient_id ON bulletin_notes(recipient_id);
+```
+
+**Files Created:**
+- `apps/api/src/db/migrations/004_bulletin_recipient.ts` - Migration for recipient_id
+- `fix_permissions.sql` - Database permissions fix script (temporary, deployed to Pi)
+
+**Files Modified:**
+- `packages/shared/src/types/bulletin.ts` - Added recipientId and recipient fields
+- `apps/api/src/modules/bulletin/repository.ts` - Added findByRecipient, updated queries
+- `apps/api/src/modules/bulletin/service.ts` - Added getNotesForRecipient function
+- `apps/api/src/modules/bulletin/routes.ts` - Added GET /user/:userId endpoint
+- `apps/web/src/lib/components/profile/ProfileSidebar.svelte` - Simple "Privat" toggle
+- `apps/web/src/routes/profile/[userId]/+page.svelte` - Updated message handling
+
+**Important Commands (Pi):**
+```bash
+# Fix database permissions (run once)
+sudo -u postgres psql -d family_hub -f /tmp/fix_permissions.sql
+
+# View migration status
+sudo -u postgres psql -d family_hub -c "SELECT * FROM schema_migrations ORDER BY version;"
+
+# Check what owns tables
+sudo -u postgres psql -d family_hub -c "SELECT tablename, tableowner FROM pg_tables WHERE schemaname = 'public';"
+```
+
+**Lessons Learned:**
+- Always check if services run via systemd before trying pm2
+- Database table ownership matters for migrations
+- Grant proper permissions to app user, not just connection rights
+- PowerShell has issues with complex escaping - use temp SQL files instead
+
+---
+
 ## Blockers & Questions
 
 | Issue | Status | Resolution |
@@ -1185,4 +1254,4 @@ Based on comprehensive project review, implemented following improvements:
 
 ---
 
-*Last updated: 2025-12-26*
+*Last updated: 2025-12-27*
