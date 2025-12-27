@@ -178,10 +178,10 @@ export default async function pushRoutes(app: FastifyInstance) {
     }>('/send', async (request: any, reply: FastifyReply) => {
         const { targetUserId, title, body, url } = request.body;
 
-        if (!targetUserId || !title || !body) {
+        if (!targetUserId || !body) {
             return reply.status(400).send({
                 success: false,
-                message: 'targetUserId, title, and body are required',
+                message: 'targetUserId and body are required',
             });
         }
 
