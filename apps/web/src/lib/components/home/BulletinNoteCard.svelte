@@ -40,14 +40,23 @@
   class="rounded-2xl shadow-xl border p-4 {noteColorClasses[note.color] || noteColorClasses.yellow}"
 >
   <!-- Header: Creator + Pin + Actions -->
-  <div class="flex items-start justify-between mb-2">
-    <div class="flex items-center gap-2">
+  <div class="flex items-start justify-between mb-1">
+    <div class="flex items-center gap-2 flex-wrap">
       {#if note.isPinned}
         <span class="text-sm">📌</span>
       {/if}
       <span class="text-xs text-stone-500 dark:text-stone-400">
         {note.creator?.avatarEmoji || '👤'}
-        {note.creator?.displayName || $t('bulletin.someone')} · {timeAgo(note.createdAt)}
+        {note.creator?.displayName || $t('bulletin.someone')}
+        {#if note.assignedTo && note.assignedTo.length > 0 && !(note.assignedTo.length === 1 && note.assignedTo[0].id === note.creator?.id)}
+          <span class="mx-0.5">→</span>
+          {#each note.assignedTo as recipient, i}
+            {recipient.avatarEmoji || '👤'}
+            {recipient.displayName || 'Användare'}{#if i < note.assignedTo.length - 1}, {/if}
+          {/each}
+        {/if}
+        <span class="mx-1">·</span>
+        {timeAgo(note.createdAt)}
       </span>
     </div>
     <div class="flex items-center gap-1">
@@ -69,7 +78,9 @@
   </div>
 
   <!-- Title -->
-  <h3 class="font-semibold text-stone-800 dark:text-stone-100 mb-1">{note.title}</h3>
+  {#if note.title}
+    <h3 class="font-semibold text-stone-800 dark:text-stone-100 mb-1">{note.title}</h3>
+  {/if}
 
   <!-- Content or List -->
   {#if note.content}

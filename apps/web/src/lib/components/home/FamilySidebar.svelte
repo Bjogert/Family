@@ -43,9 +43,9 @@
 
 <aside class="lg:w-64 flex-shrink-0">
   <div
-    class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-6"
+    class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4"
   >
-    <h3 class="text-sm font-semibold text-stone-600 dark:text-stone-400 mb-4">Familjen</h3>
+    <h3 class="text-sm font-semibold text-stone-600 dark:text-stone-400 mb-3">Familjen</h3>
 
     {#if loadingMembers}
       <div class="flex justify-center py-4">
@@ -56,7 +56,7 @@
     {:else if familyMembers.length === 0}
       <p class="text-sm text-stone-500 dark:text-stone-400">Inga medlemmar</p>
     {:else}
-      <div class="space-y-2">
+      <div class="space-y-1">
         {#each familyMembers as member (member.id)}
           {@const bgColor = colorClasses[member.color || 'orange']}
           {@const groceryCount = memberGroceryNotifications[member.id] || 0}
@@ -70,19 +70,19 @@
             taskInfo.overdue > 0 ? 'bg-red-500' : getTaskBadgeColor(taskInfo.primaryCategory)}
           <a
             href="/profile/{member.id}"
-            class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 transition-colors text-left relative block"
+            class="w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 transition-colors text-left relative block"
           >
             <!-- Avatar with task/grocery badges -->
             <div class="relative">
               <div
-                class="{bgColor} w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md"
+                class="{bgColor} w-9 h-9 rounded-full flex items-center justify-center text-lg shadow-md"
               >
                 {member.avatarEmoji || '👤'}
               </div>
               <!-- Task indicator (top-right) -->
               {#if taskInfo.total > 0}
                 <div
-                  class="absolute -top-1 -right-1 w-5 h-5 {taskBadgeColor} rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-md border-2 border-white dark:border-stone-800"
+                  class="absolute -top-1 -right-1 w-4 h-4 {taskBadgeColor} rounded-full flex items-center justify-center text-[9px] font-bold text-white shadow-md border-2 border-white dark:border-stone-800"
                   title="{taskInfo.total} uppgift{taskInfo.total > 1 ? 'er' : ''}{taskInfo.overdue >
                   0
                     ? ` (${taskInfo.overdue} försenad${taskInfo.overdue > 1 ? 'e' : ''})`
@@ -94,7 +94,7 @@
               <!-- Grocery indicator (bottom-right) -->
               {#if groceryCount > 0}
                 <div
-                  class="absolute -bottom-1 -right-1 w-4 h-4 bg-pink-500 rounded-full flex items-center justify-center text-[8px] font-bold text-white shadow-md border-2 border-white dark:border-stone-800"
+                  class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-pink-500 rounded-full flex items-center justify-center text-[7px] font-bold text-white shadow-md border-2 border-white dark:border-stone-800"
                   title={$t('groceries.assignedToList')}
                 >
                   🛒
@@ -104,7 +104,7 @@
 
             <!-- Name and role -->
             <div class="flex-1 min-w-0">
-              <p class="font-medium text-stone-800 dark:text-stone-200 truncate">
+              <p class="font-medium text-stone-800 dark:text-stone-200 text-sm truncate">
                 {member.displayName || member.username}
               </p>
               {#if member.role}

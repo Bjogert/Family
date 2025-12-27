@@ -26,7 +26,7 @@ export interface AssignmentRow {
 
 export interface CreateBulletinData {
     familyId: number;
-    title: string;
+    title?: string;
     content?: string;
     listItems?: BulletinListItem[];
     color?: string;

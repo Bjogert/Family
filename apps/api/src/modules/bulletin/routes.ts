@@ -54,11 +54,6 @@ export default async function bulletinRoutes(app: FastifyInstance) {
                 return reply.status(400).send({ error: 'User ID required' });
             }
 
-            const { title } = request.body;
-            if (!title) {
-                return reply.status(400).send({ error: 'Title is required' });
-            }
-
             const note = await bulletinService.createNote({
                 familyId: Number(familyId),
                 title: request.body.title,

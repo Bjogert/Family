@@ -8,7 +8,8 @@
       "Bash(find:*)",
       "Bash(wc:*)",
       "Bash(pnpm --filter @family-hub/web check:*)",
-      "Bash(pnpm --filter @family-hub/web build:*)"
+      "Bash(pnpm --filter @family-hub/web build:*)",
+      "Bash(pnpm build:*)"
     ]
   }
 }

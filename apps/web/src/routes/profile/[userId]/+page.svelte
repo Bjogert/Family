@@ -162,8 +162,9 @@
     ];
   }
 
-  // State
-  let userId: number;
+  // State - userId is reactive to URL params
+  $: userId = parseInt($page.params.userId || '');
+  $: isOwnProfile = userId === $currentUser?.id;
   let profile: UserProfile | null = null;
   let preferences: UserPreferences = {
     theme: 'system',
@@ -220,8 +221,7 @@
   let messageText = '';
   let sendingMessage = false;
 
-  // Computed
-  $: isOwnProfile = $currentUser?.id === userId;
+  // Computed (isOwnProfile is now defined at the top near userId)
   $: bgColor = colorClasses[profile?.color || 'orange'];
 
   // Navigation items
@@ -232,21 +232,28 @@
     { id: 'account', label: 'Konto', icon: '🔐', show: isOwnProfile },
   ].filter((item) => item.show);
 
+  // Reload profile when userId changes (reactive navigation)
+  $: if (browser && userId && !isNaN(userId)) {
+    loadProfile();
+  }
+
   onMount(async () => {
-    userId = parseInt($page.params.userId || '');
-
-    if (isNaN(userId)) {
-      error = 'Ogiltigt användar-ID';
-      loading = false;
-      return;
-    }
-
-    await loadProfile();
+    // Initial load is handled by the reactive statement above
   });
 
   async function loadProfile() {
     loading = true;
     error = null;
+
+    // Reset state for new profile
+    profile = null;
+    assignedGroceries = [];
+    assignedTasks = [];
+    earnedPoints = 0;
+    upcomingEvents = [];
+    userMessages = [];
+    activeSection = 'overview';
+    editMode = false;
 
     try {
       // Load user profile
@@ -321,15 +328,19 @@
         }
       }
 
-      // Load upcoming events for this user
-      try {
-        const eventsRes = await get<{ success: boolean; events: CalendarEvent[] }>(
-          `/calendar/events?userId=${userId}&upcoming=true`
-        );
-        upcomingEvents = eventsRes.events?.slice(0, 5) || [];
-      } catch {
-        // Ignore
-      }
+      // TODO: Upcoming events - endpoint doesn't exist yet
+      // The calendar module only has Google Calendar integration at /api/calendar/google/events
+      // which requires the user to have connected their Google Calendar.
+      // For now, leave upcomingEvents empty to avoid 404 errors.
+      // When a proper /api/calendar/events endpoint is added, re-enable this:
+      // try {
+      //   const eventsRes = await get<{ success: boolean; events: CalendarEvent[] }>(
+      //     `/calendar/events?userId=${userId}&upcoming=true`
+      //   );
+      //   upcomingEvents = eventsRes.events?.slice(0, 5) || [];
+      // } catch {
+      //   // Ignore
+      // }
 
       // Load messages assigned to this user
       await loadUserMessages();
@@ -353,8 +364,7 @@
         // assignedTo is an array of objects with {id, displayName, avatarEmoji}
         userMessages = allNotes.filter(
           (note) =>
-            note.assignedTo?.some((a) => a.id === userId) &&
-            note.title?.includes('💬 Meddelande')
+            note.assignedTo?.some((a) => a.id === userId) && note.title?.includes('💬 Meddelande')
         );
       }
     } catch {
@@ -413,7 +423,7 @@
         },
         credentials: 'include',
         body: JSON.stringify({
-          title: `💬 Meddelande från ${$currentUser.displayName || $currentUser.username}`,
+          title: '',
           content: messageText,
           color: 'blue',
           isPinned: true,

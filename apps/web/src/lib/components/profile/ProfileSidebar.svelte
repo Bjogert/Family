@@ -1,6 +1,5 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { goto } from '$app/navigation';
 
   export let profile: {
     displayName: string | null;
@@ -24,67 +23,59 @@
 
 <aside class="lg:w-64 flex-shrink-0">
   <div
-    class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-3 lg:p-4"
+    class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-3"
   >
-    <!-- User section: Avatar + Name as Overview button -->
-    <button
-      on:click={() => dispatch('setSection', 'overview')}
-      class="w-full flex items-center gap-3 px-2 py-2 rounded-xl transition-colors text-left mb-2
-        {activeSection === 'overview'
-        ? 'bg-orange-100 dark:bg-orange-900/30'
-        : 'hover:bg-stone-100 dark:hover:bg-stone-700/50'}"
-    >
-      <div
-        class="{bgColor} w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md flex-shrink-0"
+    <!-- User Header with Profile button in top right -->
+    <div class="relative">
+      <!-- Profile button in top right corner -->
+      <button
+        on:click={() => dispatch('setSection', 'profile')}
+        class="absolute top-0 right-0 p-1.5 rounded-lg transition-colors
+          {activeSection === 'profile'
+          ? 'bg-orange-200 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400'
+          : 'hover:bg-stone-200/50 dark:hover:bg-stone-600/50 text-stone-400 dark:text-stone-500'}"
+        title="Profil"
       >
-        {profile.avatarEmoji || '👤'}
-      </div>
-      <div class="min-w-0 flex-1">
-        <span
-          class="font-semibold text-sm lg:text-base text-stone-800 dark:text-white truncate block"
+        <span class="text-sm">👤</span>
+      </button>
+
+      <!-- User section: Avatar + Name as Overview button -->
+      <button
+        on:click={() => dispatch('setSection', 'overview')}
+        class="w-full flex items-center gap-2.5 pr-8 py-1 rounded-xl transition-colors text-left
+          {activeSection === 'overview'
+          ? 'bg-orange-100/50 dark:bg-orange-900/20'
+          : 'hover:bg-stone-100/50 dark:hover:bg-stone-700/30'}"
+      >
+        <div
+          class="{bgColor} w-9 h-9 rounded-full flex items-center justify-center text-lg shadow-md flex-shrink-0"
         >
-          {profile.displayName || profile.username}
-        </span>
-        <span class="text-xs text-stone-400 dark:text-stone-500 truncate block">
-          @{profile.username}
-        </span>
-      </div>
-    </button>
+          {profile.avatarEmoji || '👤'}
+        </div>
+        <div class="min-w-0 flex-1">
+          <span class="font-semibold text-sm text-stone-800 dark:text-white truncate block">
+            {profile.displayName || profile.username}
+          </span>
+          <span class="text-[11px] text-stone-400 dark:text-stone-500 truncate block">
+            @{profile.username}
+          </span>
+        </div>
+      </button>
+    </div>
 
     <!-- Message button (only show if viewing someone else's profile) -->
     {#if !isOwnProfile}
       <button
         on:click={() => dispatch('toggleMessageForm')}
-        class="w-full flex items-center gap-2 px-3 py-2 rounded-xl transition-colors mb-2
+        class="w-full flex items-center gap-2 px-2 py-1.5 mt-2 rounded-lg transition-colors text-sm
           {showMessageForm
           ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
           : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400'}"
       >
         <span>💬</span>
-        <span class="font-medium text-sm">Meddelande</span>
+        <span class="font-medium">Meddelande</span>
       </button>
     {/if}
-
-    <!-- Profile and Tillbaka buttons row -->
-    <div class="flex gap-2">
-      <button
-        on:click={() => dispatch('setSection', 'profile')}
-        class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl transition-colors
-          {activeSection === 'profile'
-          ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
-          : 'hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400'}"
-      >
-        <span>👤</span>
-        <span class="font-medium text-sm">Profil</span>
-      </button>
-      <button
-        on:click={() => goto('/')}
-        class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-700/50 text-stone-500 dark:text-stone-400 transition-colors"
-      >
-        <span>←</span>
-        <span class="font-medium text-sm">Tillbaka</span>
-      </button>
-    </div>
   </div>
 
   <!-- Message Form (appears below sidebar when active) -->

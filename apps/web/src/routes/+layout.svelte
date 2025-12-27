@@ -11,6 +11,7 @@
     checkAuth,
     logout,
   } from '$lib/stores/auth';
+  import { familyStore, familyMembers, familyLoading, familyLoaded } from '$lib/stores/family';
   import { t, setLanguage, languages, currentLanguage } from '$lib/i18n';
   import InstallPrompt from '$lib/components/InstallPrompt.svelte';
   import SettingsModal from '$lib/components/SettingsModal.svelte';
@@ -25,6 +26,9 @@
     purple: 'bg-violet-400',
     stone: 'bg-stone-400',
   };
+
+  // Other family members (excluding current user)
+  $: otherMembers = $familyMembers.filter((m) => m.id !== $currentUser?.id);
 
   let showLanguageMenu = false;
   let showSettingsModal = false;
@@ -120,6 +124,11 @@
     }
   }
 
+  // Load family members when authenticated
+  $: if ($authenticated && !$familyLoaded && !$familyLoading) {
+    familyStore.loadMembers();
+  }
+
   async function handleLogout() {
     await logout();
     goto('/welcome');
@@ -197,13 +206,6 @@
                 class="text-sm font-bold bg-gradient-to-r from-orange-400 to-amber-400 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent"
                 >{$t('nav.familyHub')}</a
               >
-              <!-- User indicator -->
-              <a
-                href="/profile/{$currentUser?.id}"
-                class="text-base hover:scale-110 transition-transform"
-                >{$currentUser?.avatarEmoji || '👤'}</a
-              >
-              <span class="{userColor} w-2 h-2 rounded-full"></span>
             </div>
             <div class="flex items-center gap-2">
               {#if canFullscreen}
@@ -237,9 +239,6 @@
               </button>
             </div>
           </div>
-          {#if $currentFamily}
-            <p class="text-[10px] text-gray-500 mb-2">{$currentFamily.name}</p>
-          {/if}
           <nav class="flex gap-3 overflow-x-auto">
             <a
               href="/groceries"
@@ -291,9 +290,6 @@
               class="text-lg font-bold bg-gradient-to-r from-orange-400 to-amber-400 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent"
               >{$t('nav.familyHub')}</a
             >
-            {#if $currentFamily}
-              <p class="text-xs text-gray-500">{$currentFamily.name}</p>
-            {/if}
           </div>
           <nav class="flex items-center gap-4">
             <a href="/groceries" class="text-stone-600 dark:text-stone-300 hover:text-orange-500">
@@ -309,16 +305,6 @@
               ✅ {$t('nav.tasks')}
             </a>
 
-            <a
-              href="/profile/{$currentUser?.id}"
-              class="flex items-center gap-2 hover:opacity-80 transition-opacity"
-            >
-              <span class="text-xl">{$currentUser?.avatarEmoji || '👤'}</span>
-              <span class="text-sm text-gray-600 dark:text-gray-400">
-                {$currentUser?.displayName || $currentUser?.username || 'User'}
-              </span>
-              <span class="{userColor} w-2 h-2 rounded-full"></span>
-            </a>
             <button
               on:click={handleLogout}
               class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm"
@@ -375,6 +361,58 @@
         </div>
       </div>
     </header>
+
+    <!-- Family Members Bar -->
+    {#if $familyMembers.length > 0}
+      <div
+        class="bg-stone-100/80 dark:bg-stone-800/80 border-b border-orange-200 dark:border-stone-700"
+      >
+        <div class="max-w-4xl mx-auto px-3 py-1.5">
+          <div class="flex items-center gap-3 overflow-x-auto">
+            <!-- Family name as link to home -->
+            <a
+              href="/"
+              class="flex flex-col leading-tight mr-1 hover:opacity-80 transition-opacity"
+            >
+              <span class="text-[9px] text-stone-400 dark:text-stone-500 uppercase tracking-wider"
+                >Familjen</span
+              >
+              <span
+                class="text-sm font-bold bg-gradient-to-r from-orange-400 to-amber-400 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent"
+              >
+                {$currentFamily?.name || 'Family'}
+              </span>
+            </a>
+            {#each $familyMembers as member (member.id)}
+              {@const bgColor = colorClasses[member.color || 'orange']}
+              {@const isCurrentUser = member.id === $currentUser?.id}
+              <a
+                href="/profile/{member.id}"
+                class="flex items-center gap-1.5 py-0.5 px-1.5 rounded-full hover:bg-white dark:hover:bg-stone-700 transition-colors group {isCurrentUser
+                  ? 'bg-white/50 dark:bg-stone-700/50'
+                  : ''}"
+                title={member.displayName || member.username}
+              >
+                <span
+                  class="{bgColor} w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-sm"
+                >
+                  {member.avatarEmoji || '👤'}
+                </span>
+                <span
+                  class="text-xs text-stone-600 dark:text-stone-300 whitespace-nowrap hidden sm:inline"
+                >
+                  {member.displayName?.split(' ')[0] || member.username}
+                </span>
+                {#if isCurrentUser}
+                  <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+                {/if}
+              </a>
+            {/each}
+          </div>
+        </div>
+      </div>
+    {/if}
+
     {#key $currentLanguage}
       <slot />
     {/key}

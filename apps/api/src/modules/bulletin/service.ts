@@ -63,7 +63,7 @@ export async function getNoteById(id: number, familyId: number): Promise<Bulleti
 
 interface CreateNoteParams {
     familyId: number;
-    title: string;
+    title?: string;
     content?: string;
     listItems?: BulletinListItem[];
     color?: BulletinColor;

@@ -4,12 +4,19 @@
   import { t } from '$lib/i18n';
   import { groceryWs } from '$lib/stores/groceryWs';
   import { currentFamily, currentUser } from '$lib/stores/auth';
+  import { familyMembers as familyMembersStore } from '$lib/stores/family';
   import type { GroceryItem } from '$lib/types/grocery';
-  import type { Task, TaskCategory, Activity, BulletinNote, CreateBulletinNoteInput, UpdateBulletinNoteInput } from '@family-hub/shared/types';
+  import type {
+    Task,
+    TaskCategory,
+    Activity,
+    BulletinNote,
+    CreateBulletinNoteInput,
+    UpdateBulletinNoteInput,
+  } from '@family-hub/shared/types';
   import type { WsMessage } from '$lib/websocket/client';
   import BulletinNoteForm from '$lib/components/BulletinNoteForm.svelte';
   import {
-    FamilySidebar,
     MyTasksCard,
     BulletinNoteCard,
     UpcomingActivities,
@@ -49,9 +56,10 @@
   let apiStatus = 'Checking...';
   let groceryItems: GroceryItem[] = [];
   let loadingGroceries = true;
-  let familyMembers: FamilyMember[] = [];
-  let loadingMembers = true;
   let groceryAssignments: GroceryAssignment[] = [];
+
+  // Get family members from global store
+  $: familyMembers = $familyMembersStore;
   let tasks: Task[] = [];
   let activities: Activity[] = [];
   let bulletinNotes: BulletinNote[] = [];
@@ -241,7 +249,9 @@
         }
         break;
       case 'grocery:unassigned':
-        groceryAssignments = groceryAssignments.filter((a) => a.userId !== (payload as { userId: number }).userId);
+        groceryAssignments = groceryAssignments.filter(
+          (a) => a.userId !== (payload as { userId: number }).userId
+        );
         break;
     }
   }
@@ -269,11 +279,6 @@
       // Fetch family data
       if ($currentFamily) {
         try {
-          const membersRes = await get<{ users: FamilyMember[] }>(
-            `/families/${$currentFamily.id}/users`
-          );
-          familyMembers = membersRes.users || [];
-
           const assignmentsRes = await get<{ success: boolean; assignments: GroceryAssignment[] }>(
             '/groceries/assignments'
           );
@@ -313,11 +318,7 @@
           }
         } catch {
           // Ignore errors
-        } finally {
-          loadingMembers = false;
         }
-      } else {
-        loadingMembers = false;
       }
     })();
 
@@ -342,10 +343,7 @@
 <main
   class="flex-1 bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900"
 >
-  <div class="h-full flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-7xl mx-auto">
-    <!-- Left Sidebar - Family Members -->
-    <FamilySidebar {familyMembers} {loadingMembers} {memberTaskInfo} {memberGroceryNotifications} />
-
+  <div class="h-full flex flex-col gap-6 p-4 lg:p-6 max-w-4xl mx-auto">
     <!-- Main Content - Bulletin Board -->
     <div class="flex-1 min-w-0 space-y-3">
       <!-- Add Note Button -->
@@ -363,7 +361,7 @@
       <!-- My Tasks Section -->
       <MyTasksCard {myAssignedTasks} {tasksAwaitingMyApproval} {familyMembers} />
 
-      {#if loadingMembers || loadingGroceries}
+      {#if loadingGroceries}
         <div
           class="bg-white/90 dark:bg-stone-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-orange-200 dark:border-stone-700 p-4"
         >

@@ -1,5 +1,12 @@
-﻿import { writable, derived } from 'svelte/store';
+﻿import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
+
+// BeforeInstallPromptEvent is a non-standard browser API for PWA installation
+interface BeforeInstallPromptEvent extends Event {
+    readonly platforms: string[];
+    readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+    prompt(): Promise<void>;
+}
 
 // Store for the deferred install prompt
 export const deferredPrompt = writable<BeforeInstallPromptEvent | null>(null);
@@ -32,7 +39,7 @@ export function initPwaDetection() {
     // Listen for the install prompt event
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
-        deferredPrompt.set(e);
+        deferredPrompt.set(e as BeforeInstallPromptEvent);
     });
 
     // Detect if app was installed
@@ -44,18 +51,13 @@ export function initPwaDetection() {
 
 // Trigger the install prompt
 export async function triggerInstall(): Promise<'accepted' | 'dismissed' | 'unavailable'> {
-    let prompt: BeforeInstallPromptEvent | null = null;
-
-    const unsubscribe = deferredPrompt.subscribe(p => {
-        prompt = p;
-    });
-    unsubscribe();
+    const prompt = get(deferredPrompt);
 
     if (!prompt) {
         return 'unavailable';
     }
 
-    prompt.prompt();
+    await prompt.prompt();
     const { outcome } = await prompt.userChoice;
 
     if (outcome === 'accepted') {

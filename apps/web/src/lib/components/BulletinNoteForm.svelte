@@ -95,12 +95,11 @@
   <div>
     <label class="block">
       <span class="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-1">
-        {$t('bulletin.titleRequired')}
+        {$t('bulletin.title')}
       </span>
       <input
         type="text"
         bind:value={title}
-        required
         class="w-full px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-700 text-stone-800 dark:text-stone-100 focus:ring-2 focus:ring-teal-400 focus:border-transparent"
         placeholder={$t('bulletin.titlePlaceholder')}
       />
