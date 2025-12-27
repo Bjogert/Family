@@ -42,7 +42,14 @@
 
     <form on:submit|preventDefault={() => dispatch('changePassword')} class="space-y-4">
       <!-- Hidden username field for password manager accessibility -->
-      <input type="text" name="username" autocomplete="username" class="hidden" aria-hidden="true" tabindex="-1" />
+      <input
+        type="text"
+        name="username"
+        autocomplete="username"
+        class="hidden"
+        aria-hidden="true"
+        tabindex="-1"
+      />
       <div>
         <label
           for="currentPassword"

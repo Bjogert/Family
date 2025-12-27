@@ -295,7 +295,11 @@
             const browserSubscribed = await isSubscribed();
             // Also check server status
             try {
-              const statusRes = await get<{ success: boolean; enabled: boolean; subscribed: boolean }>('/push/status');
+              const statusRes = await get<{
+                success: boolean;
+                enabled: boolean;
+                subscribed: boolean;
+              }>('/push/status');
               pushSubscribed = browserSubscribed || statusRes.subscribed;
             } catch {
               pushSubscribed = browserSubscribed;
@@ -443,9 +447,10 @@
       if (response.ok) {
         // Send push notification
         try {
-          const notificationBody = messageText.length > 100 ? messageText.substring(0, 100) + '...' : messageText;
+          const notificationBody =
+            messageText.length > 100 ? messageText.substring(0, 100) + '...' : messageText;
           const notificationUrl = shouldBePrivate ? `/profile/${userId}` : '/';
-          
+
           await fetch('/api/push/send', {
             method: 'POST',
             headers: {
@@ -468,7 +473,7 @@
         messageText = '';
         messageType = 'private';
         showMessageForm = false;
-        
+
         // Build success message based on type
         let successMsg = 'Meddelande skickat!';
         if (messageType === 'private') {
@@ -480,7 +485,7 @@
         }
         successMessage = successMsg;
         setTimeout(() => (successMessage = null), 3000);
-        
+
         // Reload messages to show the new one
         await loadUserMessages();
       } else {

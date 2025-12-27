@@ -103,7 +103,7 @@ export async function createNote(params: CreateNoteParams): Promise<BulletinNote
         const notifyUserIds = params.assignedTo.filter(id => id !== params.createdBy);
         if (notifyUserIds.length > 0) {
             const creatorName = await getCreatorName(params.createdBy);
-            const pushBody = params.title 
+            const pushBody = params.title
                 ? `${creatorName} la upp: "${params.title}"`
                 : `${creatorName} la upp en notis`;
             await pushService.sendToUsers(notifyUserIds, {

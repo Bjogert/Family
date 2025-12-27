@@ -124,7 +124,8 @@
 
       <!-- Message type selection -->
       <div class="mt-3 space-y-2">
-        <span class="text-xs font-medium text-stone-500 dark:text-stone-400">Visa meddelandet:</span>
+        <span class="text-xs font-medium text-stone-500 dark:text-stone-400">Visa meddelandet:</span
+        >
         <div class="flex flex-wrap gap-2">
           <button
             on:click={() => dispatch('setMessageType', 'private')}

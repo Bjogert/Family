@@ -31,9 +31,9 @@
     content: string | null;
     isPinned: boolean;
     createdAt: string;
-    creator?: { 
+    creator?: {
       id: number;
-      displayName: string | null; 
+      displayName: string | null;
       avatarEmoji: string | null;
     };
   }
@@ -101,9 +101,8 @@
             <span>{item.name}</span>
             {#if item.quantity}
               <span class="text-stone-400"
-                >({item.quantity % 1 === 0
-                  ? item.quantity
-                  : item.quantity.toFixed(1)}{item.unit || ''})</span
+                >({item.quantity % 1 === 0 ? item.quantity : item.quantity.toFixed(1)}{item.unit ||
+                  ''})</span
               >
             {/if}
           </li>
@@ -139,9 +138,7 @@
           <li class="bg-white dark:bg-stone-600/50 rounded-lg p-2">
             <div class="flex items-start justify-between gap-2">
               <div class="flex-1 min-w-0">
-                <span
-                  class="text-sm font-medium text-stone-700 dark:text-stone-200 block truncate"
-                >
+                <span class="text-sm font-medium text-stone-700 dark:text-stone-200 block truncate">
                   {task.title}
                 </span>
                 <div class="flex items-center gap-2 mt-1 flex-wrap">
@@ -158,7 +155,9 @@
                     <span
                       class="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full"
                     >
-                      {task.requiresValidation ? $t('tasks.awaitingApproval') : $t('tasks.statusDone')}
+                      {task.requiresValidation
+                        ? $t('tasks.awaitingApproval')
+                        : $t('tasks.statusDone')}
                     </span>
                     <button
                       on:click={() => dispatch('reopenTask', task.id)}
